@@ -1,0 +1,443 @@
+import { useEffect, useRef, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { easeInOutQuad } from '@/lib/utils'; // Assuming you have an easing function utility
+
+// --- Interfaces ---
+interface TokenElement {
+  id: string; // Unique identifier (e.g., 'input', 'subword-0', 'token-3')
+  text: string; // Current text displayed
+  targetText?: string; // Text it will morph into (for token IDs)
+  x: number;
+  y: number;
+  scale: number;
+  opacity: number;
+  // Animation state
+  isAnimating: boolean;
+  animStartTime: number;
+  animDuration: number;
+  startX: number;
+  startY: number;
+  startScale: number;
+  startOpacity: number;
+  targetX: number;
+  targetY: number;
+  targetScale: number;
+  targetOpacity: number;
+  // Visual state
+  isSubword: boolean;
+  isTokenId: boolean;
+  originalIndex?: number; // To link subwords and tokens
+}
+
+type AnimationPhase =
+  | 'IDLE'
+  | 'INPUT_APPEAR'
+  | 'INPUT_MOVE_CENTER'
+  | 'SPLITTING' // Phase where input fades/breaks apart
+  | 'SUBWORDS_ARRANGE'
+  | 'MORPHING_TO_TOKENS'
+  | 'TOKENS_DISPLAY'
+  | 'RESETTING';
+
+export function TokenizationAnimation() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  // --- Constants ---
+  const INPUT_TEXT = "Healthcare AI";
+  const SUBWORDS = ["Health", "care", "A", "I"]; // Corrected capitalization if needed by tokenizer
+  const TOKEN_IDS = [2847, 1839, 15, 23]; // Example IDs
+
+  const colors = isDark
+    ? {
+        background: '#050810',
+        text: 'rgba(230, 240, 255, 0.9)',
+        box: 'rgba(0, 180, 220, 0.1)',
+        border: 'rgba(0, 200, 240, 0.5)',
+        glow: 'rgba(0, 220, 255, 0.3)',
+        tokenText: 'rgba(255, 200, 100, 1)', // Distinct token color
+        tokenBox: 'rgba(255, 180, 80, 0.15)',
+        tokenBorder: 'rgba(255, 180, 80, 0.6)',
+        connector: 'rgba(0, 220, 255, 0.15)',
+        labelActive: 'rgba(0, 220, 255, 0.9)',
+        labelInactive: 'rgba(200, 220, 255, 0.4)',
+      }
+    : {
+        background: '#f8faff',
+        text: 'rgba(0, 20, 40, 0.9)',
+        box: 'rgba(0, 80, 120, 0.1)',
+        border: 'rgba(0, 100, 140, 0.5)',
+        glow: 'rgba(0, 120, 160, 0.2)',
+        tokenText: 'rgba(200, 80, 0, 1)',
+        tokenBox: 'rgba(255, 140, 50, 0.15)',
+        tokenBorder: 'rgba(255, 120, 30, 0.6)',
+        connector: 'rgba(0, 100, 140, 0.15)',
+        labelActive: 'rgba(0, 54, 73, 0.9)',
+        labelInactive: 'rgba(50, 80, 100, 0.4)',
+      };
+
+  // --- Refs for state variables (to avoid re-triggering useEffect) ---
+  const elementsRef = useRef<TokenElement[]>([]);
+  const phaseRef = useRef<AnimationPhase>('IDLE');
+  const animationFrameIdRef = useRef<number>(0);
+  const lastTimestampRef = useRef<number>(0);
+  const phaseTimerRef = useRef<number>(0); // Timer for delays within phases
+  const canvasSizeRef = useRef({ width: 0, height: 0 });
+
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // --- Animation Trigger Function ---
+    const startElementAnimation = (
+      element: TokenElement,
+      targets: Partial<TokenElement>, // Target x, y, scale, opacity
+      duration: number
+    ) => {
+      element.isAnimating = true;
+      element.animStartTime = performance.now();
+      element.animDuration = duration;
+      element.startX = element.x;
+      element.startY = element.y;
+      element.startScale = element.scale;
+      element.startOpacity = element.opacity;
+      element.targetX = targets.x ?? element.x;
+      element.targetY = targets.y ?? element.y;
+      element.targetScale = targets.scale ?? element.scale;
+      element.targetOpacity = targets.opacity ?? element.opacity;
+    };
+
+    // --- Initialization Function ---
+    const initialize = () => {
+      const { width, height } = canvasSizeRef.current;
+      elementsRef.current = [
+        { // The initial input text
+          id: 'input', text: INPUT_TEXT, x: width * 0.15, y: height * 0.5,
+          scale: 0, opacity: 0, isAnimating: false, animStartTime: 0, animDuration: 0,
+          startX: width * 0.15, startY: height * 0.5, startScale: 0, startOpacity: 0,
+          targetX: width * 0.15, targetY: height * 0.5, targetScale: 1, targetOpacity: 1,
+          isSubword: false, isTokenId: false,
+        },
+      ];
+      phaseRef.current = 'INPUT_APPEAR';
+      phaseTimerRef.current = performance.now();
+      // Start animation for the input element
+      startElementAnimation(elementsRef.current[0], { scale: 1, opacity: 1 }, 800);
+    };
+
+    // --- Resize Handler ---
+     const handleResize = () => {
+        const dpr = window.devicePixelRatio || 1;
+        const newWidth = canvas.clientWidth;
+        const newHeight = canvas.clientHeight;
+
+        canvas.width = newWidth * dpr;
+        canvas.height = newHeight * dpr;
+        ctx.scale(dpr, dpr);
+
+        canvasSizeRef.current = { width: newWidth, height: newHeight };
+        // Re-initialize on resize to reposition elements correctly
+        initialize();
+    };
+
+
+    // --- Main Animation Loop ---
+    const loop = (timestamp: number) => {
+      if (!lastTimestampRef.current) lastTimestampRef.current = timestamp;
+      const elapsed = timestamp - lastTimestampRef.current;
+      // Cap elapsed time to prevent large jumps if tab was inactive
+      const dt = Math.min(elapsed / 1000, 0.05);
+      lastTimestampRef.current = timestamp;
+
+      const { width, height } = canvasSizeRef.current;
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Draw Background / Connectors (Subtle)
+      ctx.fillStyle = colors.background;
+      ctx.fillRect(0, 0, width, height);
+      // TODO: Add subtle background animation (e.g., slow gradient shift, faint particles)
+      // Draw faint connecting lines/areas between conceptual stages
+      const stageX = [width * 0.15, width * 0.4, width * 0.65, width * 0.85];
+      ctx.strokeStyle = colors.connector;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      ctx.moveTo(stageX[0] + 50, height * 0.5);
+      ctx.lineTo(stageX[1] - 50, height * 0.5);
+      ctx.moveTo(stageX[1] + 50, height * 0.5);
+      ctx.lineTo(stageX[2] - 50, height * 0.5);
+      ctx.moveTo(stageX[2] + 50, height * 0.5);
+      ctx.lineTo(stageX[3] - 50, height * 0.5);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+
+
+      // 2. Update Element Animations
+      let allAnimationsComplete = true;
+      elementsRef.current.forEach(el => {
+        if (el.isAnimating) {
+          allAnimationsComplete = false;
+          const timeElapsed = performance.now() - el.animStartTime;
+          const progress = Math.min(timeElapsed / el.animDuration, 1);
+          const easedProgress = easeInOutQuad(progress); // Use easing!
+
+          el.x = el.startX + (el.targetX - el.startX) * easedProgress;
+          el.y = el.startY + (el.targetY - el.startY) * easedProgress;
+          el.scale = el.startScale + (el.targetScale - el.startScale) * easedProgress;
+          el.opacity = el.startOpacity + (el.targetOpacity - el.startOpacity) * easedProgress;
+
+          // Morphing text effect (simple cross-fade during morph)
+          if (phaseRef.current === 'MORPHING_TO_TOKENS' && el.isSubword && el.targetText) {
+             if (easedProgress > 0.5) {
+                 el.text = el.targetText; // Switch text halfway through
+                 el.isTokenId = true; // Mark as token visually
+             }
+          }
+
+          if (progress >= 1) {
+            el.isAnimating = false;
+            // Ensure final state is set precisely
+            el.x = el.targetX;
+            el.y = el.targetY;
+            el.scale = el.targetScale;
+            el.opacity = el.targetOpacity;
+          }
+        }
+      });
+
+      // 3. Update Animation Phase Logic
+      const now = performance.now();
+      switch (phaseRef.current) {
+        case 'INPUT_APPEAR':
+          if (allAnimationsComplete) {
+            phaseRef.current = 'INPUT_MOVE_CENTER';
+            phaseTimerRef.current = now; // Start timer for pause before moving
+          }
+          break;
+        case 'INPUT_MOVE_CENTER':
+           // Add a brief pause before moving
+          if (now - phaseTimerRef.current > 500) {
+              const inputEl = elementsRef.current.find(el => el.id === 'input');
+              if (inputEl && !inputEl.isAnimating) {
+                  startElementAnimation(inputEl, { x: width * 0.4 }, 1000); // Move to center
+                  phaseRef.current = 'SPLITTING'; // Move to next phase immediately after starting animation
+                  phaseTimerRef.current = now; // Timer for split delay
+              }
+          }
+          break;
+        case 'SPLITTING':
+           // Wait for move to roughly finish, then start splitting
+          if (allAnimationsComplete && now - phaseTimerRef.current > 800) {
+              const inputEl = elementsRef.current.find(el => el.id === 'input');
+              if (inputEl && !inputEl.isAnimating) {
+                  // Fade out input element
+                  startElementAnimation(inputEl, { opacity: 0, scale: 0.8 }, 400);
+
+                  // Create and animate in subword elements
+                  const subwordYStart = height * 0.5 - (SUBWORDS.length - 1) * 25; // Center vertically
+                  SUBWORDS.forEach((subword, i) => {
+                      const subEl: TokenElement = {
+                         id: `subword-${i}`, text: subword,
+                         x: inputEl.x, y: inputEl.y, // Start from input element's final position
+                         scale: 0, opacity: 0, isAnimating: false, animStartTime: 0, animDuration: 0,
+                         startX: inputEl.x, startY: inputEl.y, startScale: 0, startOpacity: 0,
+                         targetX: width * 0.65, targetY: subwordYStart + i * 50, // Target position in subword area
+                         targetScale: 1, targetOpacity: 1,
+                         isSubword: true, isTokenId: false, originalIndex: i,
+                      };
+                      elementsRef.current.push(subEl);
+                      // Stagger the animation start
+                      setTimeout(() => {
+                          startElementAnimation(subEl, { x: subEl.targetX, y: subEl.targetY, scale: 1, opacity: 1 }, 800);
+                      }, i * 150); // Stagger delay
+                  });
+                  phaseRef.current = 'SUBWORDS_ARRANGE';
+              }
+          }
+          break;
+        case 'SUBWORDS_ARRANGE':
+          if (allAnimationsComplete) {
+              const inputEl = elementsRef.current.find(el => el.id === 'input');
+               // Remove faded input element if needed (optional)
+               // if (inputEl && inputEl.opacity < 0.01) {
+               //    elementsRef.current = elementsRef.current.filter(el => el.id !== 'input');
+               // }
+              phaseRef.current = 'MORPHING_TO_TOKENS';
+              phaseTimerRef.current = now; // Timer for pause before morphing
+          }
+          break;
+         case 'MORPHING_TO_TOKENS':
+            // Add a brief pause before morphing
+            if (now - phaseTimerRef.current > 800 && allAnimationsComplete) {
+                elementsRef.current.forEach(el => {
+                   if (el.isSubword) {
+                       el.targetText = `#${TOKEN_IDS[el.originalIndex]}`; // Set target text for morph
+                       // Start morph animation (e.g., scale down/up, cross-fade handled in update)
+                       startElementAnimation(el, { scale: 1.1 }, 300); // Scale up slightly during morph pt1
+                       setTimeout(() => {
+                          startElementAnimation(el, {
+                              x: width * 0.85, // Move to final token position
+                              scale: 1,
+                              opacity: 1,
+                          }, 800); // Scale back down & move pt2
+                       }, 300);
+                   }
+                });
+                phaseRef.current = 'TOKENS_DISPLAY';
+            }
+            break;
+        case 'TOKENS_DISPLAY':
+          if (allAnimationsComplete) {
+             phaseRef.current = 'RESETTING'; // Prepare to loop
+             phaseTimerRef.current = now;
+          }
+          break;
+        case 'RESETTING':
+           // Add a longer pause before restarting
+           if (now - phaseTimerRef.current > 3000) {
+               initialize(); // Restart the animation
+           }
+           break;
+      }
+
+
+      // 4. Draw Elements
+      elementsRef.current.forEach(el => {
+        if (el.opacity > 0.01) { // Don't draw fully transparent elements
+          drawTokenElement(el);
+        }
+      });
+
+      // 5. Draw Stage Labels (Highlight current conceptual stage)
+      const conceptualStages = ['Input Text', 'Processing', 'Subwords', 'Token IDs'];
+      let currentConceptualStage = 0;
+      if (phaseRef.current === 'SPLITTING' || phaseRef.current === 'SUBWORDS_ARRANGE') currentConceptualStage = 2;
+      else if (phaseRef.current === 'MORPHING_TO_TOKENS' || phaseRef.current === 'TOKENS_DISPLAY') currentConceptualStage = 3;
+      else if (phaseRef.current !== 'INPUT_APPEAR') currentConceptualStage = 1; // Input moving or splitting start
+
+      ctx.font = '14px "Inter", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      conceptualStages.forEach((label, i) => {
+          const stageXPos = stageX[i];
+          ctx.fillStyle = i === currentConceptualStage ? colors.labelActive : colors.labelInactive;
+          ctx.fillText(label, stageXPos, height - 15);
+          // Draw indicator dot
+          ctx.beginPath();
+          ctx.arc(stageXPos, height - 35, i === currentConceptualStage ? 5 : 3, 0, Math.PI * 2);
+          ctx.fill();
+      });
+
+      // --- Draw Train/Val/Test Info (Transiently) ---
+       if (phaseRef.current === 'SPLITTING' || phaseRef.current === 'SUBWORDS_ARRANGE') {
+           const inputEl = elementsRef.current.find(el => el.id === 'input');
+           if(inputEl) {
+                const timeInPhase = now - phaseTimerRef.current;
+                const maxDisplayTime = 1500; // Display for 1.5 seconds
+                if(timeInPhase < maxDisplayTime) {
+                    const splitOpacity = easeInOutQuad(Math.min(1, timeInPhase / 500)) // Fade in
+                                     * (1 - easeInOutQuad(Math.max(0, (timeInPhase - (maxDisplayTime - 500))) / 500)); // Fade out
+
+                    ctx.save();
+                    ctx.font = '12px "Inter", system-ui, sans-serif';
+                    ctx.fillStyle = colors.labelInactive;
+                    ctx.globalAlpha = splitOpacity * 0.7;
+                    ctx.textAlign = 'center';
+                    const splitY = inputEl.y > height * 0.6 ? inputEl.y - 30 : inputEl.y + 30;
+                    ctx.fillText('Dataset Split: Train 80% / Validation 10% / Test 10%', inputEl.x, splitY);
+                    ctx.restore();
+                }
+           }
+       }
+
+
+      // Request next frame
+      animationFrameIdRef.current = requestAnimationFrame(loop);
+    };
+
+    // --- Drawing Function for Token Elements ---
+    const drawTokenElement = (el: TokenElement) => {
+      const isToken = el.isTokenId;
+      const boxColor = isToken ? colors.tokenBox : colors.box;
+      const borderColor = isToken ? colors.tokenBorder : colors.border;
+      const textColor = isToken ? colors.tokenText : colors.text;
+      const glow = colors.glow; // Use a general glow
+
+      ctx.save();
+      ctx.globalAlpha = el.opacity;
+      ctx.translate(el.x, el.y);
+      ctx.scale(el.scale, el.scale);
+
+      // Dynamic font size based on element type?
+      ctx.font = `${isToken ? 16 : 16}px "Inter", system-ui, sans-serif`; // Keep font size consistent for now
+      const metrics = ctx.measureText(el.text);
+      const padding = 10;
+      const boxWidth = metrics.width + padding * 2;
+      const boxHeight = 32;
+      const borderRadius = 6;
+
+      // Draw box
+      ctx.beginPath();
+      // Use standard rect with fill/stroke for potentially better perf than roundRect helper
+      ctx.fillStyle = boxColor;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1.5;
+      // Manual rounded rect path (alternative)
+      ctx.moveTo(-boxWidth / 2 + borderRadius, -boxHeight / 2);
+      ctx.lineTo(boxWidth / 2 - borderRadius, -boxHeight / 2);
+      ctx.arcTo(boxWidth / 2, -boxHeight / 2, boxWidth / 2, -boxHeight / 2 + borderRadius, borderRadius);
+      ctx.lineTo(boxWidth / 2, boxHeight / 2 - borderRadius);
+      ctx.arcTo(boxWidth / 2, boxHeight / 2, boxWidth / 2 - borderRadius, boxHeight / 2, borderRadius);
+      ctx.lineTo(-boxWidth / 2 + borderRadius, boxHeight / 2);
+      ctx.arcTo(-boxWidth / 2, boxHeight / 2, -boxWidth / 2, boxHeight / 2 - borderRadius, borderRadius);
+      ctx.lineTo(-boxWidth / 2, -boxHeight / 2 + borderRadius);
+      ctx.arcTo(-boxWidth / 2, -boxHeight / 2, -boxWidth / 2 + borderRadius, -boxHeight / 2, borderRadius);
+      ctx.closePath();
+
+
+      // Apply glow before fill/stroke
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = 12 * el.scale; // Scale glow with element
+      ctx.fill();
+      ctx.shadowBlur = 0; // Reset shadow before stroke/text
+      ctx.stroke();
+
+
+      // Draw text
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(el.text, 0, 1); // Slight Y offset for better vertical centering
+
+      ctx.restore();
+    };
+
+    // --- Start ---
+    handleResize(); // Initial setup
+    window.addEventListener('resize', handleResize);
+    animationFrameIdRef.current = requestAnimationFrame(loop);
+
+    // --- Cleanup ---
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameIdRef.current);
+    };
+  }, [isDark, colors]); // Add colors to dependency array if defined outside useEffect
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="w-full h-[350px] rounded-lg block" // Increased height slightly
+      style={{ display: 'block', background: colors.background }} // Set background here too
+    />
+  );
+}
+
+// Example Easing function (place in utils or keep within component)
+// const easeInOutQuad = (t: number): number => {
+//   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+// };

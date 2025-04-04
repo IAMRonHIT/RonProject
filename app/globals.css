@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Remove the Google Fonts import that was causing the error */
+/* @import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap'); */
+
+:root {
+  --background: 222 47% 4%;
+  --foreground: 210 40% 98%;
+
+  --card: 222 47% 6%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222 47% 6%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 210 100% 50%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 224 71% 45%;
+
+  --radius: 0.5rem;
+
+  --ron-navy: 222 47% 11%;
+  --ron-navy-dark: 222 47% 4%;
+  --ron-cyan: 180 100% 50%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Define font family classes using CSS variables */
+.font-inter {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.font-audiowide {
+  font-family: var(--font-audiowide), cursive;
+}
+
+.font-fira-code {
+  font-family: var(--font-fira-code), monospace;
+}
+

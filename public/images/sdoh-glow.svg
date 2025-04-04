@@ -1,0 +1,143 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGradient4" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#10183b" />
+      <stop offset="100%" stop-color="#050818" />
+    </radialGradient>
+    <radialGradient id="profileFillGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1f3a6e"/>
+      <stop offset="100%" stop-color="#0f1a36"/>
+    </radialGradient>
+     <linearGradient id="profileStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#aaccff"/>
+      <stop offset="100%" stop-color="#304FFE"/>
+    </linearGradient>
+    <radialGradient id="housingFillGrad" cx="50%" cy="50%" r="50%">
+       <stop offset="0%" stop-color="#1a5c6e"/>
+       <stop offset="100%" stop-color="#0f3a46"/>
+    </radialGradient>
+    <linearGradient id="housingStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+       <stop offset="0%" stop-color="#87f5ff"/>
+       <stop offset="100%" stop-color="#00BFFF"/>
+    </linearGradient>
+     <radialGradient id="foodFillGrad" cx="50%" cy="50%" r="50%">
+       <stop offset="0%" stop-color="#6e1a50"/>
+       <stop offset="100%" stop-color="#360f30"/>
+    </radialGradient>
+    <linearGradient id="foodStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+       <stop offset="0%" stop-color="#ffacef"/>
+       <stop offset="100%" stop-color="#D500F9"/>
+    </linearGradient>
+     <radialGradient id="transportFillGrad" cx="50%" cy="50%" r="50%">
+       <stop offset="0%" stop-color="#3a1a6e"/>
+       <stop offset="100%" stop-color="#1a0f36"/>
+    </radialGradient>
+    <linearGradient id="transportStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+       <stop offset="0%" stop-color="#c0aeff"/>
+       <stop offset="100%" stop-color="#7C4DFF"/>
+    </linearGradient>
+      <radialGradient id="eduFillGrad" cx="50%" cy="50%" r="50%">
+       <stop offset="0%" stop-color="#1a6e6e"/>
+       <stop offset="100%" stop-color="#0f3a3a"/>
+    </radialGradient>
+    <linearGradient id="eduStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+       <stop offset="0%" stop-color="#87ffff"/>
+       <stop offset="100%" stop-color="#00E5FF"/>
+    </linearGradient>
+    <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="0"/>
+        <stop offset="10%" stop-color="currentColor" stop-opacity="1"/>
+        <stop offset="20%" stop-color="currentColor" stop-opacity="0"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="profileGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="blurCore"/>
+         <feMerge><feMergeNode in="blurCore"/><feMergeNode in="SourceGraphic"/></feMerge>
+          <animate attributeName="stdDeviation" attributeType="XML" values="4; 5.5; 4" dur="2.2s" repeatCount="indefinite"/>
+    </filter>
+     <filter id="sdohGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="blurCore"/>
+        <feMerge><feMergeNode in="blurCore"/><feMergeNode in="SourceGraphic"/></feMerge>
+         <animate attributeName="stdDeviation" attributeType="XML" values="3; 4; 3" dur="2.8s" repeatCount="indefinite" begin="0.3s"/>
+    </filter>
+    <filter id="linePulseGlow" x="-50%" y="-50%" width="200%" height="200%">
+       <feGaussianBlur stdDeviation="2" result="blurLine"/>
+        <feMerge><feMergeNode in="blurLine"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <path id="connectTop" d="M150 115 Q 150 100, 150 88" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path id="connectRight" d="M185 150 Q 200 150, 212 150" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path id="connectBottom" d="M150 185 Q 150 200, 150 212" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path id="connectLeft" d="M115 150 Q 100 150, 88 150" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  </defs>
+
+  <rect width="300" height="300" fill="url(#bgGradient4)" />
+
+  <g id="profile" transform-origin="150 150" filter="url(#profileGlow)">
+    <circle cx="150" cy="150" r="35" fill="url(#profileFillGrad)" stroke="url(#profileStrokeGrad)" stroke-width="2" />
+    <g stroke="url(#profileStrokeGrad)" stroke-width="1.5" opacity="0.8">
+      <circle cx="150" cy="138" r="10" fill="none"/>
+      <path d="M135 165 C 135 153, 142 148, 150 148 C 158 148, 165 153, 165 165" fill="none" />
+    </g>
+    <animateTransform id="profilePulse" attributeName="transform" type="scale" values="1; 1.04; 1" dur="2.2s" repeatCount="indefinite"/>
+  </g>
+
+  <g id="sdohHousing" transform-origin="150 70" filter="url(#sdohGlow)">
+    <circle cx="150" cy="70" r="18" fill="url(#housingFillGrad)" stroke="url(#housingStrokeGrad)" stroke-width="1.5" />
+    <path d="M142 73 V 65 L 150 59 L 158 65 V 73 H 142 Z M 146 73 V 68 h 8 v 5" stroke="url(#housingStrokeGrad)" stroke-width="1.2" fill="none" stroke-linejoin="round"/>
+     <animateTransform attributeName="transform" type="scale" values="1; 1.05; 1" dur="2.8s" repeatCount="indefinite" begin="0.2s"/>
+  </g>
+
+  <g id="sdohFood" transform-origin="230 150" filter="url(#sdohGlow)">
+    <circle cx="230" cy="150" r="18" fill="url(#foodFillGrad)" stroke="url(#foodStrokeGrad)" stroke-width="1.5" />
+     <path d="M230 142 C 236 142, 238 148, 235 153 Q 230 158, 225 153 C 222 148, 224 142, 230 142 Z" stroke="url(#foodStrokeGrad)" stroke-width="1.2" fill="none"/>
+     <path d="M230 142 Q 232 138, 234 142" stroke="url(#foodStrokeGrad)" stroke-width="1.2" fill="none"/>
+      <animateTransform attributeName="transform" type="scale" values="1; 1.05; 1" dur="2.8s" repeatCount="indefinite" begin="0.4s"/>
+  </g>
+
+  <g id="sdohTransport" transform-origin="150 230" filter="url(#sdohGlow)">
+    <circle cx="150" cy="230" r="18" fill="url(#transportFillGrad)" stroke="url(#transportStrokeGrad)" stroke-width="1.5" />
+     <rect x="141" y="226" width="18" height="8" rx="2" stroke="url(#transportStrokeGrad)" stroke-width="1.2" fill="none"/>
+     <circle cx="145" cy="234" r="2" stroke="url(#transportStrokeGrad)" stroke-width="1" fill="url(#transportFillGrad)"/>
+     <circle cx="155" cy="234" r="2" stroke="url(#transportStrokeGrad)" stroke-width="1" fill="url(#transportFillGrad)"/>
+      <animateTransform attributeName="transform" type="scale" values="1; 1.05; 1" dur="2.8s" repeatCount="indefinite" begin="0.6s"/>
+  </g>
+
+  <g id="sdohEducation" transform-origin="70 150" filter="url(#sdohGlow)">
+    <circle cx="70" cy="150" r="18" fill="url(#eduFillGrad)" stroke="url(#eduStrokeGrad)" stroke-width="1.5" />
+     <path d="M63 143 H 77 M 63 147 H 77 M 63 151 H 72" stroke="url(#eduStrokeGrad)" stroke-width="1.2" stroke-linecap="round"/>
+       <rect x="62" y="140" width="16" height="16" rx="1" stroke="url(#eduStrokeGrad)" stroke-width="1.2" fill="none"/>
+      <animateTransform attributeName="transform" type="scale" values="1; 1.05; 1" dur="2.8s" repeatCount="indefinite" begin="0.8s"/>
+  </g>
+
+  <g id="connections" filter="url(#linePulseGlow)" opacity="0.8">
+    <use href="#connectTop" stroke="url(#pulseGradient)" stroke-dasharray="8 50" stroke-width="3" style="color: #00BFFF;">
+        <animate attributeName="stroke-dashoffset" from="58" to="0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.1s"/>
+         <animate attributeName="opacity" values="0; 1; 0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.1s"/>
+    </use>
+     <use href="#connectTop" stroke="#00BFFF" stroke-opacity="0.2"/>
+
+    <use href="#connectRight" stroke="url(#pulseGradient)" stroke-dasharray="8 50" stroke-width="3" style="color: #D500F9;">
+        <animate attributeName="stroke-dashoffset" from="58" to="0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.3s"/>
+         <animate attributeName="opacity" values="0; 1; 0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.3s"/>
+    </use>
+     <use href="#connectRight" stroke="#D500F9" stroke-opacity="0.2"/>
+
+     <use href="#connectBottom" stroke="url(#pulseGradient)" stroke-dasharray="8 50" stroke-width="3" style="color: #7C4DFF;">
+        <animate attributeName="stroke-dashoffset" from="58" to="0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.5s"/>
+         <animate attributeName="opacity" values="0; 1; 0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.5s"/>
+    </use>
+      <use href="#connectBottom" stroke="#7C4DFF" stroke-opacity="0.2"/>
+
+      <use href="#connectLeft" stroke="url(#pulseGradient)" stroke-dasharray="8 50" stroke-width="3" style="color: #00E5FF;">
+        <animate attributeName="stroke-dashoffset" from="58" to="0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.7s"/>
+        <animate attributeName="opacity" values="0; 1; 0" dur="1.1s" repeatCount="indefinite" begin="profilePulse.begin + 0.7s"/>
+    </use>
+     <use href="#connectLeft" stroke="#00E5FF" stroke-opacity="0.2"/>
+
+  </g>
+
+</svg>
+

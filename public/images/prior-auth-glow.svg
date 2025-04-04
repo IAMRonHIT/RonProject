@@ -1,0 +1,137 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080a1f" />
+      <stop offset="100%" stop-color="#0f1336" />
+    </linearGradient>
+    <linearGradient id="docGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#1a1c3a" />
+      <stop offset="100%" stop-color="#0f1124" />
+    </linearGradient>
+     <linearGradient id="docBorderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#637bff" />
+      <stop offset="100%" stop-color="#304FFE" />
+    </linearGradient>
+    <linearGradient id="checkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2ff" />
+      <stop offset="100%" stop-color="#00BFFF" />
+    </linearGradient>
+    <linearGradient id="dataLineGradient" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#304FFE" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#637bff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#304FFE" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="glowCheck" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+     <filter id="glowCheckSubtle" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+       <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0" result="dimmedBlur"/>
+      <feMerge>
+        <feMergeNode in="dimmedBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+     <filter id="glowBorder" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+         <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+        <animate attributeName="stdDeviation" attributeType="XML"
+                 values="3; 5; 3"
+                 dur="3s"
+                 repeatCount="indefinite" />
+    </filter>
+     <filter id="glowData" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+       <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+    </filter>
+
+    <path id="checkPath" d="M120 170L140 190L190 140" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+
+    <path id="dataFlowPath1" d="M50 150 C 60 140, 70 160, 80 150" stroke-width="2" stroke-linecap="round" />
+    <path id="dataFlowPath2" d="M220 150 C 230 140, 240 160, 250 150" stroke-width="2" stroke-linecap="round" />
+    <path id="dataFlowPath3" d="M50 170 C 60 160, 70 180, 80 170" stroke-width="2" stroke-linecap="round" />
+    <path id="dataFlowPath4" d="M220 170 C 230 160, 240 180, 250 170" stroke-width="2" stroke-linecap="round" />
+  </defs>
+
+  <rect width="300" height="300" fill="url(#bgGradient)" />
+
+  <g id="documentGroup">
+    <rect
+        x="75" y="50" width="150" height="200" rx="8"
+        fill="url(#docGradient)"
+        stroke="url(#docBorderGradient)"
+        stroke-width="2"
+        filter="url(#glowBorder)" />
+
+    <g id="docLines" opacity="0">
+      <rect x="95" y="80" width="110" height="6" rx="3" fill="#637bff" opacity="0.7" />
+      <rect x="95" y="100" width="110" height="6" rx="3" fill="#637bff" opacity="0.5" />
+      <rect x="95" y="120" width="80" height="6" rx="3" fill="#637bff" opacity="0.4" />
+      <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.5s" fill="freeze" />
+       <animate attributeName="opacity" values="1; 0.8; 1" dur="4s" begin="1s" repeatCount="indefinite" />
+    </g>
+
+     <g id="checkmarkGroup" filter="url(#glowCheckSubtle)" opacity="0">
+        <use href="#checkPath"
+             stroke="url(#checkGradient)"
+             stroke-dasharray="100"  stroke-dashoffset="100">
+             <animate id="drawCheck"
+                      attributeName="stroke-dashoffset"
+                      values="100; 0"
+                      dur="0.6s"
+                      begin="1.2s" fill="freeze" />
+             <animate attributeName="opacity" from="0" to="1" dur="0.1s" begin="1.2s" fill="freeze" />
+        </use>
+         <use href="#checkPath"
+              stroke="url(#checkGradient)"
+              stroke-width="6" filter="url(#glowCheck)"
+              opacity="0">
+              <animate attributeName="opacity" values="0; 1; 0.8; 1; 0" dur="0.8s" begin="drawCheck.end - 0.2s" fill="freeze" />
+         </use>
+
+         <animateTransform attributeName="transform"
+                           type="scale"
+                           values="1 1; 1.1 1.1; 1 1"
+                           dur="0.5s"
+                           begin="drawCheck.end + 0.1s"
+                           additive="sum"
+                           calcMode="spline"
+                           keyTimes="0; 0.5; 1"
+                           keySplines="0.7 0 0.3 1; 0.7 0 0.3 1"
+                           transform-origin="155 165" />
+     </g>
+   </g>
+
+  <g id="dataFlowGroup" opacity="0.8" filter="url(#glowData)">
+    <use href="#dataFlowPath1" stroke="url(#dataLineGradient)" stroke-dasharray="5 10">
+      <animate attributeName="stroke-dashoffset" from="0" to="15" dur="1s" repeatCount="indefinite"/>
+       <animate attributeName="opacity" values="0.5; 1; 0.5" dur="2s" repeatCount="indefinite" begin="0s"/>
+    </use>
+    <use href="#dataFlowPath2" stroke="url(#dataLineGradient)" stroke-dasharray="5 10">
+      <animate attributeName="stroke-dashoffset" from="0" to="-15" dur="1s" repeatCount="indefinite"/>
+       <animate attributeName="opacity" values="0.5; 1; 0.5" dur="2s" repeatCount="indefinite" begin="0.2s"/>
+    </use>
+    <use href="#dataFlowPath3" stroke="url(#dataLineGradient)" stroke-dasharray="5 10">
+      <animate attributeName="stroke-dashoffset" from="0" to="15" dur="1.2s" repeatCount="indefinite"/>
+       <animate attributeName="opacity" values="0.5; 1; 0.5" dur="2s" repeatCount="indefinite" begin="0.4s"/>
+    </use>
+    <use href="#dataFlowPath4" stroke="url(#dataLineGradient)" stroke-dasharray="5 10">
+      <animate attributeName="stroke-dashoffset" from="0" to="-15" dur="1.2s" repeatCount="indefinite"/>
+       <animate attributeName="opacity" values="0.5; 1; 0.5" dur="2s" repeatCount="indefinite" begin="0.6s"/>
+    </use>
+     <animate attributeName="opacity" from="0" to="0.8" dur="0.5s" begin="drawCheck.end" fill="freeze" />
+  </g>
+
+</svg>
+

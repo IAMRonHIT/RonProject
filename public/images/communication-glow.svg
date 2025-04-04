@@ -1,0 +1,141 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#10183b" />
+      <stop offset="100%" stop-color="#050818" />
+    </radialGradient>
+    <radialGradient id="nodeGlowBlue" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#8a9bff" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#304FFE" stop-opacity="0"/>
+    </radialGradient>
+     <radialGradient id="nodeGlowPurple" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#b095ff" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#7C4DFF" stop-opacity="0"/>
+    </radialGradient>
+     <radialGradient id="nodeGlowPink" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ff7dff" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#D500F9" stop-opacity="0"/>
+    </radialGradient>
+     <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#66e0ff" stop-opacity="0.7"/>
+        <stop offset="100%" stop-color="#00BFFF" stop-opacity="0"/>
+    </radialGradient>
+     <linearGradient id="nodeStrokeBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#aaccff"/>
+        <stop offset="100%" stop-color="#304FFE"/>
+    </linearGradient>
+     <linearGradient id="nodeStrokePurple" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#d7c9ff"/>
+        <stop offset="100%" stop-color="#7C4DFF"/>
+    </linearGradient>
+     <linearGradient id="nodeStrokePink" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ffc9f8"/>
+        <stop offset="100%" stop-color="#D500F9"/>
+    </linearGradient>
+     <linearGradient id="hubStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#99f0ff"/>
+        <stop offset="100%" stop-color="#00BFFF"/>
+    </linearGradient>
+     <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00BFFF" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#87cefa" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#00BFFF" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+       <feGaussianBlur stdDeviation="3.5" result="blur1"/>
+       <feGaussianBlur stdDeviation="6" result="blur2"/>
+       <feBlend in="blur1" in2="blur2" mode="screen" result="blendedBlur"/>
+       <feMerge>
+         <feMergeNode in="blendedBlur"/>
+         <feMergeNode in="SourceGraphic"/>
+       </feMerge>
+         <animate attributeName="stdDeviation" attributeType="CSS" from="3.5" to="4.5" dur="2s" repeatCount="indefinite" begin="0s" values="3.5; 4.5; 3.5" keyTimes="0; 0.5; 1" additive="sum" result="animatedBlur1"/>
+          <animate attributeName="stdDeviation" attributeType="CSS" from="6" to="8" dur="2s" repeatCount="indefinite" begin="0s" values="6; 8; 6" keyTimes="0; 0.5; 1" additive="sum" result="animatedBlur2"/>
+    </filter>
+     <filter id="hubPulseGlow" x="-100%" y="-100%" width="300%" height="300%">
+       <feGaussianBlur stdDeviation="5" result="blurBase"/>
+        <feMerge>
+            <feMergeNode in="blurBase"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+         <animate attributeName="stdDeviation" attributeType="XML"
+                 values="5; 10; 5"
+                 dur="1.5s"
+                 repeatCount="indefinite"
+                 begin="0.1s"
+                 keyTimes="0; 0.5; 1"
+                 />
+    </filter>
+     <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
+       <feGaussianBlur stdDeviation="2.5" result="blurLine"/>
+        <feMerge>
+            <feMergeNode in="blurLine"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+    </filter>
+
+    <path id="line1" d="M95 135 Q 120 110, 130 95" stroke-width="2.5" stroke-linecap="round" />
+    <path id="line2" d="M170 95 Q 180 110, 205 135" stroke-width="2.5" stroke-linecap="round" />
+    <path id="line3" d="M100 150 H 200" stroke-width="2.5" stroke-linecap="round" /> </defs>
+
+  <rect width="300" height="300" fill="url(#bgGradient)" />
+
+  <g id="nodePayer" transform-origin="75 150">
+    <circle cx="75" cy="150" r="35" fill="url(#nodeGlowBlue)" filter="url(#softGlow)" opacity="0.8"/>
+    <circle cx="75" cy="150" r="25" fill="#0f1124" stroke="url(#nodeStrokeBlue)" stroke-width="2.5" />
+    <path d="M68 150h14 M75 143v14" stroke="#aaccff" stroke-width="2.5" stroke-linecap="round" />
+    <animateTransform attributeName="transform" type="scale" values="1; 1.03; 1" dur="2s" repeatCount="indefinite" begin="0s"/>
+  </g>
+
+  <g id="nodeProvider" transform-origin="150 80">
+    <circle cx="150" cy="80" r="35" fill="url(#nodeGlowPurple)" filter="url(#softGlow)" opacity="0.8"/>
+    <circle cx="150" cy="80" r="25" fill="#0f1124" stroke="url(#nodeStrokePurple)" stroke-width="2.5" />
+    <path d="M143 80h14 M150 73v14" stroke="#d7c9ff" stroke-width="2.5" stroke-linecap="round" />
+    <animateTransform attributeName="transform" type="scale" values="1; 1.03; 1" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+  </g>
+
+  <g id="nodePatient" transform-origin="225 150">
+    <circle cx="225" cy="150" r="35" fill="url(#nodeGlowPink)" filter="url(#softGlow)" opacity="0.8"/>
+    <circle cx="225" cy="150" r="25" fill="#0f1124" stroke="url(#nodeStrokePink)" stroke-width="2.5" />
+    <circle cx="225" cy="142" r="6" stroke="#ffc9f8" stroke-width="2" />
+    <path d="M215 158 C 217 152, 233 152, 235 158" stroke="#ffc9f8" stroke-width="2" stroke-linecap="round" fill="none" />
+    <animateTransform attributeName="transform" type="scale" values="1; 1.03; 1" dur="2s" repeatCount="indefinite" begin="0.6s"/>
+  </g>
+
+  <g id="connections" filter="url(#lineGlow)" opacity="0.9">
+     <use href="#line1" stroke="url(#lineGradient)" stroke-dasharray="4 8">
+        <animate attributeName="stroke-dashoffset" from="0" to="12" dur="1.8s" repeatCount="indefinite" begin="0.1s"/>
+         <animate attributeName="stroke-width" values="2.5; 3.5; 2.5" dur="1.8s" repeatCount="indefinite" begin="0.1s"/>
+     </use>
+      <use href="#line2" stroke="url(#lineGradient)" stroke-dasharray="4 8">
+        <animate attributeName="stroke-dashoffset" from="12" to="0" dur="1.8s" repeatCount="indefinite" begin="0.4s"/>
+        <animate attributeName="stroke-width" values="2.5; 3.5; 2.5" dur="1.8s" repeatCount="indefinite" begin="0.4s"/>
+     </use>
+      <use href="#line3" stroke="url(#lineGradient)" stroke-dasharray="4 8">
+        <animate attributeName="stroke-dashoffset" from="0" to="12" dur="1.8s" repeatCount="indefinite" begin="0.7s"/>
+        <animate attributeName="stroke-width" values="2.5; 3.5; 2.5" dur="1.8s" repeatCount="indefinite" begin="0.7s"/>
+     </use>
+  </g>
+
+  <g id="hub" transform-origin="150 150">
+     <circle cx="150" cy="150" r="10" stroke="#00BFFF" stroke-width="1.5" fill="none" opacity="0">
+          <animate attributeName="r" values="10; 50" dur="1.5s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="opacity" values="0; 0.6; 0" dur="1.5s" repeatCount="indefinite" begin="0s"/>
+      </circle>
+       <circle cx="150" cy="150" r="10" stroke="#87cefa" stroke-width="1" fill="none" opacity="0">
+          <animate attributeName="r" values="10; 50" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+          <animate attributeName="opacity" values="0; 0.4; 0" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+      </circle>
+
+      <circle cx="150" cy="150" r="18" fill="url(#hubGlow)" filter="url(#hubPulseGlow)" opacity="0.9"/>
+      <g transform-origin="150 150">
+         <circle cx="150" cy="150" r="12" fill="#0f1124" stroke="url(#hubStroke)" stroke-width="2"/>
+         <path d="M145 150 h10 M150 145 v10" stroke="#99f0ff" stroke-width="2" stroke-linecap="round"/>
+          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/>
+      </g>
+        <animateTransform attributeName="transform" type="scale" values="1; 1.1; 1" dur="1.5s" repeatCount="indefinite" begin="0.1s"/>
+  </g>
+
+</svg>
+

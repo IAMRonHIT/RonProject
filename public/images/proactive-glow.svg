@@ -1,0 +1,164 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGradient3" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a0f2c" />
+      <stop offset="100%" stop-color="#050818" />
+    </radialGradient>
+    <linearGradient id="timelineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#304FFE" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#637bff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#304FFE" stop-opacity="0.5"/>
+    </linearGradient>
+    <radialGradient id="pastEventFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a2c5a"/>
+      <stop offset="100%" stop-color="#0f1a36"/>
+    </radialGradient>
+    <radialGradient id="presentEventFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a4c5a"/>
+      <stop offset="100%" stop-color="#0f2a36"/>
+    </radialGradient>
+     <radialGradient id="futureEventFill1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3a1a5a"/>
+      <stop offset="100%" stop-color="#1a0f36"/>
+    </radialGradient>
+     <radialGradient id="futureEventFill2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5a1a50"/>
+      <stop offset="100%" stop-color="#360f30"/>
+    </radialGradient>
+    <linearGradient id="presentStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#50d0ff"/>
+      <stop offset="100%" stop-color="#00BFFF"/>
+    </linearGradient>
+     <linearGradient id="futureStroke1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c0aeff"/>
+      <stop offset="100%" stop-color="#7C4DFF"/>
+    </linearGradient>
+     <linearGradient id="futureStroke2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffacef"/>
+      <stop offset="100%" stop-color="#D500F9"/>
+    </linearGradient>
+     <radialGradient id="scanGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" stop-color="#00BFFF" stop-opacity="0"/>
+      <stop offset="90%" stop-color="#50d0ff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#00BFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="glowTimeline" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowPast" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.7 0" result="dimBlur"/>
+      <feMerge><feMergeNode in="dimBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+     <filter id="glowPresent" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blurBase"/>
+      <feMerge><feMergeNode in="blurBase"/><feMergeNode in="SourceGraphic"/></feMerge>
+       <animate attributeName="stdDeviation" attributeType="XML" values="4; 6; 4" dur="1.5s" repeatCount="indefinite"/>
+    </filter>
+     <filter id="glowFuture" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blurBase"/>
+       <feMerge><feMergeNode in="blurBase"/><feMergeNode in="SourceGraphic"/></feMerge>
+        <animate attributeName="stdDeviation" attributeType="XML" values="3; 4; 3" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>
+    </filter>
+     <filter id="glowScan" x="-50%" y="-50%" width="200%" height="200%">
+       <feGaussianBlur stdDeviation="1.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+     </filter>
+
+    <path id="predCurveUp" d="M-10 -20 C -10 -20, -5 -25, 0 -25 C 5 -25, 10 -20, 10 -20" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 4" fill="none"/>
+    <path id="predCurveDown" d="M-10 20 C -10 20, -5 25, 0 25 C 5 25, 10 20, 10 20" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 4" fill="none"/>
+
+  </defs>
+
+  <rect width="300" height="300" fill="url(#bgGradient3)" />
+
+  <path id="timelinePath" d="M30 150 H 270"
+        stroke="url(#timelineGradient)" stroke-width="3" stroke-linecap="round"
+        filter="url(#glowTimeline)"
+        stroke-dasharray="240" stroke-dashoffset="240">
+        <animate id="drawTimeline" attributeName="stroke-dashoffset" values="240; 0" dur="0.8s" fill="freeze" begin="0.2s"/>
+  </path>
+
+  <g id="eventPast1" opacity="0" filter="url(#glowPast)">
+    <circle cx="80" cy="150" r="8" fill="url(#pastEventFill)" stroke="#637bff" stroke-width="1.5" />
+    <path d="M80 142 V 150 H 88" stroke="#637bff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    <animate attributeName="opacity" values="0; 1" dur="0.3s" begin="drawTimeline.end" fill="freeze"/>
+  </g>
+
+  <g id="eventPast2" opacity="0" filter="url(#glowPast)">
+    <circle cx="120" cy="150" r="8" fill="url(#pastEventFill)" stroke="#637bff" stroke-width="1.5" />
+    <path d="M120 142 V 150 H 128" stroke="#637bff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+     <animate attributeName="opacity" values="0; 1" dur="0.3s" begin="drawTimeline.end + 0.1s" fill="freeze"/>
+  </g>
+
+  <g id="eventPresent" opacity="0" filter="url(#glowPresent)" transform-origin="160 150">
+    <circle cx="160" cy="150" r="12" fill="url(#presentEventFill)" stroke="url(#presentStroke)" stroke-width="2" />
+    <path d="M160 140 V 150 H 168" stroke="url(#presentStroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <animate attributeName="opacity" values="0; 1" dur="0.3s" begin="drawTimeline.end + 0.2s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="scale" values="1; 1.1; 1" dur="1.5s" begin="drawTimeline.end + 0.2s" repeatCount="indefinite"/>
+  </g>
+
+  <g id="eventFuture1" opacity="0" filter="url(#glowFuture)" transform-origin="200 150">
+    <circle cx="200" cy="150" r="10" fill="url(#futureEventFill1)" stroke="url(#futureStroke1)" stroke-width="1.8" />
+    <path d="M200 142 V 150 H 208" stroke="url(#futureStroke1)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <animate id="appearFuture1" attributeName="opacity" values="0; 1" dur="0.3s" begin="drawTimeline.end + 0.4s" fill="freeze"/>
+     <animateTransform attributeName="transform" type="scale" values="1; 1.05; 1" dur="2.5s" begin="appearFuture1.end" repeatCount="indefinite"/>
+  </g>
+
+  <g id="eventFuture2" opacity="0" filter="url(#glowFuture)" transform-origin="240 150">
+    <circle cx="240" cy="150" r="10" fill="url(#futureEventFill2)" stroke="url(#futureStroke2)" stroke-width="1.8" />
+    <path d="M240 142 V 150 H 248" stroke="url(#futureStroke2)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+     <animate id="appearFuture2" attributeName="opacity" values="0; 1" dur="0.3s" begin="drawTimeline.end + 0.6s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="scale" values="1; 1.05; 1" dur="2.5s" begin="appearFuture2.end + 0.2s" repeatCount="indefinite"/>
+  </g>
+
+  <g id="predictionsFuture1" opacity="0">
+     <use href="#predCurveUp" transform="translate(200 150)" stroke="url(#futureStroke1)" stroke-dashoffset="30">
+        <animate id="drawPred1Up" attributeName="stroke-dashoffset" values="30; 0" dur="0.5s" begin="appearFuture1.end + 0.1s" fill="freeze"/>
+     </use>
+      <circle cx="200" cy="125" r="3" fill="url(#futureStroke1)" opacity="0">
+         <animate attributeName="opacity" values="0; 1" dur="0.2s" begin="drawPred1Up.end" fill="freeze"/>
+          <animate attributeName="r" values="3; 4; 3" dur="2.5s" begin="drawPred1Up.end" repeatCount="indefinite"/>
+      </circle>
+     <use href="#predCurveDown" transform="translate(200 150)" stroke="url(#futureStroke1)" stroke-dashoffset="30">
+         <animate id="drawPred1Down" attributeName="stroke-dashoffset" values="30; 0" dur="0.5s" begin="appearFuture1.end + 0.1s" fill="freeze"/>
+     </use>
+      <circle cx="200" cy="175" r="3" fill="url(#futureStroke1)" opacity="0">
+          <animate attributeName="opacity" values="0; 1" dur="0.2s" begin="drawPred1Down.end" fill="freeze"/>
+          <animate attributeName="r" values="3; 4; 3" dur="2.5s" begin="drawPred1Down.end + 0.1s" repeatCount="indefinite"/>
+      </circle>
+       <animate attributeName="opacity" from="0" to="0.8" dur="0.1s" begin="appearFuture1.end + 0.1s" fill="freeze"/>
+  </g>
+
+   <g id="predictionsFuture2" opacity="0">
+     <use href="#predCurveUp" transform="translate(240 150)" stroke="url(#futureStroke2)" stroke-dashoffset="30">
+        <animate id="drawPred2Up" attributeName="stroke-dashoffset" values="30; 0" dur="0.5s" begin="appearFuture2.end + 0.1s" fill="freeze"/>
+     </use>
+      <circle cx="240" cy="125" r="3" fill="url(#futureStroke2)" opacity="0">
+         <animate attributeName="opacity" values="0; 1" dur="0.2s" begin="drawPred2Up.end" fill="freeze"/>
+         <animate attributeName="r" values="3; 4; 3" dur="2.5s" begin="drawPred2Up.end + 0.2s" repeatCount="indefinite"/>
+      </circle>
+     <use href="#predCurveDown" transform="translate(240 150)" stroke="url(#futureStroke2)" stroke-dashoffset="30">
+         <animate id="drawPred2Down" attributeName="stroke-dashoffset" values="30; 0" dur="0.5s" begin="appearFuture2.end + 0.1s" fill="freeze"/>
+     </use>
+      <circle cx="240" cy="175" r="3" fill="url(#futureStroke2)" opacity="0">
+          <animate attributeName="opacity" values="0; 1" dur="0.2s" begin="drawPred2Down.end" fill="freeze"/>
+          <animate attributeName="r" values="3; 4; 3" dur="2.5s" begin="drawPred2Down.end + 0.3s" repeatCount="indefinite"/>
+      </circle>
+       <animate attributeName="opacity" from="0" to="0.8" dur="0.1s" begin="appearFuture2.end + 0.1s" fill="freeze"/>
+  </g>
+
+  <g id="scanEffect" filter="url(#glowScan)" transform-origin="160 150">
+      <circle cx="160" cy="150" r="20" stroke="url(#scanGradient)" stroke-width="2.5" fill="none" opacity="0.7">
+          <animate attributeName="r" values="20; 120" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>
+          <animate attributeName="opacity" values="0.7; 0" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>
+      </circle>
+       <circle cx="160" cy="150" r="20" stroke="url(#scanGradient)" stroke-width="1.5" fill="none" opacity="0.5">
+          <animate attributeName="r" values="20; 120" dur="2.5s" repeatCount="indefinite" begin="1.5s"/> <animate attributeName="opacity" values="0.5; 0" dur="2.5s" repeatCount="indefinite" begin="1.5s"/>
+      </circle>
+       </g>
+
+</svg>
+

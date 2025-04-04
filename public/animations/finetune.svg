@@ -1,0 +1,648 @@
+import { useEffect, useRef } from 'react';
+import { useTheme } from 'next-themes';
+import { easeInOutQuad, easeOutCubic } from '@/lib/utils'; // Assuming easing functions
+
+// --- Interfaces ---
+type ParticleState = 'entering' | 'security_check' | 'processing' | 'absorbed';
+
+interface DataParticle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  label: string; // Data type
+  opacity: number;
+  state: ParticleState;
+  isSecure: boolean; // Passed security check
+  securityProgress: number; // Animation progress for security check (0-1)
+  currentLayer: number; // Which processing ring/layer it's in
+  color: string; // Base color
+  processedColor?: string; // Color after processing layers
+}
+
+interface Ring {
+  radius: number;
+  rotation: number;
+  pulse: number; // For animation effects
+  isSecurity?: boolean;
+  isValidation?: boolean; // Special state during validation phase
+}
+
+interface CoreInternalNode {
+    id: number;
+    x: number; // Relative to core center
+    y: number;
+    connections: number[]; // IDs of connected nodes
+    activation: number; // 0 to 1, how recently activated
+}
+
+interface ValidationProbe {
+    angle: number;
+    length: number;
+    maxLength: number;
+    speed: number;
+    active: boolean;
+}
+
+interface Core {
+  x: number;
+  y: number;
+  baseRadius: number;
+  growthFactor: number;
+  currentRadius: number; // Dynamically calculated
+  pulse: number; // Base pulse
+  intensity: number; // Based on recent absorptions
+  internalNodes: CoreInternalNode[];
+  connectionsToDraw: { x1: number; y1: number; x2: number; y2: number; activation: number }[];
+  // Validation state
+  isValidating: boolean;
+  validationProgress: number; // 0 to 1 for the gauge/phase
+  accuracyScore: number; // 0 to 100 (simulated)
+  probes: ValidationProbe[];
+}
+
+export function ModelTrainingAnimation() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  // --- Constants ---
+  const PHASE_NAMES = [
+    'Initializing Secure Environment', // Phase 0
+    'Secure Data Integration',         // Phase 1
+    'Knowledge Synthesis',             // Phase 2
+    'Model Validation',                // Phase 3
+    'Deployment Ready',              // Phase 4
+  ];
+  const PHASE_DURATION = 6; // seconds per phase (increased slightly)
+  const MAX_PARTICLES = 30;
+  const SPAWN_INTERVAL = 600; // ms
+  const PARTICLE_SPEED = 35; // px/sec
+  const PARTICLE_RADIUS = 5;
+  const CORE_BASE_RADIUS = 40;
+  const CORE_GROWTH_FACTOR = 50; // Max pixels added to radius
+  const MAX_ABSORBED_FOR_FULL_GROWTH = 40;
+  const RING_COUNT = 3; // Outer = security, 2 inner = processing layers
+  const RING_SPACING = 35;
+  const DATA_LABELS = [ 'Patient History', 'Clinical Notes', 'Lab Results', 'Medications', 'Genomics Data', 'Imaging Meta' ];
+  const MAX_INTERNAL_NODES = 50;
+  const VALIDATION_PROBE_COUNT = 5;
+
+  // --- Colors ---
+   const colors = isDark
+    ? {
+        background1: 'rgba(5, 8, 16, 0.8)', // Darker bg
+        background2: 'rgba(0, 0, 0, 1)',
+        coreBase: 'rgba(0, 200, 230, ALPHA)', // Slightly less cyan
+        coreInternal: 'rgba(100, 220, 255, 0.5)',
+        ringSecurity: 'rgba(255, 100, 100, 0.5)', // Red-ish for security
+        ringProcessing: 'rgba(0, 220, 255, 0.2)',
+        ringValidation: 'rgba(255, 255, 150, 0.6)', // Yellow for validation
+        particleBase: 'rgba(150, 200, 255, 0.9)', // Lighter blue particle
+        particleSecureFlash: 'rgba(255, 150, 150, 1)', // Red flash
+        particleProcessed: 'rgba(0, 240, 200, 0.9)', // Processed color (more teal)
+        text: 'rgba(230, 240, 255, 0.85)',
+        highlight: 'rgba(0, 220, 255, 1)',
+        gaugeBg: 'rgba(255, 255, 255, 0.1)',
+        gaugeFg: 'rgba(100, 255, 150, 0.8)', // Green for accuracy
+        probe: 'rgba(255, 255, 180, 0.7)', // Yellow probes
+      }
+    : {
+        background1: 'rgba(248, 250, 255, 0.8)', // Lighter bg
+        background2: 'rgba(235, 245, 255, 1)',
+        coreBase: 'rgba(0, 80, 110, ALPHA)',
+        coreInternal: 'rgba(0, 120, 160, 0.5)',
+        ringSecurity: 'rgba(200, 50, 50, 0.4)',
+        ringProcessing: 'rgba(0, 100, 140, 0.2)',
+        ringValidation: 'rgba(200, 180, 80, 0.5)',
+        particleBase: 'rgba(80, 120, 180, 0.9)',
+        particleSecureFlash: 'rgba(220, 80, 80, 1)',
+        particleProcessed: 'rgba(0, 130, 110, 0.9)',
+        text: 'rgba(0, 20, 40, 0.85)',
+        highlight: 'rgba(0, 80, 110, 1)',
+        gaugeBg: 'rgba(0, 0, 0, 0.1)',
+        gaugeFg: 'rgba(0, 150, 80, 0.8)',
+        probe: 'rgba(200, 180, 100, 0.7)',
+      };
+
+
+  // --- Refs ---
+  const particlesRef = useRef<DataParticle[]>([]);
+  const ringsRef = useRef<Ring[]>([]);
+  const coreRef = useRef<Core | null>(null);
+  const phaseIndexRef = useRef<number>(0);
+  const phaseElapsedRef = useRef<number>(0);
+  const absorbedCountRef = useRef<number>(0);
+  const animationFrameIdRef = useRef<number>(0);
+  const lastTimestampRef = useRef<number>(0);
+  const lastSpawnTimeRef = useRef<number>(0);
+  const canvasSizeRef = useRef({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // --- Initialization ---
+    const initialize = () => {
+      const { width, height } = canvasSizeRef.current;
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Initialize Rings
+      ringsRef.current = [];
+      for (let i = 0; i < RING_COUNT; i++) {
+        const isSecurity = i === RING_COUNT - 1; // Outermost is security
+        ringsRef.current.push({
+          radius: CORE_BASE_RADIUS + (i + 1) * RING_SPACING,
+          rotation: Math.random() * Math.PI * 2,
+          pulse: 0,
+          isSecurity: isSecurity,
+        });
+      }
+
+      // Initialize Core
+      coreRef.current = {
+        x: centerX,
+        y: centerY,
+        baseRadius: CORE_BASE_RADIUS,
+        growthFactor: CORE_GROWTH_FACTOR,
+        currentRadius: CORE_BASE_RADIUS,
+        pulse: 0,
+        intensity: 0,
+        internalNodes: [],
+        connectionsToDraw: [],
+        isValidating: false,
+        validationProgress: 0,
+        accuracyScore: 0,
+        probes: Array.from({ length: VALIDATION_PROBE_COUNT }, (_, i) => ({
+            angle: (i / VALIDATION_PROBE_COUNT) * Math.PI * 2,
+            length: 0,
+            maxLength: ringsRef.current[RING_COUNT-1].radius + 10, // Reach just past outer ring
+            speed: (Math.random() * 50 + 50), // px/sec
+            active: false,
+        })),
+      };
+
+      // Reset state
+      particlesRef.current = [];
+      phaseIndexRef.current = 0;
+      phaseElapsedRef.current = 0;
+      absorbedCountRef.current = 0;
+      lastTimestampRef.current = 0;
+      lastSpawnTimeRef.current = 0;
+    };
+
+    // --- Resize Handler ---
+    const handleResize = () => {
+        const dpr = window.devicePixelRatio || 1;
+        const newWidth = canvas.clientWidth;
+        const newHeight = canvas.clientHeight;
+        canvas.width = newWidth * dpr;
+        canvas.height = newHeight * dpr;
+        ctx.scale(dpr, dpr);
+        canvasSizeRef.current = { width: newWidth, height: newHeight };
+        initialize(); // Re-initialize on resize
+    };
+
+    // --- Spawning ---
+    const spawnParticle = () => {
+        const { width, height } = canvasSizeRef.current;
+        const edge = Math.floor(Math.random() * 4);
+        let x = 0, y = 0;
+        // Spawn on random edge
+        if (edge === 0) { x = -10; y = Math.random() * height; }
+        else if (edge === 1) { x = width + 10; y = Math.random() * height; }
+        else if (edge === 2) { x = Math.random() * width; y = -10; }
+        else { x = Math.random() * width; y = height + 10; }
+
+        const label = DATA_LABELS[Math.floor(Math.random() * DATA_LABELS.length)];
+
+        particlesRef.current.push({
+            id: Math.random(), // Simple ID for now
+            x, y, vx: 0, vy: 0, radius: PARTICLE_RADIUS, label,
+            opacity: 0, state: 'entering', isSecure: false,
+            securityProgress: 0, currentLayer: -1, // -1 means outside rings
+            color: colors.particleBase,
+        });
+    };
+
+    // --- Core Internal Logic ---
+    const addInternalNode = (core: Core, fromParticle: DataParticle) => {
+        if (core.internalNodes.length >= MAX_INTERNAL_NODES) return; // Limit complexity
+
+        const newNode: CoreInternalNode = {
+            id: Math.random(),
+            x: (Math.random() - 0.5) * core.currentRadius * 1.8, // Random position within core radius
+            y: (Math.random() - 0.5) * core.currentRadius * 1.8,
+            connections: [],
+            activation: 1.0, // Start fully active
+        };
+
+        // Connect to a few nearby existing nodes
+        const connectCount = Math.min(3, core.internalNodes.length);
+        core.internalNodes
+            .sort((a, b) => { // Find closest nodes
+                const distA = Math.hypot(a.x - newNode.x, a.y - newNode.y);
+                const distB = Math.hypot(b.x - newNode.x, b.y - newNode.y);
+                return distA - distB;
+            })
+            .slice(0, connectCount)
+            .forEach(neighbor => {
+                if (!newNode.connections.includes(neighbor.id)) {
+                    newNode.connections.push(neighbor.id);
+                }
+                 // Connect back potentially? (can make complex)
+                 // if (!neighbor.connections.includes(newNode.id)) {
+                 //    neighbor.connections.push(newNode.id);
+                 // }
+                 // Trigger connection drawing
+                core.connectionsToDraw.push({
+                     x1: newNode.x, y1: newNode.y,
+                     x2: neighbor.x, y2: neighbor.y,
+                     activation: 1.0,
+                });
+                neighbor.activation = 1.0; // Activate neighbor
+            });
+
+        core.internalNodes.push(newNode);
+    };
+
+
+    // --- Update Functions ---
+    const update = (dt: number) => {
+        if (!coreRef.current) return;
+        const core = coreRef.current;
+        const { width, height } = canvasSizeRef.current;
+        const centerX = core.x;
+        const centerY = core.y;
+
+        // --- Phase Logic ---
+        phaseElapsedRef.current += dt;
+        if (phaseElapsedRef.current >= PHASE_DURATION) {
+            phaseElapsedRef.current = 0;
+            phaseIndexRef.current = (phaseIndexRef.current + 1) % PHASE_NAMES.length;
+            core.isValidating = PHASE_NAMES[phaseIndexRef.current] === 'Model Validation';
+             // Reset validation state when phase changes
+            if (!core.isValidating) {
+                 core.validationProgress = 0;
+                 core.accuracyScore = 0;
+                 core.probes.forEach(p => p.active = false);
+            } else {
+                 // Start validation probes
+                 core.probes.forEach(p => { p.active = true; p.length = 0; });
+            }
+        }
+        // Update validation progress if in that phase
+        if (core.isValidating) {
+             core.validationProgress = Math.min(1, phaseElapsedRef.current / PHASE_DURATION);
+             // Simulate accuracy score rising quickly and settling
+             const targetAccuracy = 96.7; // Example target
+             const currentAccuracyProgress = easeOutCubic(core.validationProgress); // Use easing
+             core.accuracyScore = Math.min(targetAccuracy, targetAccuracy * currentAccuracyProgress * 1.2); // Overshoot slightly then settle
+        }
+
+        // --- Spawn Particles ---
+        const now = performance.now();
+        // Only spawn if not validating, or allow fewer during validation?
+        if (!core.isValidating && particlesRef.current.length < MAX_PARTICLES && now - lastSpawnTimeRef.current > SPAWN_INTERVAL) {
+            spawnParticle();
+            lastSpawnTimeRef.current = now;
+        }
+
+        // --- Update Core ---
+        const growthProgress = Math.min(1, absorbedCountRef.current / MAX_ABSORBED_FOR_FULL_GROWTH);
+        core.currentRadius = core.baseRadius + growthProgress * core.growthFactor;
+        core.pulse = 0.1 * Math.sin(now * 0.004); // Slow base pulse
+        // Fade out internal node/connection activations
+        core.internalNodes.forEach(n => n.activation = Math.max(0, n.activation - dt * 1.5));
+        core.connectionsToDraw = core.connectionsToDraw.filter(c => {
+            c.activation = Math.max(0, c.activation - dt * 1.5);
+            return c.activation > 0;
+        });
+
+         // --- Update Rings ---
+         ringsRef.current.forEach((ring, i) => {
+             ring.rotation += (i % 2 === 0 ? -0.005 : 0.005) * dt * 50; // Slow rotation, alternating directions
+             ring.pulse = 0.05 * Math.sin(now * 0.002 + i * 0.5); // Slow pulse, offset per ring
+             ring.isValidation = core.isValidating; // Mark rings during validation phase
+         });
+
+         // --- Update Validation Probes ---
+         if(core.isValidating) {
+            core.probes.forEach(p => {
+                if (p.active) {
+                    p.length += p.speed * dt;
+                    if (p.length >= p.maxLength) {
+                        p.length = p.maxLength;
+                        // Optional: Trigger a visual effect when probe hits max length
+                    }
+                }
+            });
+         }
+
+
+        // --- Update Particles ---
+        particlesRef.current.forEach((p, index) => {
+            // Fade in
+            if (p.opacity < 1 && p.state !== 'absorbed') {
+                p.opacity = Math.min(1, p.opacity + 1.5 * dt);
+            }
+
+            const dx = centerX - p.x;
+            const dy = centerY - p.y;
+            const distToCoreCenter = Math.hypot(dx, dy) || 1;
+
+            // Security Check Logic
+            const securityRing = ringsRef.current.find(r => r.isSecurity);
+            if (securityRing && p.state === 'entering' && Math.abs(distToCoreCenter - securityRing.radius) < p.radius + 2) {
+                p.state = 'security_check';
+                p.securityProgress = 0;
+                p.vx = 0; p.vy = 0; // Pause particle
+            }
+
+            if (p.state === 'security_check') {
+                p.securityProgress += 2.0 * dt; // Speed of security check animation
+                if (p.securityProgress >= 1) {
+                    p.isSecure = true; // Passed!
+                    p.state = 'processing';
+                    p.currentLayer = RING_COUNT -1; // Start at outermost ring index
+                    p.securityProgress = 1; // Cap progress
+                }
+            }
+            // Movement Logic (only if not being checked or already secure)
+            else if (p.state !== 'security_check') {
+                const targetSpeed = p.isSecure ? PARTICLE_SPEED * (1 + p.currentLayer * 0.1) : PARTICLE_SPEED * 0.5; // Faster inside layers
+                p.vx = (dx / distToCoreCenter) * targetSpeed;
+                p.vy = (dy / distToCoreCenter) * targetSpeed;
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+            }
+
+            // Processing Layers Logic (if secure)
+            if (p.isSecure && p.state === 'processing') {
+                 for (let i = ringsRef.current.length - 2; i >= 0; i--) { // Check inner rings from outside in
+                     const ring = ringsRef.current[i];
+                     if (p.currentLayer > i && distToCoreCenter < ring.radius + p.radius) {
+                         p.currentLayer = i; // Entered next layer
+                         // Trigger visual change - e.g., color shift towards processed color
+                         if(!p.processedColor) p.processedColor = lerpColor(p.color, colors.particleProcessed, 0.3 * (RING_COUNT - 1 - i));
+                         else p.processedColor = lerpColor(p.processedColor, colors.particleProcessed, 0.4);
+
+                         // Optional: brief pause or speed change effect
+                         break; // Only process one layer per frame
+                     }
+                 }
+                 // Check for Core Absorption
+                 if (distToCoreCenter < core.currentRadius + p.radius) {
+                     p.state = 'absorbed';
+                     absorbedCountRef.current++;
+                     core.intensity = Math.min(1, core.intensity + 0.2); // Boost intensity on absorption
+                     addInternalNode(core, p); // Add complexity to core internals
+                 }
+            }
+
+
+            // Remove absorbed particles
+            if (p.state === 'absorbed') {
+                particlesRef.current.splice(index, 1);
+            }
+        });
+
+        // Fade down core intensity slowly
+        core.intensity = Math.max(0, core.intensity - 0.1 * dt);
+    };
+
+    // --- Drawing Functions ---
+    const draw = (timestamp: number) => {
+        if (!lastTimestampRef.current) lastTimestampRef.current = timestamp;
+        const dt = Math.min((timestamp - lastTimestampRef.current) / 1000, 0.05);
+        lastTimestampRef.current = timestamp;
+
+        if (!coreRef.current) return; // Should not happen after init
+        const core = coreRef.current;
+        const { width, height } = canvasSizeRef.current;
+        ctx.clearRect(0, 0, width, height);
+
+        // --- Draw Background ---
+        const bgGradient = ctx.createRadialGradient(width / 2, height / 2, core.currentRadius * 0.5, width / 2, height / 2, Math.max(width, height) * 0.7);
+        bgGradient.addColorStop(0, colors.background1);
+        bgGradient.addColorStop(1, colors.background2);
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, width, height);
+
+        // --- Draw Rings ---
+        ringsRef.current.forEach(ring => {
+             ctx.save();
+             ctx.translate(core.x, core.y);
+             ctx.rotate(ring.rotation);
+             ctx.beginPath();
+             ctx.arc(0, 0, ring.radius + ring.pulse, 0, Math.PI * 2);
+             ctx.globalAlpha = 0.5 + ring.pulse * 2; // Pulsing alpha
+             ctx.strokeStyle = ring.isValidation ? colors.ringValidation : (ring.isSecurity ? colors.ringSecurity : colors.ringProcessing);
+             ctx.lineWidth = ring.isValidation ? 2.5 : (ring.isSecurity ? 2 : 1.5); // Thicker validation/security rings
+             // Make rings solid, not dashed
+             // ctx.setLineDash(ring.isValidation ? [] : [8, 4]);
+             ctx.stroke();
+             // ctx.setLineDash([]);
+             ctx.restore();
+        });
+
+        // --- Draw Core ---
+        const coreAlpha = 0.3 + 0.6 * (core.currentRadius / (core.baseRadius + core.growthFactor));
+        const coreFill = colors.coreBase.replace('ALPHA', coreAlpha.toFixed(2));
+        const glowIntensity = 15 + 30 * core.intensity + 20 * (core.currentRadius / (core.baseRadius + core.growthFactor));
+
+        ctx.save();
+        // Draw Internal Structure FIRST (behind main core fill)
+        ctx.translate(core.x, core.y);
+         // Draw connections
+         core.connectionsToDraw.forEach(c => {
+             ctx.beginPath();
+             ctx.moveTo(c.x1, c.y1);
+             ctx.lineTo(c.x2, c.y2);
+             ctx.strokeStyle = colors.coreInternal;
+             ctx.lineWidth = 0.5 + c.activation * 1.5;
+             ctx.globalAlpha = 0.2 + c.activation * 0.6;
+             ctx.stroke();
+         });
+         // Draw nodes
+         core.internalNodes.forEach(n => {
+             ctx.beginPath();
+             ctx.arc(n.x, n.y, 2 + n.activation * 2, 0, Math.PI * 2);
+             ctx.fillStyle = colors.coreInternal;
+             ctx.globalAlpha = 0.5 + n.activation * 0.5;
+             ctx.fill();
+         });
+        ctx.globalAlpha = 1.0; // Reset alpha for core fill
+
+        // Draw main core circle
+        ctx.shadowColor = colors.highlight;
+        ctx.shadowBlur = glowIntensity;
+        ctx.beginPath();
+        ctx.arc(0, 0, core.currentRadius + core.pulse * 20, 0, Math.PI * 2); // Apply pulse here
+        ctx.fillStyle = coreFill;
+        ctx.fill();
+        ctx.shadowBlur = 0; // Reset shadow
+        ctx.restore(); // Restore from translate
+
+        // --- Draw Validation Probes ---
+        if (core.isValidating) {
+            ctx.save();
+            ctx.translate(core.x, core.y);
+            core.probes.forEach(p => {
+                if (p.active && p.length > 0) {
+                     ctx.rotate(p.angle);
+                     ctx.beginPath();
+                     ctx.moveTo(core.currentRadius * 0.8, 0); // Start slightly inside core edge
+                     ctx.lineTo(p.length, 0);
+                     ctx.strokeStyle = colors.probe;
+                     ctx.lineWidth = 2;
+                     ctx.globalAlpha = 0.8 * (1 - p.length/p.maxLength) + 0.2; // Fade slightly at end
+                     ctx.stroke();
+                     ctx.rotate(-p.angle); // Rotate back
+                }
+            });
+            ctx.restore();
+        }
+
+
+        // --- Draw Particles ---
+        particlesRef.current.forEach(p => {
+            ctx.save();
+            ctx.globalAlpha = p.opacity;
+            ctx.translate(p.x, p.y);
+
+            // Security check visual (flash/scramble effect)
+            if (p.state === 'security_check') {
+                const flashProgress = Math.sin(p.securityProgress * Math.PI); // Goes 0 -> 1 -> 0
+                ctx.fillStyle = lerpColor(p.color, colors.particleSecureFlash, flashProgress); // Flash red-ish
+                const scaleEffect = 1 + flashProgress * 0.3; // Pulse size
+                ctx.scale(scaleEffect, scaleEffect);
+            } else {
+                ctx.fillStyle = p.processedColor || p.color; // Use processed color if available
+            }
+
+            // Draw particle shape (circle for now)
+            ctx.beginPath();
+            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Optional: Draw label (can get crowded)
+            // ctx.scale(1 / (p.state === 'security_check' ? (1 + Math.sin(p.securityProgress * Math.PI) * 0.3) : 1), ...); // Correct for scale before text
+            // ctx.font = '8px system-ui';
+            // ctx.fillStyle = colors.text;
+            // ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            // ctx.fillText(p.label, 0, -p.radius - 1);
+
+            ctx.restore();
+        });
+
+        // --- Draw Phase Info & Validation Gauge ---
+        ctx.save();
+        ctx.textAlign = 'center';
+        // Phase Name
+        ctx.font = 'bold 16px "Inter", system-ui, sans-serif';
+        ctx.fillStyle = colors.text;
+        ctx.fillText(PHASE_NAMES[phaseIndexRef.current], width / 2, height - 50);
+
+        // Validation Gauge (draw if validating)
+        if (core.isValidating) {
+             const gaugeRadius = 40;
+             const gaugeX = width / 2;
+             const gaugeY = height - 100; // Position above phase text
+             const gaugeLineWidth = 8;
+             const startAngle = -Math.PI / 2; // Start at top
+             const endAngle = startAngle + (core.validationProgress * Math.PI * 2);
+             const accuracyEndAngle = startAngle + (core.accuracyScore / 100 * Math.PI * 2);
+
+             // Draw background circle
+             ctx.beginPath();
+             ctx.arc(gaugeX, gaugeY, gaugeRadius, 0, Math.PI * 2);
+             ctx.strokeStyle = colors.gaugeBg;
+             ctx.lineWidth = gaugeLineWidth + 2; // Slightly thicker bg
+             ctx.stroke();
+
+             // Draw validation progress arc (optional, could just show accuracy)
+             // ctx.beginPath();
+             // ctx.arc(gaugeX, gaugeY, gaugeRadius, startAngle, endAngle);
+             // ctx.strokeStyle = colors.highlight;
+             // ctx.lineWidth = gaugeLineWidth;
+             // ctx.stroke();
+
+             // Draw accuracy arc
+             if (core.accuracyScore > 0) {
+                 ctx.beginPath();
+                 ctx.arc(gaugeX, gaugeY, gaugeRadius, startAngle, accuracyEndAngle);
+                 ctx.strokeStyle = colors.gaugeFg; // Green for accuracy
+                 ctx.lineWidth = gaugeLineWidth;
+                 ctx.lineCap = 'round';
+                 ctx.stroke();
+             }
+
+             // Draw accuracy text
+             ctx.font = 'bold 18px "Inter", system-ui, sans-serif';
+             ctx.fillStyle = colors.gaugeFg;
+             ctx.fillText(`${core.accuracyScore.toFixed(1)}%`, gaugeX, gaugeY + 6);
+             ctx.font = '10px "Inter", system-ui, sans-serif';
+              ctx.fillStyle = colors.text;
+             ctx.fillText('Validation', gaugeX, gaugeY - gaugeRadius - 8);
+
+
+        } else {
+            // Simple Phase progress bar (if not validating)
+            const barW = 200; const barH = 4;
+            const barX = (width - barW) / 2; const barY = height - 30;
+            const phaseProgress = phaseElapsedRef.current / PHASE_DURATION;
+            ctx.fillStyle = colors.gaugeBg; // Reuse gauge bg
+            ctx.fillRect(barX, barY, barW, barH);
+            ctx.fillStyle = colors.highlight;
+            ctx.fillRect(barX, barY, barW * phaseProgress, barH);
+        }
+        ctx.restore();
+
+        // --- Update Logic ---
+        update(dt);
+
+        // Request next frame
+        animationFrameIdRef.current = requestAnimationFrame(draw);
+    };
+
+    // --- Start ---
+    handleResize(); // Initial setup
+    window.addEventListener('resize', handleResize);
+    animationFrameIdRef.current = requestAnimationFrame(draw);
+
+    // --- Cleanup ---
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameIdRef.current);
+    };
+  }, [isDark, colors]); // Add dependencies
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="w-full h-[500px] rounded-lg block" // Increased height
+      style={{ display: 'block', background: colors.background }}
+    />
+  );
+}
+
+// Named export for the component
+export { ModelTrainingAnimation as default };
+
+// Assume easing functions are imported or defined elsewhere:
+// const easeInOutQuad = (t: number): number => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+// const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
+// Simple lerpColor function (same as before)
+const lerpColor = (color1, color2, t) => {
+    const parseRgba = (rgbaStr) => { try { const rgba = rgbaStr.match(/\d+(\.\d+)?/g).map(Number); return rgba.length === 3 ? [...rgba, 1] : rgba; } catch (e) { return [0, 0, 0, 1]; } };
+    const c1 = parseRgba(color1); const c2 = parseRgba(color2);
+    const progress = Math.max(0, Math.min(1, t));
+    const r = Math.round(c1[0] + (c2[0] - c1[0]) * progress); const g = Math.round(c1[1] + (c2[1] - c1[1]) * progress); const b = Math.round(c1[2] + (c2[2] - c1[2]) * progress); const a = Math.max(0, Math.min(1, c1[3] + (c2[3] - c1[3]) * progress)).toFixed(2);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+};

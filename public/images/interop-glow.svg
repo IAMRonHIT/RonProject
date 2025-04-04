@@ -1,0 +1,164 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGradient2" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#10183b" />
+      <stop offset="100%" stop-color="#050818" />
+    </radialGradient>
+    <linearGradient id="boxGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a2c5a" />
+      <stop offset="100%" stop-color="#0f1a36" />
+    </linearGradient>
+     <linearGradient id="boxGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a1a5a" />
+      <stop offset="100%" stop-color="#1a0f36" />
+    </linearGradient>
+    <linearGradient id="boxStroke1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8a9bff" />
+      <stop offset="100%" stop-color="#304FFE" />
+    </linearGradient>
+     <linearGradient id="boxStroke2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c0aeff" />
+      <stop offset="100%" stop-color="#7C4DFF" />
+    </linearGradient>
+    <linearGradient id="puzzleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#50d0ff" />
+      <stop offset="100%" stop-color="#00BFFF" />
+    </linearGradient>
+    <linearGradient id="dataFlowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00BFFF" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#87cefa" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#00BFFF" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <filter id="boxGlow" x="-30%" y="-30%" width="160%" height="160%">
+       <feGaussianBlur stdDeviation="4" result="blur1"/>
+        <feMorphology operator="dilate" radius="1" in="blur1" result="dilate1"/>
+       <feMerge>
+         <feMergeNode in="dilate1"/>
+         <feMergeNode in="SourceGraphic"/>
+       </feMerge>
+        <animate attributeName="stdDeviation" attributeType="XML"
+                 values="4; 6; 4" dur="3s" repeatCount="indefinite" />
+    </filter>
+     <filter id="puzzleConnectorGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="blurPuz"/>
+         <feMerge>
+            <feMergeNode in="blurPuz"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+     </filter>
+      <filter id="dataFlowGlowEffect" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2" result="blurData"/>
+         <feMerge>
+            <feMergeNode in="blurData"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+     </filter>
+
+     <path id="puzzleLeft" d="M130 140 C 130 135, 135 135, 135 130 C 135 125, 130 125, 130 120" stroke-linecap="round" stroke-linejoin="round"/>
+     <path id="puzzleRight" d="M170 140 C 170 135, 165 135, 165 130 C 165 125, 170 125, 170 120" stroke-linecap="round" stroke-linejoin="round"/>
+
+     <path id="dataLine1" d="M135 150 H 165" stroke-width="2" stroke-linecap="round"/>
+     <path id="dataLine2" d="M135 160 H 165" stroke-width="2" stroke-linecap="round"/>
+     <path id="dataLine3" d="M135 170 H 165" stroke-width="2" stroke-linecap="round"/>
+
+  </defs>
+
+  <rect width="300" height="300" fill="url(#bgGradient2)" />
+
+  <g id="system1" filter="url(#boxGlow)">
+    <rect x="50" y="100" width="80" height="100" rx="8" fill="url(#boxGradient1)" stroke="url(#boxStroke1)" stroke-width="1.5" />
+    <g opacity="0.8">
+       <rect x="60" y="120" width="60" height="8" rx="2" fill="#8a9bff">
+           <animate attributeName="width" values="60; 40; 60" dur="2.5s" repeatCount="indefinite" begin="1.5s"/>
+       </rect>
+       <rect x="60" y="140" width="40" height="8" rx="2" fill="#8a9bff" opacity="0.6">
+          <animate attributeName="opacity" values="0.6; 0.3; 0.6" dur="2s" repeatCount="indefinite" begin="1.8s"/>
+       </rect>
+       <rect x="60" y="160" width="60" height="8" rx="2" fill="#8a9bff">
+          <animate attributeName="width" values="60; 50; 60" dur="2.2s" repeatCount="indefinite" begin="2.1s"/>
+       </rect>
+       <rect x="60" y="180" width="30" height="8" rx="2" fill="#8a9bff" opacity="0.6">
+           <animate attributeName="opacity" values="0.6; 0.4; 0.6" dur="1.8s" repeatCount="indefinite" begin="2.4s"/>
+       </rect>
+    </g>
+  </g>
+
+  <g id="system2" filter="url(#boxGlow)">
+    <rect x="170" y="100" width="80" height="100" rx="8" fill="url(#boxGradient2)" stroke="url(#boxStroke2)" stroke-width="1.5" />
+     <g opacity="0.8">
+       <rect x="180" y="120" width="60" height="8" rx="2" fill="#c0aeff">
+            <animate attributeName="width" values="60; 50; 60" dur="2.3s" repeatCount="indefinite" begin="1.6s"/>
+       </rect>
+       <rect x="180" y="140" width="40" height="8" rx="2" fill="#c0aeff" opacity="0.6">
+            <animate attributeName="opacity" values="0.6; 0.4; 0.6" dur="1.9s" repeatCount="indefinite" begin="1.9s"/>
+       </rect>
+       <rect x="180" y="160" width="60" height="8" rx="2" fill="#c0aeff">
+            <animate attributeName="width" values="60; 45; 60" dur="2.6s" repeatCount="indefinite" begin="2.2s"/>
+       </rect>
+       <rect x="180" y="180" width="30" height="8" rx="2" fill="#c0aeff" opacity="0.6">
+            <animate attributeName="opacity" values="0.6; 0.3; 0.6" dur="2.1s" repeatCount="indefinite" begin="2.5s"/>
+       </rect>
+    </g>
+  </g>
+
+  <g id="puzzleConnector" filter="url(#puzzleConnectorGlow)">
+     <use id="puzLeftUse" href="#puzzleLeft" stroke="url(#puzzleGradient)" stroke-width="3" fill="none" transform="translate(0 0)">
+         <animateTransform id="connectAnimL"
+                           attributeName="transform" type="translate"
+                           values="0 0; 5 0" dur="0.5s" begin="0.8s" fill="freeze"
+                           calcMode="spline" keyTimes="0; 1" keySplines="0.4 0 0.2 1"/>
+          <animate attributeName="stroke-width" values="3; 4; 3" dur="0.4s" begin="connectAnimL.end" fill="freeze"/>
+           <animate attributeName="opacity" values="1; 0.7; 1" dur="0.4s" begin="connectAnimL.end" fill="freeze"/>
+     </use>
+      <use id="puzRightUse" href="#puzzleRight" stroke="url(#puzzleGradient)" stroke-width="3" fill="none" transform="translate(0 0)">
+         <animateTransform id="connectAnimR"
+                           attributeName="transform" type="translate"
+                           values="0 0; -5 0" dur="0.5s" begin="0.8s" fill="freeze"
+                           calcMode="spline" keyTimes="0; 1" keySplines="0.4 0 0.2 1"/>
+           <animate attributeName="stroke-width" values="3; 4; 3" dur="0.4s" begin="connectAnimR.end" fill="freeze"/>
+           <animate attributeName="opacity" values="1; 0.7; 1" dur="0.4s" begin="connectAnimR.end" fill="freeze"/>
+     </use>
+  </g>
+
+  <g id="dataStreams" filter="url(#dataFlowGlowEffect)" opacity="0">
+      <use href="#dataLine1" stroke="url(#dataFlowGradient)" stroke-dasharray="3 6">
+          <animate attributeName="stroke-dashoffset" from="0" to="9" dur="1.2s" repeatCount="indefinite" begin="connectAnimL.end + 0.2s"/>
+          <animate attributeName="opacity" values="0.7; 1; 0.7" dur="1.2s" repeatCount="indefinite" begin="connectAnimL.end + 0.2s"/>
+     </use>
+      <use href="#dataLine2" stroke="url(#dataFlowGradient)" stroke-dasharray="3 6">
+          <animate attributeName="stroke-dashoffset" from="9" to="0" dur="1.0s" repeatCount="indefinite" begin="connectAnimL.end + 0.4s"/>
+          <animate attributeName="opacity" values="0.7; 1; 0.7" dur="1.0s" repeatCount="indefinite" begin="connectAnimL.end + 0.4s"/>
+     </use>
+      <use href="#dataLine3" stroke="url(#dataFlowGradient)" stroke-dasharray="3 6">
+          <animate attributeName="stroke-dashoffset" from="0" to="9" dur="1.4s" repeatCount="indefinite" begin="connectAnimL.end + 0.6s"/>
+          <animate attributeName="opacity" values="0.7; 1; 0.7" dur="1.4s" repeatCount="indefinite" begin="connectAnimL.end + 0.6s"/>
+     </use>
+
+     <animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="connectAnimL.end + 0.1s" fill="freeze"/>
+  </g>
+
+  <g id="apiEndpoints" opacity="0">
+     <circle cx="135" cy="150" r="4" fill="#87cefa">
+        <animate attributeName="r" values="4; 5; 4" dur="1.2s" repeatCount="indefinite" begin="connectAnimL.end + 0.2s"/>
+     </circle>
+     <circle cx="165" cy="150" r="4" fill="#87cefa">
+        <animate attributeName="r" values="4; 5; 4" dur="1.2s" repeatCount="indefinite" begin="connectAnimL.end + 0.8s"/>
+     </circle>
+     <circle cx="135" cy="160" r="4" fill="#87cefa">
+         <animate attributeName="r" values="4; 5; 4" dur="1.0s" repeatCount="indefinite" begin="connectAnimL.end + 0.4s"/>
+     </circle>
+     <circle cx="165" cy="160" r="4" fill="#87cefa">
+         <animate attributeName="r" values="4; 5; 4" dur="1.0s" repeatCount="indefinite" begin="connectAnimL.end + 0.9s"/>
+     </circle>
+     <circle cx="135" cy="170" r="4" fill="#87cefa">
+         <animate attributeName="r" values="4; 5; 4" dur="1.4s" repeatCount="indefinite" begin="connectAnimL.end + 0.6s"/>
+     </circle>
+     <circle cx="165" cy="170" r="4" fill="#87cefa">
+          <animate attributeName="r" values="4; 5; 4" dur="1.4s" repeatCount="indefinite" begin="connectAnimL.end + 1.1s"/>
+     </circle>
+      <animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="connectAnimL.end + 0.1s" fill="freeze"/>
+  </g>
+
+</svg>
+

@@ -1,0 +1,120 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="gearFillPurple" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#a08dff"/>
+      <stop offset="60%" stop-color="#7C4DFF"/>
+      <stop offset="100%" stop-color="#4a2cae"/>
+    </radialGradient>
+     <radialGradient id="gearFillBlue" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#8a9bff"/>
+      <stop offset="60%" stop-color="#304FFE"/>
+      <stop offset="100%" stop-color="#1a2cae"/>
+    </radialGradient>
+     <radialGradient id="gearFillCyan" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#87f5ff"/>
+      <stop offset="60%" stop-color="#00BFFF"/>
+      <stop offset="100%" stop-color="#007a99"/>
+    </radialGradient>
+     <radialGradient id="hubFill" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#4a4e69"/>
+        <stop offset="100%" stop-color="#22223b"/>
+    </radialGradient>
+     <linearGradient id="hubStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#9a8c98"/>
+        <stop offset="100%" stop-color="#4a4e69"/>
+    </linearGradient>
+
+     <radialGradient id="bgGradient5" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1c203d" />
+      <stop offset="100%" stop-color="#050818" />
+    </radialGradient>
+
+    <filter id="gearGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+       <feMerge>
+         <feMergeNode in="coloredBlur"/>
+         <feMergeNode in="SourceGraphic"/>
+       </feMerge>
+        <animate attributeName="stdDeviation" attributeType="XML"
+                 values="4; 5; 4" dur="2.5s" repeatCount="indefinite" />
+    </filter>
+     <filter id="sparkGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+       <feMerge>
+         <feMergeNode in="coloredBlur"/>
+         <feMergeNode in="SourceGraphic"/>
+       </feMerge>
+    </filter>
+
+    <path id="gearPathMain" d="M150,110 L145,105 L155,105 Z
+       M178.3,119.7 L171.2,116.2 L174.7,123.3 Z
+       M190,150 L195,145 L195,155 Z
+       M178.3,180.3 L174.7,176.7 L171.2,183.8 Z
+       M150,190 L145,195 L155,195 Z
+       M121.7,180.3 L128.8,183.8 L125.3,176.7 Z
+       M110,150 L105,145 L105,155 Z
+       M121.7,119.7 L125.3,123.3 L128.8,116.2 Z
+
+       M150,110 A40,40 0 0 1 178.3,119.7
+       A40,40 0 0 1 190,150
+       A40,40 0 0 1 178.3,180.3
+       A40,40 0 0 1 150,190
+       A40,40 0 0 1 121.7,180.3
+       A40,40 0 0 1 110,150
+       A40,40 0 0 1 121.7,119.7
+       A40,40 0 0 1 150,110 Z" />
+
+    <path id="gearPathSmall" d="M0,-15 L-4,-18 L4,-18 Z
+        M13,-7.5 L9.8,-11.8 L16.3,-10.3 Z
+        M15,0 L18,-4 L18,4 Z
+        M13,7.5 L16.3,10.3 L9.8,11.8 Z
+        M0,15 L-4,18 L4,18 Z
+        M-13,7.5 L-9.8,11.8 L-16.3,10.3 Z
+        M-15,0 L-18,-4 L-18,4 Z
+        M-13,-7.5 L-16.3,-10.3 L-9.8,-11.8 Z
+
+        M0,-15 A25,25 0 0 1 13,-7.5
+        A25,25 0 0 1 15,0
+        A25,25 0 0 1 13,7.5
+        A25,25 0 0 1 0,15
+        A25,25 0 0 1 -13,7.5
+        A25,25 0 0 1 -15,0
+        A25,25 0 0 1 -13,-7.5
+        A25,25 0 0 1 0,-15 Z" />
+
+  </defs>
+
+  <rect width="300" height="300" fill="url(#bgGradient5)" />
+
+  <g id="mainGear" transform-origin="150 150" filter="url(#gearGlow)">
+    <use href="#gearPathMain" fill="url(#gearFillPurple)" stroke="#4a2cae" stroke-width="1"/>
+    <circle cx="150" cy="150" r="15" fill="url(#hubFill)" stroke="url(#hubStroke)" stroke-width="1.5" />
+    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite" />
+  </g>
+
+  <g id="smallGearTR" transform="translate(210, 110)" transform-origin="210 110" filter="url(#gearGlow)">
+     <use href="#gearPathSmall" fill="url(#gearFillBlue)" stroke="#1a2cae" stroke-width="0.8"/>
+     <circle cx="0" cy="0" r="8" fill="url(#hubFill)" stroke="url(#hubStroke)" stroke-width="1"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="-480" dur="6s" repeatCount="indefinite" />
+   </g>
+
+   <g id="smallGearBL" transform="translate(90, 190)" transform-origin="90 190" filter="url(#gearGlow)">
+     <use href="#gearPathSmall" fill="url(#gearFillCyan)" stroke="#007a99" stroke-width="0.8"/>
+     <circle cx="0" cy="0" r="8" fill="url(#hubFill)" stroke="url(#hubStroke)" stroke-width="1"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="-480" dur="6s" repeatCount="indefinite" />
+   </g>
+
+  <g id="meshEffects" filter="url(#sparkGlow)">
+      <g transform="translate(185, 125) rotate(30)"> <path d="M-2,-2 L0,0 L-2,2 M2,-2 L0,0 L2,2" stroke="#FFF" stroke-width="1.5" stroke-linecap="round">
+            <animate attributeName="opacity" values="0; 1; 0" dur="0.15s" repeatCount="indefinite" begin="0s"/>
+            <animateTransform attributeName="transform" type="scale" values="0.5; 1; 0.5" dur="0.15s" repeatCount="indefinite" begin="0s"/>
+         </path>
+      </g>
+       <g transform="translate(115, 175) rotate(-150)"> <path d="M-2,-2 L0,0 L-2,2 M2,-2 L0,0 L2,2" stroke="#FFF" stroke-width="1.5" stroke-linecap="round">
+            <animate attributeName="opacity" values="0; 1; 0" dur="0.15s" repeatCount="indefinite" begin="0.05s"/> <animateTransform attributeName="transform" type="scale" values="0.5; 1; 0.5" dur="0.15s" repeatCount="indefinite" begin="0.05s"/>
+         </path>
+      </g>
+   </g>
+
+</svg>
+
