@@ -25,7 +25,7 @@ This directory contains the Flask backend server (`server.py`) and the user-edit
     *   Automatically start the initial `user_app.py` using Streamlit (usually on port 8501).
 
 3.  The frontend application (running on your Next.js dev server, likely port 3000) will communicate with the Flask server on port 5001.
-4.  When you edit code in the frontend IDE and click "Run", the Flask server will:
+VEWhen you edit code in the frontend IDE and click "Run", the Flask server will:
     *   Overwrite `user_app.py` with the new code.
     *   Terminate the existing Streamlit process.
     *   Start a new Streamlit process with the updated `user_app.py`.
