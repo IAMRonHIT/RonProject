@@ -57,10 +57,10 @@ export function ProcessStageCard({ title, description, isActive, icon }: Process
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  // Enhanced 3D base classes with refined transitions
-  const baseClasses = "p-6 transition-all duration-500 ease-out border overflow-hidden relative transform-gpu"; // Added GPU acceleration
-  const activeClasses = "scale-[1.05] border-primary/80 translate-y-[-4px]"; // More pronounced elevation
-  const inactiveClasses = "scale-100 border-border hover:translate-y-[-2px]"; // Added subtle hover elevation
+  // Enhanced 3D base classes with refined transitions - enforce exact height with !important
+  const baseClasses = "p-6 transition-all duration-500 ease-out border overflow-hidden relative transform-gpu !h-[180px] w-full flex flex-col"; 
+  const activeClasses = "scale-[1.05] border-primary/80 translate-y-[-4px]"; 
+  const inactiveClasses = "scale-100 border-border hover:translate-y-[-2px]";
 
   // Enhanced background gradients with more sophisticated layering
   const baseGradient = isActive
@@ -90,11 +90,12 @@ export function ProcessStageCard({ title, description, isActive, icon }: Process
       : `${shineGradient}, ${baseGradient}`,
     // Add subtle texture for more visual richness
     backgroundBlendMode: 'overlay, normal, normal',
+    height: '180px', // Enforce exact height with inline style too
   };
 
   return (
     <Card
-      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses} group hover:scale-[1.03] hover:border-primary/60 perspective-1000`} // Added perspective for 3D context
+      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses} group hover:scale-[1.03] hover:border-primary/60 perspective-1000`}
       style={{
         ...backgroundStyle,
         ...getShadowStyle(isActive, isDark),
@@ -108,7 +109,7 @@ export function ProcessStageCard({ title, description, isActive, icon }: Process
       <div className="absolute inset-0 rounded-lg border-t border-l border-white/10 pointer-events-none"></div>
       <div className="absolute inset-0 rounded-lg border-b border-r border-black/10 pointer-events-none"></div>
 
-      <div className="flex flex-col items-center text-center space-y-4 relative z-10 transform-style-preserve-3d"> {/* Added 3D style preservation */}
+      <div className="flex flex-col items-center text-center justify-between h-full relative z-10 transform-style-preserve-3d">
         <div 
           className={`p-3 rounded-full transition-all duration-500 ease-out transform group-hover:scale-110 ${getIconBgStyle(isActive, isDark)} [transform-style:preserve-3d]`}
         >
@@ -119,16 +120,19 @@ export function ProcessStageCard({ title, description, isActive, icon }: Process
              {icon}
            </div>
         </div>
-        <h3 
-          className={`text-lg font-semibold transition-colors duration-300 ${isActive ? 'text-primary [transform:translateZ(5px)]' : 'text-card-foreground [transform:translateZ(0px)]'} [transition:transform_0.5s_ease-out]`}
-        >
-          {title}
-        </h3>
-        <p 
-          className={`text-sm text-muted-foreground ${isActive ? '[transform:translateZ(3px)]' : '[transform:translateZ(0px)]'} [transition:transform_0.5s_ease-out]`}
-        >
-          {description}
-        </p>
+        <div className="flex flex-col items-center">
+          <h3 
+            className={`text-lg font-semibold transition-colors duration-300 ${isActive ? 'text-primary [transform:translateZ(5px)]' : 'text-card-foreground [transform:translateZ(0px)]'} [transition:transform_0.5s_ease-out] truncate w-full`}
+          >
+            {title}
+          </h3>
+          <p 
+            className={`text-sm text-muted-foreground mt-1 ${isActive ? '[transform:translateZ(3px)]' : '[transform:translateZ(0px)]'} [transition:transform_0.5s_ease-out] line-clamp-2 w-full h-[40px]`}
+          >
+            {description}
+          </p>
+        </div>
+        <div className="h-2"></div> {/* Bottom spacer */}
       </div>
       
       {/* Add custom styles for 3D transforms */}

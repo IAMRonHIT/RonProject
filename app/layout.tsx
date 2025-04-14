@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Inter, Audiowide, Fira_Code } from "next/font/google"
 import { ClientThemeProvider } from "@/components/client-theme-provider"
 import Navigation from "@/components/navigation"
+import Footer from "@/components/Footer"
+import { ChatbotUI } from "@/components/chatbot-ui" // Import the Chatbot UI
 import "./globals.css"
 
 // Configure the Inter font
@@ -45,7 +47,9 @@ export default function RootLayout({
       <body>
         <ClientThemeProvider>
           <Navigation />
-          {children}
+          <main className="flex-grow">{children}</main> {/* Optional: Wrap children in main */}
+          <Footer />
+          <ChatbotUI /> {/* Add the Chatbot UI component here */}
         </ClientThemeProvider>
       </body>
     </html>

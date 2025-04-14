@@ -20,6 +20,17 @@ const audienceSegments = [
     impactSource: "Impact in Behavioral Health",
   },
   {
+    id: "telehealth",
+    title: "Telehealth",
+    videoSrc: "/videos/telehealth.mp4",
+    posterSrc: "/images/posterTelehealth.png",
+    metric: "75%",
+    metricLabel: "Improved patient engagement",
+    impactStatement:
+      "Ron AI's adaptive agentic framework transforms telehealth delivery by automating appointment scheduling, streamlining virtual visit workflows, and enhancing remote patient monitoring, resulting in increased access to care and significantly improved patient engagement across diverse populations.",
+    impactSource: "Impact in Telehealth",
+  },
+  {
     id: "hospitals",
     title: "Hospitals",
     videoSrc: "/videos/Hospital.mp4",
@@ -453,4 +464,3 @@ export default function HealthcareSectorsShowcase() {
     </section>
   )
 }
-

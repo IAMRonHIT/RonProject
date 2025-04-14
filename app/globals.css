@@ -5,6 +5,34 @@
 /* Remove the Google Fonts import that was causing the error */
 /* @import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap'); */
 
+/* Custom background classes */
+.bg-circuit-pattern {
+  background-image: url('/images/circuit-pattern-2.png');
+}
+
+/* Animation delay utilities */
+.animation-delay-1s {
+  animation-delay: 1s;
+}
+
+.animation-delay-1500ms {
+  animation-delay: 1.5s;
+}
+
+/* Scrollbar utilities */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  /* Add fallback styles for browsers that don't support scrollbar-width */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(155, 155, 155, 0.5);
+    border-radius: 3px;
+  }
+}
+
 :root {
   --background: 222 47% 4%;
   --foreground: 210 40% 98%;
@@ -63,3 +91,27 @@
   font-family: var(--font-fira-code), monospace;
 }
 
+/* Custom scrollbar for the dashboard */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(0, 229, 224, 0.5), rgba(59, 130, 246, 0.5));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgba(0, 229, 224, 0.8), rgba(59, 130, 246, 0.8));
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 224, 0.5) rgba(30, 41, 59, 0.5);
+}

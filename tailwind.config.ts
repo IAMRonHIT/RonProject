@@ -76,6 +76,14 @@ const config = {
         "pulse-glow": {
           "0%": { opacity: "0.5", transform: "scale(0.95)" },
           "100%": { opacity: "1", transform: "scale(1.05)" }
+        },
+        "projector-flicker": {
+          "0%, 100%": { opacity: "0.7" },
+          "10%": { opacity: "0.3" },
+          "30%": { opacity: "0.9" },
+          "50%": { opacity: "0.5" },
+          "70%": { opacity: "0.9" },
+          "90%": { opacity: "0.4" }
         }
       },
       animation: {
@@ -83,6 +91,8 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 4s infinite alternate ease-in-out",
         "pulse-glow-slow": "pulse-glow 6s infinite alternate ease-in-out",
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "projector-flicker": "projector-flicker 0.6s ease-in-out forwards",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],

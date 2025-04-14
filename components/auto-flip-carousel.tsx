@@ -216,7 +216,7 @@ export default function AutoFlipCarousel() {
                   {/* The Flippable Card itself */}
                   <div className="flip-card-container w-full h-full perspective-1200 group">
                     <div
-                      className={`flip-card relative w-full h-full transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] transform-style-3d ${
+                      className={`flip-card relative w-full h-full transition-transform duration-1000 ease-&lsqb;cubic-bezier(0.25,1,0.5,1)&rsqb; transform-style-3d ${
                         isFlipped ? "rotate-y-180" : ""
                       }`}
                     >

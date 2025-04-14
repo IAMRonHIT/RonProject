@@ -7,6 +7,24 @@ import { FlashlightBeam } from "./flashlight-beam"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { safePlayVideo } from "@/utils/video-helpers"
 
+// Define types for Spline objects
+interface SplineObject {
+  name: string;
+  position?: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  scale?: {
+    set: (x: number, y: number, z: number) => void;
+  };
+  traverse: (callback: (object: SplineObject) => void) => void;
+}
+
+interface SplineScene {
+  findObjectByName: (name: string) => SplineObject | null;
+}
+
 interface InteractiveSceneProps {
   className?: string
   onLoad?: () => void
@@ -37,7 +55,7 @@ export function InteractiveScene({ className, onLoad }: InteractiveSceneProps) {
   }, [onLoad])
 
   // Function to handle Spline scene load
-  const handleSplineLoad = (spline: any) => {
+  const handleSplineLoad = (spline: SplineScene) => {
     splineRef.current = spline
     console.log("Spline scene loaded")
 
@@ -46,8 +64,8 @@ export function InteractiveScene({ className, onLoad }: InteractiveSceneProps) {
       const scene = spline.findObjectByName("Scene")
       if (scene) {
         // Find the robot object
-        let robotObject = null
-        scene.traverse((object: any) => {
+        let robotObject: SplineObject | null = null
+        scene.traverse((object: SplineObject) => {
           if (object.name.toLowerCase().includes("robot")) {
             robotObject = object
           }
@@ -57,19 +75,30 @@ export function InteractiveScene({ className, onLoad }: InteractiveSceneProps) {
         if (robotObject) {
           console.log("Repositioning robot to the right side")
 
+          // Use type assertion to help TypeScript understand the object structure
+          const typedRobot = robotObject as {
+            position?: { x: number; y: number; z: number };
+            scale?: { set: (x: number, y: number, z: number) => void };
+          };
+
           // Move the robot to the right side
           // Note: Exact values may need adjustment based on the specific Spline scene
-          if (robotObject.position) {
+          if (typedRobot.position) {
             // Store original position for reference
-            const originalX = robotObject.position.x
+            const originalX = typedRobot.position.x
 
             // Move to the right
-            robotObject.position.x = originalX + 2
+            typedRobot.position.x = originalX + 2
 
             // Adjust based on mobile or desktop
             if (isMobile) {
-              robotObject.position.y -= 0.5 // Move up slightly on mobile
-              robotObject.scale.set(0.7, 0.7, 0.7) // Scale down more on mobile
+              // Check if position and scale properties exist before accessing them
+              if (typedRobot.position) {
+                typedRobot.position.y -= 0.5 // Move up slightly on mobile
+              }
+              if (typedRobot.scale) {
+                typedRobot.scale.set(0.7, 0.7, 0.7) // Scale down more on mobile
+              }
             }
           }
         }

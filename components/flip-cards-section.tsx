@@ -333,7 +333,7 @@ function CarouselFlipCard({ question, imagePath, imageAlt, isFlipped }: Carousel
   return (
     <div className="flip-card-container h-full w-full perspective-1500 group"> {/* Increased perspective for more dramatic 3D */}
       <div
-        className={`flip-card relative w-full h-full transition-transform duration-1200 ease-[cubic-bezier(0.2,1,0.3,1)] transform-style-3d ${
+        className={`flip-card relative w-full h-full transition-transform duration-1200 ease-&lsqb;cubic-bezier(0.2,1,0.3,1)&rsqb; transform-style-3d ${
           isFlipped ? "rotate-y-180" : ""
         }`}
       >

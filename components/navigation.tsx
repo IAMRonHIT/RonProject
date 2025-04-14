@@ -41,8 +41,8 @@ export default function Navigation() {
               <NavLink href="/solutions" isActive={isActive("/solutions")}>
                 Solutions
               </NavLink>
-              <NavLink href="/framework" isActive={isActive("/framework")}>
-                Framework
+              <NavLink href="/blog" isActive={isActive("/blog")}>
+                Blog
               </NavLink>
               <NavLink href="/about" isActive={isActive("/about")}>
                 About
@@ -103,8 +103,8 @@ export default function Navigation() {
           <MobileNavLink href="/solutions" isActive={isActive("/solutions")}>
             Solutions
           </MobileNavLink>
-          <MobileNavLink href="/framework" isActive={isActive("/framework")}>
-            Framework
+          <MobileNavLink href="/blog" isActive={isActive("/blog")}>
+            Blog
           </MobileNavLink>
           <MobileNavLink href="/about" isActive={isActive("/about")}>
             About
