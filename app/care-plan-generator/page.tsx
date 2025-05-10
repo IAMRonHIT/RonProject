@@ -1,34 +1,35 @@
 "use client";
 
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
-import PatientDataForm from '@/components/careplangenerator/PatientDataForm';
-import { PatientInfo } from '@/lib/scenario-data';
+import PatientDataForm, { FormState } from '@/components/careplangenerator/PatientDataForm';
+// PatientInfo from scenario-data might not be needed if CarePlanJsonData covers it
+// import { PatientInfo } from '@/lib/scenario-data'; 
 import ReasoningDisplay from '@/components/careplangenerator/ReasoningDisplay';
-import CarePlanTemplate from '@/components/careplangenerator/careplan-template';
+// Import the component AND the type definition
+import CarePlanTemplate, { CarePlanJsonData } from '@/components/careplangenerator/careplan-template'; 
 import PromptDisplay from '@/components/careplangenerator/PromptDisplay';
 import LoadingSpinner from '@/components/careplangenerator/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, FileText } from 'lucide-react';
 import { SonarService } from '@/lib/sonar-service';
 
-interface CarePlanJsonData {
-  patientData?: any; 
-  clinicalData?: any;
-  aiAgents?: any[];
-  priorAuthItems?: any[];
-  sourcesData?: any[];
-  assessment_subjective_chief_complaint?: string;
-  [key: string]: any; 
-}
+// Removed local interface definitions - using imported CarePlanJsonData now
 
 const CarePlanGeneratorPage = () => {
-  const [carePlanData, setCarePlanData] = useState<CarePlanJsonData | null>(null);
+  const [carePlanData, setCarePlanData] = useState<CarePlanJsonData | null>(null); // Will store final_json
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [activeTab, setActiveTab] = useState('form');
-  const [streamingReasoning, setStreamingReasoning] = useState('');
+  // streamingReasoning will be replaced by finalReasoningMarkdown for the main display
+  // but we might keep a form of live update if desired, or remove it.
+  // For now, let's assume finalReasoningMarkdown is the primary one.
+  // const [streamingReasoning, setStreamingReasoning] = useState(''); // Original state
+  const [liveReasoningText, setLiveReasoningText] = useState<string>(""); // For live streaming display
+  const [finalReasoningMarkdown, setFinalReasoningMarkdown] = useState<string | null>(null); // For final formatted display
   const [error, setError] = useState<string | null>(null);
-  const [citations, setCitations] = useState<any[]>([]);
+  const [topLevelCitations, setTopLevelCitations] = useState<string[]>([]); // Renamed from citations and typed
   const [showPromptDisplay, setShowPromptDisplay] = useState(false);
   const [promptDisplayData, setPromptDisplayData] = useState<{
     patientName?: string;
@@ -55,15 +56,16 @@ const CarePlanGeneratorPage = () => {
     return match && match[1] ? match[1].trim() : "";
   };
 
-  const handleFormSubmit = async (formData: PatientInfo) => {
+  const handleFormSubmit = async (formData: FormState) => {
     try {
       setIsLoading(true);
       setLoadingMessage('Your patient scenario is being sent to Ron AI.');
       setError(null);
       setCarePlanData(null);
-      setStreamingReasoning('');
+      setLiveReasoningText(""); // Reset live reasoning
+      setFinalReasoningMarkdown(null);
       rawAccumulatedStreamRef.current = "";
-      setCitations([]);
+      setTopLevelCitations([]);
       setPromptDisplayData({
         patientName: formData.patient_full_name,
         patientAge: formData.patient_age,
@@ -106,65 +108,94 @@ const CarePlanGeneratorPage = () => {
         };
         
         eventSourceRef.current.onmessage = (event) => {
+          // The '[DONE]' event might become redundant if 'final_json' is the true end signal.
+          // For now, keep it to ensure stream closure, but primary logic will rely on typed events.
           if (event.data === '[DONE]') {
-            console.log('Stream completed [DONE]');
-            // Final extraction from accumulated data if reasoning wasn't in 'complete'
-            const finalReasoningText = extractSingleThinkBlockJS(rawAccumulatedStreamRef.current);
-            if (finalReasoningText && !streamingReasoning) { // Check if streamingReasoning was already set by 'complete'
-                 setStreamingReasoning(finalReasoningText);
+            console.log('Stream signaled [DONE]');
+            // If final_json hasn't arrived, it implies an incomplete stream or error.
+            // isLoading should be managed by final_json or error event.
+            if (isLoading) { // If still loading when DONE arrives, it might be an issue.
+                console.warn("Stream ended with [DONE] but still in loading state.");
+                // setError("Stream ended prematurely."); // Optional: set error
+                // setIsLoading(false); // Force loading to false
             }
-            setIsLoading(false);
             eventSourceRef.current?.close();
             eventSourceRef.current = null;
-            // Do not clear rawAccumulatedStreamRef here if you want to inspect it post-DONE for debugging
             return;
           }
           
           try {
-            const data = JSON.parse(event.data);
+            const parsedData = JSON.parse(event.data);
             
-            if (data.type === 'content_chunk') {
-              rawAccumulatedStreamRef.current += data.content;
-              // Continuously update streamingReasoning with parsed <think> content
-              const currentReasoning = extractSingleThinkBlockJS(rawAccumulatedStreamRef.current);
-              setStreamingReasoning(currentReasoning); // This will make ReasoningDisplay update live
-            } else if (data.type === 'complete') {
-              console.log('Received complete data object from stream');
-              const content = data.content;
-              
-              // Set final reasoning from the 'complete' message if available, otherwise it's already set by streaming
-              if (content.reasoning) {
-                setStreamingReasoning(content.reasoning); 
-              } else if (!streamingReasoning) { // If not set by streaming and not in complete, extract one last time
-                setStreamingReasoning(extractSingleThinkBlockJS(rawAccumulatedStreamRef.current));
-              }
-              
-              if (content.json_data) {
-                console.log('Attempting to set carePlanData with:', JSON.stringify(content.json_data, null, 2));
-                setCarePlanData(content.json_data as CarePlanJsonData);
-              } else {
-                console.warn('Received "complete" event but content.json_data is missing or empty.');
-              }
-              
-              if (content.citations && Array.isArray(content.citations)) {
-                setCitations(content.citations);
-              }
-              
-              setShowPromptDisplay(false); 
-              setIsLoading(false); 
-              // rawAccumulatedStreamRef.current = ""; // Clear only after successful 'complete' processing
-              eventSourceRef.current?.close(); 
-              eventSourceRef.current = null;
-            } else if (data.type === 'error') {
-              setError(data.content || 'An error occurred during generation');
-              setShowPromptDisplay(false);
-              setIsLoading(false); 
-              rawAccumulatedStreamRef.current = ""; 
-              eventSourceRef.current?.close();
-              eventSourceRef.current = null;
+            switch (parsedData.type) {
+              case "citations":
+                console.log("Received citations:", parsedData.content);
+                setTopLevelCitations(parsedData.content as string[]);
+                break;
+              case "content_chunk":
+                // Append to raw stream
+                rawAccumulatedStreamRef.current += parsedData.content;
+                // Extract potential reasoning from the accumulated raw stream
+                const currentRawThink = extractSingleThinkBlockJS(rawAccumulatedStreamRef.current);
+                // Update the live reasoning state
+                setLiveReasoningText(currentRawThink);
+                break;
+              case "final_reasoning":
+                console.log("Received final_reasoning (first 100 chars):", (parsedData.content as string).substring(0,100));
+                // Set the final formatted markdown
+                setFinalReasoningMarkdown(parsedData.content as string);
+                // Ensure the live text matches the final markdown in case chunks were missed/out of order
+                setLiveReasoningText(extractSingleThinkBlockJS(rawAccumulatedStreamRef.current)); 
+                // Switch view to Care Plan tab only AFTER reasoning is final
+                setActiveTab('careplan'); 
+                // Keep loading until final_json arrives
+                break;
+              case "final_json":
+                console.log("Received final_json");
+                // Ensure the received data conforms to the interface, especially required fields like next_steps
+                const receivedData = parsedData.content || {};
+                const validatedData: CarePlanJsonData = {
+                  ...receivedData,
+                  next_steps: Array.isArray(receivedData.next_steps) ? receivedData.next_steps : [], // Default to empty array if missing/invalid
+                };
+                setCarePlanData(validatedData);
+                setShowPromptDisplay(false); 
+                setIsLoading(false); // Loading is now complete
+                // Do NOT switch tab here, it was switched on final_reasoning
+                rawAccumulatedStreamRef.current = ""; // Clear accumulated raw data
+                eventSourceRef.current?.close(); 
+                eventSourceRef.current = null;
+                break;
+              case "error":
+                console.error("Received error event from stream:", parsedData.content);
+                setError(parsedData.content || 'An error occurred during generation');
+                setShowPromptDisplay(false);
+                setIsLoading(false); 
+                rawAccumulatedStreamRef.current = ""; 
+                eventSourceRef.current?.close();
+                eventSourceRef.current = null;
+                break;
+              case "start": // Backend sends this, can be used for UI updates
+                console.log("Stream started event from backend:", parsedData.content);
+                setLoadingMessage(parsedData.content || 'Care plan generation initiated...');
+                break;
+              default:
+                // console.warn("Received unknown event type from stream:", parsedData.type, parsedData);
+                // It's possible that 'content_chunk' from the Python backend (which is just the delta)
+                // is the only thing that doesn't have a 'type' if the Python side isn't wrapping it.
+                // The Python client was updated to wrap it as {"type": "content_chunk", "content": ...}
+                // So, unhandled types should be logged.
+                if (parsedData.content) { // If it's an untyped content chunk (fallback)
+                    // rawAccumulatedStreamRef.current += parsedData.content;
+                } else {
+                    console.warn("Received unknown or malformed event from stream:", parsedData);
+                }
             }
           } catch (err) {
             console.error('Error parsing stream data:', err, event.data);
+            // Potentially set a generic error if parsing fails repeatedly
+            // setError("Error processing data from server.");
+            // setIsLoading(false);
           }
         };
       } catch (streamErr) {
@@ -217,7 +248,7 @@ const CarePlanGeneratorPage = () => {
             primaryDiagnosis={promptDisplayData?.primaryDiagnosis}
           />
           
-          {isLoading && !streamingReasoning && !error && !showPromptDisplay && (
+          {isLoading && !finalReasoningMarkdown && !error && !showPromptDisplay && (
             <LoadingSpinner message={loadingMessage} />
           )}
 
@@ -228,16 +259,17 @@ const CarePlanGeneratorPage = () => {
             </div>
           )}
 
-          {/* Display reasoning if available, regardless of loading state for the rest of the content */}
-          {(streamingReasoning || (isLoading && rawAccumulatedStreamRef.current.includes("<think>"))) && !error && (
+          {/* Display ReasoningDisplay if liveReasoningText has content OR if loading */}
+          {(liveReasoningText || isLoading) && !error && (
             <ReasoningDisplay
-              isLoading={isLoading && !carePlanData} // Pass true if still loading overall and care plan not yet received
-              streamingContent={streamingReasoning}
+              isLoading={isLoading && !finalReasoningMarkdown} // Loading is true until final_reasoning arrives
+              liveReasoningText={liveReasoningText} // Pass live text
+              finalReasoningMarkdown={finalReasoningMarkdown} // Pass final formatted text
             />
           )}
           
-          {!isLoading && !error && !streamingReasoning && !showPromptDisplay && (
-             <div className="text-center p-8 text-gray-500">
+          {!isLoading && !error && !liveReasoningText && !finalReasoningMarkdown && !showPromptDisplay && (
+            <div className="text-center p-8 text-gray-500">
               Reasoning process will appear here once generated. Submit patient data to begin.
             </div>
           )}
@@ -246,7 +278,7 @@ const CarePlanGeneratorPage = () => {
         <TabsContent value="careplan" className="mt-6 transition-all duration-300 ease-in-out">
           {carePlanData && (
             <div className="fade-in">
-              <CarePlanTemplate data={carePlanData} />
+              <CarePlanTemplate data={carePlanData} topLevelCitations={topLevelCitations} />
             </div>
           )}
           {!carePlanData && !isLoading && (

@@ -6,7 +6,7 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/Footer"
 import { ChatbotUI } from "@/components/chatbot-ui" // Import the Chatbot UI
 import { TooltipProvider } from "@/components/ui/tooltip" // Import TooltipProvider
-// Removed MonacoThemeInitializer import as it's no longer needed
+import { GlobalFlashlight } from "@/components/global-flashlight" // Import GlobalFlashlight
 import "./globals.css"
 
 // Configure the Inter font
@@ -49,11 +49,13 @@ export default function RootLayout({
       <body>
         <ClientThemeProvider>
           <TooltipProvider>
-            <Navigation />
-            <main className="flex-grow">{children}</main> {/* Optional: Wrap children in main */}
-            <Footer />
-            <ChatbotUI /> {/* Add the Chatbot UI component here */}
-            {/* Removed MonacoThemeInitializer component */}
+            <GlobalFlashlight>
+              <Navigation />
+              <main className="flex-grow">{children}</main> {/* Optional: Wrap children in main */}
+              <Footer />
+              <ChatbotUI /> {/* Add the Chatbot UI component here */}
+              {/* Removed MonacoThemeInitializer component */}
+            </GlobalFlashlight>
           </TooltipProvider>
         </ClientThemeProvider>
       </body>

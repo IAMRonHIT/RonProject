@@ -21,32 +21,33 @@ const PromptDisplay: React.FC<PromptDisplayProps> = ({
   const [showCursor, setShowCursor] = useState(true);
 
   const simplifiedPrompt = patientName && primaryDiagnosis
-    ? `Ron AI, please generate a comprehensive ADPIE nursing care plan for ${patientName}, a ${patientAge}-year-old patient. Key focus should be on their primary diagnosis of "${primaryDiagnosis}". Ensure the plan is evidence-based and tailored to their specific needs, considering all provided clinical data.`
+    ? `Please generate a comprehensive ADPIE nursing care plan for ${patientName}, a ${patientAge}-year-old patient. Key focus should be on their primary diagnosis of "${primaryDiagnosis}". Ensure the plan is evidence-based and tailored to their specific needs, considering all provided clinical data.`
     : "Preparing your request for Ron AI...";
 
   useEffect(() => {
     if (isVisible && simplifiedPrompt) {
       setDisplayedText(""); // Reset before typing
       let i = 0;
-      const typingInterval = setInterval(() => {
-        if (i < simplifiedPrompt.length) {
-          setDisplayedText((prev) => prev + simplifiedPrompt.charAt(i));
-          i++;
-        } else {
-          clearInterval(typingInterval);
-          setShowCursor(false); // Hide cursor when typing is done
-        }
-      }, 30); // Adjust typing speed here
-
-      return () => {
+    const typingInterval = setInterval(() => {
+      if (i < simplifiedPrompt.length) {
+        // Use a functional update that doesn't depend on previous state
+        setDisplayedText(simplifiedPrompt.substring(0, i + 1));
+        i++;
+      } else {
         clearInterval(typingInterval);
-        setShowCursor(true); // Reset cursor state
-      };
-    } else if (!isVisible) {
-      setDisplayedText(""); // Clear text if not visible
-      setShowCursor(true); // Reset cursor
-    }
-  }, [isVisible, simplifiedPrompt]);
+        setShowCursor(false);
+      }
+    }, 50); // Slow down the typing speed slightly
+
+    return () => {
+      clearInterval(typingInterval);
+      setShowCursor(true); // Reset cursor state
+    };
+  } else if (!isVisible) {
+    setDisplayedText(""); // Clear text if not visible
+    setShowCursor(true); // Reset cursor
+  }
+}, [isVisible, simplifiedPrompt]);
 
   if (!isVisible) {
     return null;
@@ -64,9 +65,6 @@ const PromptDisplay: React.FC<PromptDisplayProps> = ({
         <p className="text-base leading-relaxed font-mono min-h-[100px]"> {/* Increased font size, leading, and min height */}
           {displayedText}
           {showCursor && <span className="animate-ping">|</span>}
-        </p>
-        <p className="text-xs text-blue-200 mt-4 italic">
-          (This is a simplified representation of the detailed instructions being sent to the AI.)
         </p>
       </CardContent>
     </Card>

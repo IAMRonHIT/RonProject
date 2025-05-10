@@ -5,6 +5,23 @@ export interface LabResult {
   lab_n_trend: 'Improving' | 'Worsening' | 'Stable' | '';
 }
 
+export interface Medication {
+  med_n_name: string;
+  med_n_dosage: string;
+  med_n_route: string;
+  med_n_frequency: string;
+  med_n_status: string; // e.g., "Active", "Discontinued", "PRN"
+  med_n_pa_required?: boolean | string; 
+}
+
+export interface Treatment {
+  treatment_n_name: string;
+  treatment_n_status: string; // e.g., "Completed", "Ongoing", "Planned"
+  treatment_n_details?: string;
+  treatment_n_date?: string; // YYYY-MM-DD or description
+  treatment_n_pa_required?: boolean | string;
+}
+
 export interface VitalSigns {
   vital_bp: string; // e.g., "120/80 mmHg"
   vital_pulse: string; // e.g., "75 bpm"
@@ -35,6 +52,14 @@ export interface PatientInfo {
   primary_diagnosis_text: string;
   secondaryDiagnoses: string[];
   labs: LabResult[];
+  
+  // New fields based on feedback and UI
+  patient_severity_class?: string; // e.g., "NYHA Class III", "GAF 45", "Mild"
+  medications?: Medication[];
+  treatments?: Treatment[];
+  last_imaging_summary?: string; // For general cases or specific mental health reports
+  last_ecg_summary?: string;   // For general cases or specific mental health reports
+  condition_category?: 'General Medicine' | 'Cardiology' | 'Pulmonology' | 'Mental Health' | 'Neurology' | 'Other';
 }
 
 export interface Scenario {
@@ -386,9 +411,21 @@ export const scenarios: Scenario[] = [
         secondaryDiagnoses: ['Atrial Fibrillation (chronic)', 'Hypertension', 'Hyperlipidemia'],
         labs: [ // Focus on labs relevant to stroke workup and tPA consideration
             { lab_n_name: 'Glucose (fingerstick)', lab_n_value: '150 mg/dL', lab_n_flag: 'H', lab_n_trend: 'Stable' },
-            { lab_n_name: 'INR', lab_n_value: '1.1', lab_n_flag: 'N', lab_n_trend: 'Stable' }, // Important for tPA
-            { lab_n_name: 'Platelets', lab_n_value: '220,000/uL', lab_n_flag: 'N', lab_n_trend: 'Stable' }, // Important for tPA
+            { lab_n_name: 'INR', lab_n_value: '1.1', lab_n_flag: 'N', lab_n_trend: 'Stable' }, 
+            { lab_n_name: 'Platelets', lab_n_value: '220,000/uL', lab_n_flag: 'N', lab_n_trend: 'Stable' }, 
         ],
+        patient_severity_class: 'NIHSS Score 12 (Moderate-Severe)',
+        medications: [
+            { med_n_name: 'Alteplase (tPA)', med_n_dosage: 'Per protocol', med_n_route: 'IV', med_n_frequency: 'Once', med_n_status: 'Administered (if eligible)' },
+            { med_n_name: 'Aspirin', med_n_dosage: '325mg PO', med_n_route: 'PO', med_n_frequency: 'Once, then daily', med_n_status: 'Active' },
+        ],
+        treatments: [
+            { treatment_n_name: 'CT Head without contrast', treatment_n_status: 'Completed', treatment_n_details: 'No hemorrhage.' },
+            { treatment_n_name: 'Neurological Checks Q15min', treatment_n_status: 'Ongoing' },
+        ],
+        last_imaging_summary: 'CT Head: No acute bleed. MRI pending to confirm infarct.',
+        last_ecg_summary: 'Atrial fibrillation with rapid ventricular response.',
+        condition_category: 'Neurology',
     },
   }
 ];

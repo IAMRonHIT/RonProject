@@ -7,7 +7,7 @@ const config = {
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
-    "*.{js,ts,jsx,tsx,mdx}",
+    "*.{js,ts,jsx,tsx,mdx}", // Ensure this path correctly targets your root-level component files if any
   ],
   prefix: "",
   theme: {
@@ -77,7 +77,7 @@ const config = {
         "glow-magenta-md": "0 0 15px 3px rgba(255, 0, 255, 0.5)",
         "glow-panel-cyan": "0 8px 32px rgba(0, 243, 255, 0.2)", // Outer glow for panels
         "glow-panel-magenta": "0 8px 32px rgba(255, 0, 255, 0.2)",
-        // Subtle inner edge for glass (can be combined with outer glow if needed or used on pseudo-elements)
+        // Subtle inner edge for glass
         "inner-edge-cyan": "inset 0 0 2px 0px rgba(0, 243, 255, 0.3)",
         "inner-edge-white": "inset 0 0 2px 0px rgba(255, 255, 255, 0.2)",
       },
@@ -106,24 +106,53 @@ const config = {
           "50%": { opacity: "0.5" },
           "70%": { opacity: "0.9" },
           "90%": { opacity: "0.4" }
-        }
+        },
+        // Keyframes from CarePlanTemplate
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "fade-in-up": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-in-down": {
+          "0%": { opacity: "0", transform: "translateY(-20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(30px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 4s infinite alternate ease-in-out",
         "pulse-glow-slow": "pulse-glow 6s infinite alternate ease-in-out",
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite", // Tailwind's default pulse, but potentially customized here
         "projector-flicker": "projector-flicker 0.6s ease-in-out forwards",
+        // Animation utilities from CarePlanTemplate
+        "fade-in": "fade-in 0.5s ease-out forwards",
+        "fade-in-up": "fade-in-up 0.5s ease-out forwards",
+        "fade-in-down": "fade-in-down 0.5s ease-out forwards",
+        "slide-in-right": "slide-in-right 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"], // Ensure --font-inter is defined in your global CSS and Inter font is loaded
         audiowide: ["var(--font-audiowide)", "cursive"],
         mono: ["var(--font-fira-code)", "monospace"],
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography")
+    // If you want to use a plugin for scrollbar styling, you can add it here.
+    // For example: require('tailwind-scrollbar'), then configure it in theme.extend.
+    // However, the CarePlanTemplate uses custom CSS classes for scrollbars (.styled-scrollbar)
+    // which should be defined in a global CSS file.
+  ],
 } satisfies Config
 
 export default config

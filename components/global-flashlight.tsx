@@ -1,11 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useRef, useState, createContext, useContext } from "react"
-import type Spline from "@splinetool/react-spline"
-import type { SPEObject } from "@splinetool/runtime"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { FlashlightBeam } from "./flashlight-beam"
 
 /**
  * FlashlightContext provides state and position data for the flashlight effect
@@ -27,65 +24,31 @@ const FlashlightContext = createContext<FlashlightContextType>({
 
 export const useFlashlight = () => useContext(FlashlightContext)
 
-interface FlashlightControllerProps {
+interface GlobalFlashlightProps {
   children: React.ReactNode
 }
 
 /**
- * FlashlightController manages the flashlight behavior, position tracking,
- * and robot head movement in the 3D scene
+ * GlobalFlashlight provides site-wide flashlight effect for enhanced visual experience
+ * This component is designed to work without Spline dependencies for global use
  */
-export function FlashlightController({ children }: FlashlightControllerProps) {
+export function GlobalFlashlight({ children }: GlobalFlashlightProps) {
   // Device detection
   const isMobile = useIsMobile()
 
   // Flashlight state
-  const [isFlashlightActive, setIsFlashlightActive] = useState(false)
+  const [isFlashlightActive, setIsFlashlightActive] = useState(true)
   const [flashlightPosition, setFlashlightPosition] = useState({ x: 0, y: 0 })
   const [flashlightDirection, setFlashlightDirection] = useState({ x: 0, y: 0, z: 1 })
-  const [flashlightIntensity, setFlashlightIntensity] = useState(0)
-
-  // Spline scene references
-  const splineRef = useRef<typeof Spline | null>(null)
-  const robotRef = useRef<SPEObject | null>(null)
-  const robotHeadRef = useRef<SPEObject | null>(null)
-  const flashlightRef = useRef<SPEObject | null>(null)
+  const [flashlightIntensity, setFlashlightIntensity] = useState(1.2) // High intensity by default for visibility
 
   // Mouse tracking
   const containerRef = useRef<HTMLDivElement>(null)
   const mousePosition = useRef({ x: 0, y: 0 })
   const isMouseInContainer = useRef(false)
 
-  // Handle Spline scene load
-  const handleSplineLoad = (spline: any) => {
-    splineRef.current = spline
-
-    // Try to find robot and flashlight objects
-    const scene = spline.findObjectByName("Scene")
-    if (scene) {
-      // Find robot and related objects by traversing the scene
-      scene.traverse((object: SPEObject) => {
-        // Store references to important objects
-        if (object.name.toLowerCase().includes("robot")) {
-          robotRef.current = object
-          console.log("Found robot:", object.name)
-        }
-        if (object.name.toLowerCase().includes("head")) {
-          robotHeadRef.current = object
-          console.log("Found robot head:", object.name)
-        }
-        if (object.name.toLowerCase().includes("light") || object.name.toLowerCase().includes("flash")) {
-          flashlightRef.current = object
-          console.log("Found flashlight:", object.name)
-        }
-      })
-    }
-
-    // Activate flashlight immediately with higher intensity
-    setIsFlashlightActive(true)
-    setFlashlightIntensity(1.4) // Higher intensity for a brighter teal effect
-
-    // Set initial position to center of container
+  // Set up dimensions and initial position on mount
+  useEffect(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect()
       setFlashlightPosition({
@@ -93,9 +56,9 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
         y: rect.height / 2,
       })
     }
-  }
+  }, [])
 
-  // Track mouse movement
+  // Track mouse movement globally
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return
@@ -134,7 +97,7 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
       isMouseInContainer.current = false
     }
 
-    // Add event listeners to document for smoother tracking
+    // Add event listeners to document for global tracking
     document.addEventListener("mousemove", handleMouseMove)
 
     const container = containerRef.current
@@ -195,8 +158,7 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
     }
   }, [])
 
-  // Animation loop for smooth flashlight movement and robot head tracking
-  // with performance optimizations
+  // Animation loop for smooth flashlight movement
   useEffect(() => {
     let animationFrameId: number
     let lastAnimationTime = 0
@@ -216,58 +178,14 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
       
       lastAnimationTime = timestamp - (deltaTime % frameInterval)
       
-      // Update robot head orientation to follow flashlight position
-      if (isFlashlightActive) {
-        try {
-          // Determine which object to rotate (head preferred, then flashlight, then robot)
-          const targetObject = robotHeadRef.current || flashlightRef.current || robotRef.current
-
-          if (targetObject && targetObject.rotation) {
-            // Calculate target rotation based on flashlight direction
-            // Adjust rotation limits and sensitivity based on device
-            const rotationSensitivity = isMobile ? 0.3 : 0.5
-            const maxRotation = isMobile ? 0.2 : 0.4
-
-            // Calculate target rotation with limits
-            const targetRotationY = Math.max(
-              -maxRotation,
-              Math.min(maxRotation, flashlightDirection.x * rotationSensitivity),
-            )
-
-            const targetRotationX = Math.max(
-              -maxRotation,
-              Math.min(maxRotation, flashlightDirection.y * rotationSensitivity),
-            )
-
-            // Apply smooth rotation with easing
-            // Adapt easing speed based on delta time for consistent animation regardless of frame rate
-            const easingFactor = Math.min(1, deltaTime / 16.67) * 0.1
-            targetObject.rotation.y += (targetRotationY - targetObject.rotation.y) * easingFactor
-            targetObject.rotation.x += (targetRotationX - targetObject.rotation.x) * easingFactor
-
-            // Optional: Add subtle bobbing motion for more lifelike appearance
-            if (!isMouseInContainer.current) {
-              // Use timestamp instead of Date.now() for more consistent animations
-              const time = timestamp / 2000
-              targetObject.rotation.x += Math.sin(time) * 0.003 * (deltaTime / 16.67)
-              targetObject.rotation.y += Math.cos(time * 0.7) * 0.002 * (deltaTime / 16.67)
-            }
-          }
-        } catch (error) {
-          // Silently handle errors with Spline object manipulation
-          // Avoid console logs in production for better performance
-        }
-      }
-
       // Automatic movement when mouse is not in container
       if (!isMouseInContainer.current && isFlashlightActive && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect()
         const centerX = rect.width / 2
         const centerY = rect.height / 2
-
+        
         // Calculate time-based position for automatic movement
         // Use different patterns for mobile vs desktop
-        // Use timestamp instead of Date.now() for better animation consistency
         const time = timestamp / (isMobile ? 2000 : 3000)
         
         // Reduce animation complexity on mobile
@@ -284,7 +202,7 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
           x = centerX + Math.cos(time) * radius + Math.sin(time * 1.5) * (radius * 0.3)
           y = centerY + Math.sin(time * 0.7) * radius + Math.cos(time * 2) * (radius * 0.2)
         }
-
+        
         // Smooth transition to automatic position with adaptive speed
         // Scale transition speed by delta time for frame-rate independence
         const baseSpeed = isMobile ? 0.04 : 0.02
@@ -298,10 +216,10 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
           y: prev.y + (y - prev.y) * cappedSpeed,
         }))
       }
-
+      
       animationFrameId = requestAnimationFrame(animate)
     }
-
+    
     animationFrameId = requestAnimationFrame(animate)
     
     return () => {
@@ -318,10 +236,10 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
         flashlightIntensity,
       }}
     >
-      <div ref={containerRef} className="relative w-full h-full">
+      <div ref={containerRef} className="relative w-full min-h-screen">
         {children}
+        <FlashlightBeam enhancedMode={true} />
       </div>
     </FlashlightContext.Provider>
   )
 }
-

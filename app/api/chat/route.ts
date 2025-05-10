@@ -2,16 +2,19 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, Content } from "@google/generative-ai";
 import { queryKnowledgeBase, generateContextEnrichedPrompt } from '@/lib/rag-service';
 
-const MODEL_NAME = "gemini-2.0-flash-lite"; // Use the specific model
-const API_KEY = process.env.GOOGLE_API_KEY;
+// Use a valid model name - Gemini 2.0 Flash Lite is the latest version for text generation
+const MODEL_NAME = "gemini-2.0-flash-lite"; // Fallback to a stable model version
+const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY; // Try both possible key names
+
+// Log API key status for debugging (without leaking key values)
+console.log(`API key status: ${API_KEY ? 'CONFIGURED' : 'MISSING'}`);
 
 if (!API_KEY) {
-  console.error("GOOGLE_API_KEY environment variable is not set.");
-  // Optionally, throw an error or handle this case appropriately
-  // For now, we'll let requests fail downstream if the key is missing at runtime.
+  console.error("Neither GOOGLE_API_KEY nor GOOGLE_AI_API_KEY environment variables are set.");
 }
 
-const genAI = new GoogleGenerativeAI(API_KEY || ""); // Initialize with API key or empty string if missing
+// Initialize the API client with robust error handling
+const genAI = new GoogleGenerativeAI(API_KEY || "");
 
 // Safety settings - adjust as needed
 const safetySettings = [
@@ -80,12 +83,13 @@ export async function POST(request: Request) {
     }
 
     // Start chat with the potentially adjusted history
+    // Create a simpler chat configuration with sensible defaults
     const chat = model.startChat({
-      history: formattedHistory, // Use the adjusted history
+      history: formattedHistory,
       generationConfig: {
-        maxOutputTokens: 1000, // Adjust as needed
-        temperature: 0.7, // Adjust for desired creativity/factuality
-      },
+        maxOutputTokens: 1024,
+        temperature: 0.7
+      }
     });
 
     // Create a system prompt with context from the RAG system
@@ -96,20 +100,44 @@ export async function POST(request: Request) {
 
     // If potential lead, add lead capture instructions
     if (isPotentialLeadMessage) {
-      enrichedPrompt += "\n\nThis user appears to be a potential lead. Politely gather contact information (name, email, company) if they haven't provided it. If they've shown specific interest in Ron AI services, help qualify them by asking about their timeline, budget, or specific needs. Be helpful and conversational, not pushy.";
+      enrichedPrompt += "\n\nPOTENTIAL LEAD DETECTED:\nThis user appears to be a potential lead. Follow these guidelines in your response:\n- Politely gather contact information (name, email, company) if not already provided\n- If they've shown interest in specific Ron AI services, help qualify their needs\n- Ask relevant questions about their timeline, budget, or specific requirements\n- Maintain a helpful, conversational tone - never be pushy\n- Mention that a team member from Ron AI can follow up with more detailed information";
     }
 
-    console.log("Sending message to Gemini:", enrichedPrompt);
-    const result = await chat.sendMessage(enrichedPrompt);
-    const response = result.response;
+    console.log("Sending message to Gemini with system prompt:", enrichedPrompt.substring(0, 100) + "...");
+    
+    let botReply = 'I couldn\'t retrieve a response right now. Please try again later.';
+    
+    try {
+      // Basic validation of API key before making the request
+      if (!API_KEY) {
+        console.error("No API key available");
+        return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+      }
 
-    if (!response) {
-        console.error("Gemini API returned no response.");
-        return NextResponse.json({ error: 'No response from AI model' }, { status: 500 });
+      // Send message to Gemini model with timeout handling
+      const result: any = await Promise.race([
+        chat.sendMessage(enrichedPrompt),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), 10000))
+      ]);
+
+      // Extract response text
+      const response = result?.response;
+      if (response) {
+        botReply = response.text();
+        console.log("Received reply from Gemini. Length:", botReply.length);
+        console.log("Reply preview:", botReply.substring(0, 100) + "...");
+      }
+    } catch (error: any) {
+      // Log the full error details for debugging
+      console.error("Error from Gemini API:", error?.message || 'Unknown error');
+      
+      // Return a user-friendly error but with a 200 status so the UI can handle it gracefully
+      return NextResponse.json({ 
+        reply: "Sorry, I'm having trouble connecting right now. Please try again later.",
+        error: error?.message || 'Unknown error',
+        isPotentialLead: false
+      });
     }
-
-    const botReply = response.text();
-    console.log("Received reply from Gemini:", botReply);
 
     // Prepare response object
     const responseData = { 

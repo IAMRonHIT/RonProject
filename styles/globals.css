@@ -1,18 +1,11 @@
+/* Import Tailwind's base, components, and utilities */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
+/* Base layer for CSS variables and global styles */
 @layer base {
+  /* Light theme variables (default) */
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
@@ -39,6 +32,8 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    /* Sidebar specific variables (light theme) */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -47,7 +42,12 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Define --font-inter if you haven't already, e.g., in your Tailwind config or here */
+    /* --font-inter: "Inter", sans-serif; */
   }
+
+  /* Dark theme variables */
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -73,6 +73,8 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* Sidebar specific variables (dark theme) */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -84,11 +86,99 @@ body {
   }
 }
 
+/* Apply base styles */
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border; /* Applies border color using CSS variable */
   }
+
+  html,
+  body,
+  /* Ensure your React root element (often #root or #__next) takes full height */
+  #root, #__next {
+    height: 100%;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground; /* Applies background and text color using CSS variables */
+    font-family: var(--font-inter, "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+    -webkit-font-smoothing: antialiased; /* Improves font rendering on WebKit browsers */
+    -moz-osx-font-smoothing: grayscale; /* Improves font rendering on Firefox */
   }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Scrollbar styling from CarePlanTemplate */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .styled-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .styled-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Consider using theme variables here if needed */
+    border-radius: 10px;
+  }
+  .styled-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* Consider using theme variables here */
+    border-radius: 10px;
+  }
+  .styled-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* Consider using theme variables here */
+  }
+
+  /* Apply dark theme scrollbar styles if needed */
+  .dark .styled-scrollbar::-webkit-scrollbar-track {
+    background: #2d3748; /* Example dark track color */
+  }
+  .dark .styled-scrollbar::-webkit-scrollbar-thumb {
+    background: #4a5568; /* Example dark thumb color */
+  }
+  .dark .styled-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #718096; /* Example dark thumb hover color */
+  }
+}
+
+/* Keyframe animations (also defined in tailwind.config.js for utility classes) */
+/* You might not need these here if you exclusively use Tailwind's animate-* utilities */
+/* However, including them ensures they are available if referenced directly in CSS */
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.animate-fade-in { /* Optional: if you want a CSS class directly */
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { /* Optional */
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down { /* Optional */
+  animation: fade-in-down 0.5s ease-out forwards;
+}
+
+@keyframes slide-in-right {
+  0% { opacity: 0; transform: translateX(30px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right { /* Optional */
+  animation: slide-in-right 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }

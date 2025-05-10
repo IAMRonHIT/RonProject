@@ -21,216 +21,229 @@ class PerplexityClient:
     Client for interacting with Perplexity's Sonar Reasoning Pro API
     """
 
+    # Replacing with the user-provided schema
     ADPIE_SCHEMA = {
-        "type": "object",
-        "properties": {
-            "patientData": {
-                "type": ["object", "null"],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CarePlanJsonData",
+      "description": "Schema for AI-Powered Comprehensive Plan of Care data",
+      "type": "object",
+      "properties": {
+        "patientData": {
+          "type": "object",
                 "properties": {
-                    "patient_full_name": {"type": ["string", "null"]},
-                    "patient_age": {"type": ["string", "number", "null"]},
-                    "patient_gender": {"type": ["string", "null"]},
-                    "patient_mrn": {"type": ["string", "null"]},
-                    "patient_dob": {"type": ["string", "null"]},
-                    "patient_insurance_plan": {"type": ["string", "null"]},
-                    "patient_policy_number": {"type": ["string", "null"]},
-                    "patient_primary_provider": {"type": ["string", "null"]},
-                    "patient_admission_date": {"type": ["string", "null"]},
-                    "allergies": {"type": ["array", "null"], "items": {"type": "string"}},
+                    "patient_full_name": {"type": "string"},
+                    "patient_age": {"type": ["string", "number"]},
+                    "patient_gender": {"type": "string"},
+                    "patient_mrn": {"type": "string"},
+                    "patient_dob": {"type": "string"},
+                    "patient_insurance_plan": {"type": "string"},
+                    "patient_policy_number": {"type": "string"},
+                    "patient_primary_provider": {"type": "string"},
+                    "patient_admission_date": {"type": "string"},
+                    "allergies": {"type": "array", "items": {"type": "string"}},
                     "vitalSigns": {
-                        "type": ["object", "null"],
+                        "type": "object",
                         "properties": {
-                            "vital_bp": {"type": ["string", "null"]},
-                            "vital_pulse": {"type": ["string", "null"]},
-                            "vital_resp_rate": {"type": ["string", "null"]},
-                            "vital_temp": {"type": ["string", "null"]},
-                            "vital_o2sat": {"type": ["string", "null"]},
-                            "vital_pain_score": {"type": ["string", "null"]},
-                        },
-                        "additionalProperties": False
-                    },
-                    "nyha_class_description": {"type": ["string", "null"]},
-                },
-                "additionalProperties": False
-            },
-            "clinicalData": {
-                "type": ["object", "null"],
-                "properties": {
-                    "primary_diagnosis_text": {"type": ["string", "null"]},
-                    "secondaryDiagnoses": {"type": ["array", "null"], "items": {"type": "string"}},
-                    "labs": {
-                        "type": ["array", "null"],
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "lab_n_name": {"type": ["string", "null"]},
-                                "lab_n_value": {"type": ["string", "null"]},
-                                "lab_n_flag": {"type": ["string", "null"]},
-                                "lab_n_trend": {"type": ["string", "null"]},
-                            },
-                            "additionalProperties": False
+                            "vital_bp": {"type": "string"},
+                            "vital_pulse": {"type": "string"},
+                            "vital_resp_rate": {"type": "string"},
+                            "vital_temp": {"type": "string"},
+                            "vital_o2sat": {"type": "string"},
+                            "vital_pain_score": {"type": "string"}
                         }
                     },
-                    "medications": {
-                        "type": ["array", "null"],
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "med_n_name": {"type": ["string", "null"]},
-                                "med_n_dosage": {"type": ["string", "null"]},
-                                "med_n_route": {"type": ["string", "null"]},
-                                "med_n_frequency": {"type": ["string", "null"]},
-                                "med_n_status": {"type": ["string", "null"]},
-                                "med_n_pa_required": {"type": ["boolean", "string", "null"]},
-                            },
-                            "additionalProperties": False
-                        }
-                    },
-                    "treatments": {
-                        "type": ["array", "null"],
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "treatment_n_name": {"type": ["string", "null"]},
-                                "treatment_n_status": {"type": ["string", "null"]},
-                                "treatment_n_details": {"type": ["string", "null"]},
-                                "treatment_n_date": {"type": ["string", "null"]},
-                                "treatment_n_pa_required": {"type": ["boolean", "string", "null"]},
-                            },
-                            "additionalProperties": False
-                        }
-                    },
-                    "last_imaging_summary": {"type": ["string", "null"]},
-                    "last_ecg_summary": {"type": ["string", "null"]},
-                },
-                "additionalProperties": False
-            },
-            "aiAgents": {
-                "type": ["array", "null"],
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": ["string", "null"]},
-                        "specialty": {"type": ["string", "null"]},
-                    },
-                    "additionalProperties": True 
+                    "nyha_class_description": {"type": "string"}
                 }
             },
-            "priorAuthItems": {
-                "type": ["array", "null"],
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": ["string", "null"]},
-                        "item": {"type": ["string", "null"]},
-                        "type": {"type": ["string", "null"]},
-                        "status": {"type": ["string", "null"]},
-                        "submittedDate": {"type": ["string", "null"]},
-                        "approvedDate": {"type": ["string", "null"]},
-                        "expirationDate": {"type": ["string", "null"]},
-                        "estimatedResponse": {"type": ["string", "null"]},
-                        "estimatedSubmission": {"type": ["string", "null"]},
-                        "confidence": {"type": ["string", "number", "null"]},
-                        "criteria": {
-                            "type": ["array", "null"],
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {"type": ["string", "null"]},
-                                    "met": {"type": ["boolean", "string", "null"]},
-                                    "notes": {"type": ["string", "null"]},
-                                },
-                                "additionalProperties": False
+            "clinicalData": {
+                "type": "object",
+                "properties": {
+                    "primary_diagnosis_text": {"type": "string"},
+                    "secondaryDiagnoses": {"type": "array", "items": {"type": "string"}},
+                    "labs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "lab_n_name": {"type": "string"},
+                                "lab_n_value": {"type": "string"},
+                                "lab_n_flag": {"type": "string"},
+                                "lab_n_trend": {"type": "string"}
                             }
                         }
                     },
-                    "additionalProperties": True 
+                    "medications": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "med_n_name": {"type": "string"},
+                                "med_n_dosage": {"type": "string"},
+                                "med_n_route": {"type": "string"},
+                                "med_n_frequency": {"type": "string"},
+                                "med_n_status": {"type": "string"},
+                                "med_n_pa_required": {"type": ["boolean", "string"]}
+                            }
+                        }
+                    },
+                    "treatments": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "treatment_n_name": {"type": "string"},
+                                "treatment_n_status": {"type": "string"},
+                                "treatment_n_details": {"type": "string"},
+                                "treatment_n_date": {"type": "string"},
+                                "treatment_n_pa_required": {"type": ["boolean", "string"]}
+                            }
+                        }
+                    },
+                    "last_imaging_summary": {"type": "string"},
+                    "last_ecg_summary": {"type": "string"}
                 }
             },
-            "sourcesData": {
-                "type": ["array", "null"],
+            "aiAgents": {
+                "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
-                        "id": {"type": ["string", "null"]},
-                        "title": {"type": ["string", "null"]},
-                        "type": {"type": ["string", "null"]},
-                        "url": {"type": ["string", "null"]},
-                        "snippet": {"type": ["string", "null"]},
-                        "retrieval_date": {"type": ["string", "null"]},
-                        "agent_source": {"type": ["string", "null"]},
+                        "name": {"type": "string"},
+                        "specialty": {"type": "string"}
                     },
                     "additionalProperties": True
                 }
             },
-            "assessment_subjective_chief_complaint": {"type": ["string", "null"]},
-            "assessment_subjective_hpi": {"type": ["string", "null"]},
-            "assessment_subjective_goals": {"type": ["string", "null"]},
-            "assessment_subjective_other": {"type": ["string", "null"]},
-            "assessment_objective_vitals_summary": {"type": ["string", "null"]},
-            "assessment_objective_physical_exam": {"type": ["string", "null"]},
-            "assessment_objective_diagnostics": {"type": ["string", "null"]},
-            "assessment_objective_meds_reviewed": {"type": ["string", "null"]},
-            "assessment_objective_other": {"type": ["string", "null"]},
-            "diagnosis_1_nanda": {"type": ["string", "null"]},
-            "diagnosis_1_related_to": {"type": ["string", "null"]},
-            "diagnosis_1_evidence": {"type": ["string", "null"]},
-            "diagnosis_2_nanda": {"type": ["string", "null"]},
-            "diagnosis_2_related_to": {"type": ["string", "null"]},
-            "diagnosis_2_evidence": {"type": ["string", "null"]},
-            "diagnosis_3_nanda_risk": {"type": ["string", "null"]},
-            "diagnosis_3_related_to_risk_factors": {"type": ["string", "null"]},
-            "goal_1_description": {"type": ["string", "null"]},
-            "goal_1_target_date": {"type": ["string", "null"]},
-            "goal_1_outcome_1": {"type": ["string", "null"]},
-            "goal_1_outcome_2": {"type": ["string", "null"]},
-            "goal_2_description": {"type": ["string", "null"]},
-            "goal_2_target_date": {"type": ["string", "null"]},
-            "goal_2_outcome_1": {"type": ["string", "null"]},
-            "Discipline_1": {"type": ["string", "null"]},
-            "discipline_1_plan_item_1": {"type": ["string", "null"]},
-            "discipline_1_plan_item_2": {"type": ["string", "null"]},
-            "Discipline_2": {"type": ["string", "null"]},
-            "discipline_2_plan_item_1": {"type": ["string", "null"]},
-            "intervention_target_1": {"type": ["string", "null"]},
-            "intervention_1_action": {"type": ["string", "null"]},
-            "intervention_1_rationale": {"type": ["string", "null"]},
-            "intervention_2_action": {"type": ["string", "null"]},
-            "intervention_2_rationale": {"type": ["string", "null"]},
-            "intervention_3_action_pending": {"type": ["string", "null"]},
-            "intervention_3_rationale": {"type": ["string", "null"]},
-            "intervention_target_2": {"type": ["string", "null"]},
-            "intervention_4_action": {"type": ["string", "null"]},
-            "intervention_4_rationale": {"type": ["string", "null"]},
-            "evaluation_1_date": {"type": ["string", "null"]},
-            "evaluation_1_status": {"type": ["string", "null"]},
-            "evaluation_1_evidence": {"type": ["string", "null"]},
-            "evaluation_1_revision": {"type": ["string", "null"]},
-            "evaluation_2_date": {"type": ["string", "null"]},
-            "evaluation_2_status": {"type": ["string", "null"]},
-            "evaluation_2_evidence": {"type": ["string", "null"]},
-            "evaluation_2_revision": {"type": ["string", "null"]},
-            "overall_plan_summary": {"type": ["string", "null"]},
-            "next_step_1": {"type": ["string", "null"]},
-            "next_step_2": {"type": ["string", "null"]},
-            "next_step_3": {"type": ["string", "null"]},
-            "notification_title": {"type": ["string", "null"]},
-            "notification_message": {"type": ["string", "null"]},
-            "notification_detail_1": {"type": ["string", "null"]},
-            "notification_detail_2": {"type": ["string", "null"]},
+            "priorAuthItems": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "item": {"type": "string"},
+                        "type": {"type": "string"},
+                        "status": {"type": "string"},
+                        "submittedDate": {"type": "string"},
+                        "approvedDate": {"type": "string"},
+                        "expirationDate": {"type": "string"},
+                        "estimatedResponse": {"type": "string"},
+                        "estimatedSubmission": {"type": "string"},
+                        "confidence": {"type": "string"},
+                        "criteria": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "met": {"type": ["boolean", "string"]},
+                                    "notes": {"type": "string"}
+                                }
+                            }
+                        }
+                    },
+                    "additionalProperties": True
+                }
+            },
+            "sourcesData": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "title": {"type": "string"},
+                        "type": {"type": "string"},
+                        "url": {"type": "string"},
+                        "snippet": {"type": "string"},
+                        "retrieval_date": {"type": "string"},
+                        "agent_source": {"type": "string"}
+                    },
+                    "additionalProperties": True
+                }
+            },
+            "assessment_subjective_chief_complaint": {"type": "string"},
+            "assessment_subjective_hpi": {"type": "string"},
+            "assessment_subjective_goals": {"type": "string"},
+            "assessment_subjective_other": {"type": "string"},
+            "assessment_objective_vitals_summary": {"type": "string"},
+            "assessment_objective_physical_exam": {"type": "string"},
+            "assessment_objective_diagnostics": {"type": "string"},
+        "assessment_objective_meds_reviewed": { "type": "string" },
+        "assessment_objective_other": { "type": "string" },
+        "nursingDiagnoses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "diagnosis_nanda": { "type": "string" },
+              "diagnosis_related_to": { "type": "string" },
+              "diagnosis_evidence": { "type": "array", "items": { "type": "string" } },
+              "diagnosis_is_risk": { "type": "boolean" },
+              "diagnosis_risk_factors": { "type": "array", "items": { "type": "string" } },
+              "goals": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "goal_description": { "type": "string" },
+                    "goal_target_date": { "type": "string", "format": "date" },
+                    "goal_outcomes": { "type": "array", "items": { "type": "string" } },
+                    "goal_rationale": { "type": "string" }
+                  },
+                  "required": ["goal_description", "goal_outcomes"]
+                }
+              },
+              "interventions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "intervention_action": { "type": "string" },
+                    "intervention_rationale": { "type": "string" },
+                    "intervention_is_pending": { "type": "boolean" }
+                  },
+                  "required": ["intervention_action", "intervention_rationale"]
+                }
+              }
+            },
+            "required": ["diagnosis_nanda", "diagnosis_evidence", "goals", "interventions"]
+          }
         },
-        "additionalProperties": False,
-        "required": [
-            "patientData", 
-            "clinicalData",
-            "assessment_subjective_chief_complaint",
-            "diagnosis_1_nanda",
-            "goal_1_description",
-            "intervention_1_action",
-            "evaluation_1_status",
-            "overall_plan_summary"
-        ]
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evaluation_goal_description_ref": { "type": "string" },
+              "evaluation_date": { "type": "string", "format": "date" },
+              "evaluation_status": { "type": "string" },
+              "evaluation_evidence": { "type": "string" },
+              "evaluation_revision": { "type": "string" },
+              "evaluation_rationale": { "type": "string" }
+            },
+            "required": ["evaluation_goal_description_ref", "evaluation_evidence"]
+          }
+        },
+        "interdisciplinaryPlan": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "discipline": { "type": "string" },
+                    "plan_item": { "type": "string" }
+                },
+                "required": ["discipline", "plan_item"]
+            }
+        },
+        "overall_plan_summary": { "type": "string" },
+        "next_steps": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "notification_title": { "type": "string" },
+        "notification_message": { "type": "string" },
+        "notification_detail_1": { "type": "string" },
+        "notification_detail_2": { "type": "string" }
+      },
+      "required": ["patientData", "clinicalData", "nursingDiagnoses", "evaluations", "next_steps"]
     }
+
 
     def __init__(self, api_key: Optional[str] = None):
         """
@@ -246,8 +259,60 @@ class PerplexityClient:
         self.base_url = "https://api.perplexity.ai"
         self.chat_endpoint = f"{self.base_url}/chat/completions"
         
-        # Verify API key is valid upon initialization
-        self._validate_api_key()
+        # Removed blocking API key validation during initialization
+        # self._validate_api_key() 
+        # Validation will happen implicitly on the first actual API call.
+
+    def _format_reasoning_as_markdown(self, reasoning_text: str) -> str:
+        """
+        Formats raw reasoning text into Markdown.
+        """
+        if not reasoning_text:
+            return ""
+
+        # Normalize line endings
+        markdown = reasoning_text.replace('\r\n', '\n')
+
+        # Headings: Convert lines like "Assessment:" or "Step 1:"
+        markdown = re.sub(r'^(Assessment|Diagnosis|Planning|Implementation|Evaluation|Conclusion|Summary):$', r'## \1:', markdown, flags=re.MULTILINE)
+        markdown = re.sub(r'^(Step\s*\d+):', r'### \1:', markdown, flags=re.MULTILINE)
+        markdown = re.sub(r'^(Rationale|Evidence|Considerations):$', r'#### \1:', markdown, flags=re.MULTILINE)
+
+        # Bold important keywords (case-insensitive, whole word)
+        keywords_to_bold = [
+            'ADPIE', 'NANDA', 'CHF', 'Congestive Heart Failure', 'Hypertension', 'Diabetes',
+            'Assessment', 'Diagnosis', 'Planning', 'Implementation', 'Evaluation',
+            'Goal', 'Outcome', 'Intervention', 'Rationale', 'Evidence', 'Risk for', 'Related to', 'As evidenced by'
+        ]
+        for keyword in keywords_to_bold:
+            # Match whole word, case insensitive
+            markdown = re.sub(r'\b(' + re.escape(keyword) + r')\b', r'**\1**', markdown, flags=re.IGNORECASE)
+
+        # Italicize source references (e.g., [S1], [3], [Source A])
+        markdown = re.sub(r'(\[\s*(?:S\d+|\d+|[A-Za-z]+)\s*\])', r'*\1*', markdown)
+        
+        # Format bulleted lists (lines starting with - or *)
+        markdown = re.sub(r'^\s*-\s+(.*)', r'* \1', markdown, flags=re.MULTILINE)
+        markdown = re.sub(r'^\s*\*\s+(.*)', r'* \1', markdown, flags=re.MULTILINE)
+
+        # Format numbered lists (lines starting with 1., 2., etc.)
+        markdown = re.sub(r'^\s*(\d+\.)\s+(.*)', r'\1 \2', markdown, flags=re.MULTILINE)
+
+        # Format blockquotes (lines starting with >)
+        markdown = re.sub(r'^\s*>\s*(.*)', r'> \1', markdown, flags=re.MULTILINE)
+
+        # Ensure proper paragraph spacing (convert single newlines within a block to space, multiple newlines to paragraph breaks)
+        # This is tricky with regex alone for complex cases, but a common approach is to split by double newlines, then process blocks
+        blocks = markdown.split('\n\n')
+        processed_blocks = []
+        for block in blocks:
+            # Join lines within a block that are not list items or headings
+            if not (block.startswith('* ') or block.startswith('#') or block.startswith('>') or re.match(r'^\d+\.\s', block)):
+                block = block.replace('\n', ' ') # Convert single newlines to spaces
+            processed_blocks.append(block.strip())
+        markdown = '\n\n'.join(processed_blocks)
+
+        return markdown.strip()
         
     def _validate_api_key(self) -> bool:
         """
@@ -260,7 +325,7 @@ class PerplexityClient:
         payload = {
             "model": "sonar-reasoning-pro",
             "messages": [{"role": "user", "content": "Hello"}],
-            "max_tokens": 5
+            "max_tokens": 8000
         }
         
         try:
@@ -269,7 +334,7 @@ class PerplexityClient:
                 self.chat_endpoint,
                 headers=headers,
                 json=payload,
-                timeout=5
+                timeout=15 # Increased timeout to 15 seconds
             )
             
             if response.status_code != 200:
@@ -320,7 +385,7 @@ class PerplexityClient:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                "max_tokens": 4000, 
+                "max_tokens": 8000, # Increased token limit
                 "stream": True,
                 "response_format": {
                     "type": "json_schema",
@@ -347,7 +412,8 @@ class PerplexityClient:
                 return
                 
             # Process the streaming response
-            full_response = ""
+            accumulated_content = "" # For the full message content
+            last_known_citations: List[str] = [] # To track and yield citations only when they change
             
             for line in response.iter_lines():
                 if line:
@@ -356,28 +422,58 @@ class PerplexityClient:
                         json_str = line_text[len('data: '):]
                         
                         if json_str == "[DONE]":
+                            logger.info("Received [DONE] signal from stream.")
                             break
                             
                         try:
                             chunk = json.loads(json_str)
-                            if chunk.get("choices") and chunk["choices"][0].get("delta") and chunk["choices"][0]["delta"].get("content"):
-                                content = chunk["choices"][0]["delta"]["content"]
-                                full_response += content
-                                # Yield content chunks as they arrive.
-                                yield {"type": "content_chunk", "content": content}
+                            
+                            # Extract and yield citations if they have changed
+                            current_citations = chunk.get("citations", []) # Perplexity API might include citations field
+                            if current_citations and current_citations != last_known_citations:
+                                logger.info(f"Yielding updated citations: {current_citations}")
+                                yield {"type": "citations", "content": current_citations}
+                                last_known_citations = current_citations
+                            
+                            # Extract delta content
+                            delta_content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            
+                            if delta_content:
+                                accumulated_content += delta_content
+                                # Yield raw content chunk
+                                yield {"type": "content_chunk", "content": delta_content}
+                                
                         except json.JSONDecodeError:
                             logger.warning(f"Skipping non-JSON line in stream: {json_str}")
                             continue
             
-            # Process the complete response after the stream has finished
-            logger.info("Streaming complete, now processing full response for reasoning and JSON extraction.")
-            final_result = self._process_response(full_response)
+            # Post-stream processing
+            logger.info("Streaming complete. Processing accumulated content.")
             
-            # Yield the complete result
-            yield {"type": "complete", "content": final_result}
+            # Extract Raw Reasoning
+            raw_reasoning = self._extract_reasoning_from_think_tags(accumulated_content)
+            logger.info(f"Raw reasoning extracted (first 100 chars): {raw_reasoning[:100]}")
+
+            # Format Reasoning
+            formatted_reasoning_markdown = self._format_reasoning_as_markdown(raw_reasoning)
+            logger.info(f"Formatted reasoning generated (first 100 chars): {formatted_reasoning_markdown[:100]}")
+            
+            # Yield Formatted Reasoning
+            yield {"type": "final_reasoning", "content": formatted_reasoning_markdown}
+            
+            # Extract Schema JSON
+            json_data = self._extract_json_from_response(accumulated_content)
+            if json_data:
+                 logger.info("JSON data extracted successfully.")
+            else:
+                 logger.warning("Failed to extract JSON data from accumulated content.")
+            
+            # Yield Schema JSON
+            yield {"type": "final_json", "content": json_data}
             
         except Exception as e:
             error_msg = f"Error in streaming: {str(e)}"
+            logger.exception("Exception during streaming care plan:") # Log full traceback
             logger.error(error_msg)
             yield {"type": "error", "content": error_msg}
     
@@ -394,26 +490,32 @@ class PerplexityClient:
         # Convert patient data to a formatted string
         patient_data_str = json.dumps(patient_data, indent=2)
         
-        # The system prompt with instructions for the model
+        # The system prompt with instructions for the model, updated for new schema and content requirements
         system_prompt = """
-        You are Ron of Ron AI, an expert clinical AI. 
-        Your primary task is to generate a comprehensive, evidence-based ADPIE nursing care plan.
+        You are Ron of Ron AI, an expert clinical AI specializing in comprehensive, evidence-based ADPIE nursing care plans.
         
-        First, provide your detailed clinical reasoning and analysis of the patient's situation. This reasoning should be thorough, evidence-based, and patient-centered, considering all relevant patient data.
-
-        Next, generate a structured JSON object for the care plan. This JSON object MUST strictly adhere to the JSON schema provided in the API request. 
-        Ensure all relevant sections of the schema are populated, including:
-        - `patientData`
-        - `clinicalData` (with `labs`, `medications`, `treatments`)
-        - All ADPIE sections (`assessment_*`, `diagnosis_*`, `planning_*` including `goal_*` and `Discipline_*`, `implementation_*`, `evaluation_*`)
-        - `overall_plan_summary` and `next_step_*` fields.
-        - `aiAgents`: For each agent, include `name`, `specialty`. Also, provide their specific contributions to each ADPIE section using dynamic keys like `agent_name_assessmentContribution`, `agent_name_diagnosisContribution`, etc., and any insights using keys like `agent_name_insight_1`, `agent_name_insight_2`. Include a confidence score like `agent_name_confidence_score`.
-        - `priorAuthItems`: Detail any anticipated prior authorizations, including criteria.
-        - `sourcesData`: List any evidence-based sources or citations used, including title, URL if applicable, and a brief snippet or relevance.
-        - `notification_title` and `notification_message` if any urgent alerts are warranted.
+        1.  **Reasoning First:** Begin your response with your detailed clinical reasoning enclosed in `<think>` tags. Analyze the patient data thoroughly.
+        2.  **Structured JSON:** Following the reasoning, provide a structured JSON object for the care plan. This JSON object MUST strictly adhere to the JSON schema provided in the API request.
+        
+        **JSON Content Requirements:**
+        
+        *   **Populate Fully:** Fill all relevant sections: `patientData`, `clinicalData`, `assessment_*`, `nursingDiagnoses`, `interdisciplinaryPlan`, `evaluations`, `overall_plan_summary`, `next_steps`, `aiAgents`, `priorAuthItems`, `sourcesData`, and `notification_*` fields if applicable.
+        *   **Nursing Diagnoses (Critical Detail):**
+            *   Identify priority nursing diagnoses (actual and risk).
+            *   For **each** diagnosis in the `nursingDiagnoses` array:
+                *   Provide the `diagnosis_nanda` label.
+                *   Provide the `diagnosis_related_to` factors.
+                *   If it's an actual diagnosis (`diagnosis_is_risk` is false or omitted), list **at least 5** specific subjective/objective assessment findings in the `diagnosis_evidence` array.
+                *   If it's a risk diagnosis (`diagnosis_is_risk` is true), list relevant risk factors in the `diagnosis_risk_factors` array.
+                *   Define **at least 3** patient-centered SMART goals in the `goals` array, each with a `goal_description`, `goal_target_date`, and measurable `goal_outcomes` (array of strings).
+                *   List **at least 10** specific nursing interventions in the `interventions` array, each with a detailed `intervention_action` and `intervention_rationale`. Use `intervention_is_pending` if appropriate.
+        *   **Citations:** Use inline citations (e.g., [S1], [S2]) within rationales or evidence fields where appropriate. Ensure every cited source corresponds to an entry in the `sourcesData` array within the JSON.
+        *   **`sourcesData` Array:** Populate this array comprehensively for all cited sources, including `id`, `title`, `type`, `url` (if available), `snippet`, `retrieval_date`, and `agent_source`.
+        
+        Ensure your reasoning is thorough and directly supports the diagnoses, goals, and interventions selected in the JSON plan. Prioritize patient safety and evidence-based practice.
         """
         
-        # The user prompt containing patient data
+        # The user prompt containing patient data (remains the same)
         user_prompt = f"""
         Please generate a comprehensive ADPIE nursing care plan for the patient detailed below, including your clinical reasoning, AI agent contributions, prior authorization considerations, and cited sources, followed by the structured JSON care plan.
 
@@ -422,31 +524,32 @@ class PerplexityClient:
         """
         return system_prompt, user_prompt
     
-    def _process_response(self, response_text: str) -> Dict[str, Any]:
-        """
-        Process the response from the Perplexity API
+    # _process_response is no longer called directly by stream_care_plan.
+    # Its logic has been integrated into the post-stream processing section of stream_care_plan.
+    # It can be kept if other methods might use it, or removed if not.
+    # For now, let's comment it out to ensure it's not accidentally used.
+    # def _process_response(self, response_text: str) -> Dict[str, Any]:
+    #     """
+    #     Process the response from the Perplexity API
         
-        Args:
-            response_text: The raw response text from the API
+    #     Args:
+    #         response_text: The raw response text from the API (expected to be message.content)
             
-        Returns:
-            Dict[str, Any]: The processed response with reasoning and JSON data
-        """
-        # Extract reasoning from think tags
-        reasoning = self._extract_reasoning_from_think_tags(response_text)
+    #     Returns:
+    #         Dict[str, Any]: The processed response with reasoning and JSON data
+    #     """
+    #     # Extract reasoning from think tags (searches the whole text)
+    #     reasoning = self._extract_reasoning_from_think_tags(response_text)
         
-        # Remove the reasoning part (and <think> tags) to isolate potential JSON
-        text_after_reasoning = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL).strip()
+    #     # Extract JSON data from the whole text, independent of reasoning block position
+    #     json_data = self._extract_json_from_response(response_text)
         
-        # Extract JSON data from the remaining text
-        json_data = self._extract_json_from_response(text_after_reasoning)
-        
-        # Return the formatted result (reasoning_steps is removed)
-        return {
-            "reasoning": reasoning,
-            "json_data": json_data
-        }
-    
+    #     # Return the formatted result
+    #     return {
+    #         "reasoning": reasoning,
+    #         "json_data": json_data
+    #     }
+
     def _extract_reasoning_from_think_tags(self, response_text: str) -> str:
         """
         Extract reasoning content from <think> tags
@@ -472,24 +575,42 @@ class PerplexityClient:
         Extract JSON content from the response
         
         Args:
-            response_text: The raw response text (expected to be JSON after <think> block removal)
+            response_text: The raw response text potentially containing JSON and other text.
             
         Returns:
-            Dict[str, Any]: The extracted JSON data
+            Dict[str, Any]: The extracted JSON data, or an empty dict if not found/invalid.
         """
-        # With json_schema, the API should return a valid JSON string directly
-        # after the <think> block (if any).
-        # We attempt to parse it directly.
-        if not response_text: # If the text after <think> block is empty
-            logger.warning("No text found after <think> block to parse as JSON.")
-            return {}
+        # Attempt to find the first '{' and its corresponding '}' to extract the JSON object
+        json_obj = None
+        start_index = response_text.find('{')
+        if start_index != -1:
+            brace_level = 0
+            for i, char in enumerate(response_text[start_index:]):
+                if char == '{':
+                    brace_level += 1
+                elif char == '}':
+                    brace_level -= 1
+                
+                if brace_level == 0:
+                    # Found a potential JSON object string
+                    potential_json_str = response_text[start_index : start_index + i + 1]
+                    try:
+                        json_obj = json.loads(potential_json_str)
+                        # Successfully parsed, break the loop
+                        break 
+                    except json.JSONDecodeError:
+                        # This substring wasn't valid JSON, continue searching if possible
+                        # (This simple version takes the first complete {} block)
+                        logger.warning(f"Found a '{{...}}' block but it wasn't valid JSON: {potential_json_str[:100]}...")
+                        # More robust logic could search for the *next* '{' here, 
+                        # but for now, we assume the first complete block is the target.
+                        pass # Continue to the end of the function which returns {} if json_obj is still None
             
-        try:
-            # The response_text here is expected to be the JSON string itself
-            return json.loads(response_text)
-        except json.JSONDecodeError as e:
-            logger.error(f"Error parsing JSON from response after <think> block: {e}")
-            logger.error(f"Problematic text: '{response_text[:500]}...'") # Log snippet
+        if json_obj:
+            return json_obj
+        else:
+            logger.warning("Could not find or parse a valid JSON object in the response text.")
+            logger.debug(f"Full response text for JSON extraction failure: {response_text}")
             return {}
 
 # Create a singleton instance

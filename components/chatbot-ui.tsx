@@ -46,8 +46,8 @@ interface Message {
 export function ChatbotUI() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { sender: 'system', text: "[Pasted text +44 lines]" },
-    { sender: 'bot', text: "Hi there! I'm Ron AI's assistant. How can I help you today?" }
+    { sender: 'system', text: "Chat initialized" },
+    { sender: 'bot', text: "Hi there! I'm Ronny, Ron AI's assistant. How can I help you today?" }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -199,8 +199,9 @@ export function ChatbotUI() {
     const userMessage = promptMessage || inputValue.trim();
     if (!userMessage) return;
 
-    // Add user message to state
-    setMessages((prev) => [...prev, { sender: 'user', text: userMessage }]);
+    // Add user message to chat history first
+    const userMsg: Message = { sender: 'user', text: userMessage };
+    setMessages([...messages, userMsg]);
     if (!promptMessage) setInputValue('');
     setIsLoading(true);
 
@@ -208,7 +209,14 @@ export function ChatbotUI() {
     extractUserInfo(userMessage);
 
     try {
-      // Send message to backend API route
+      // Only send relevant chat history to the API (not the message we just added)
+      // Filter out system messages and format for the API
+      const historyForApi = messages.filter(msg => msg.sender !== 'system');
+      
+      // Send message to backend API route with proper timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -216,22 +224,33 @@ export function ChatbotUI() {
         },
         body: JSON.stringify({ 
           message: userMessage, 
-          history: messages.filter(msg => msg.sender !== 'system'), // Exclude system messages
+          history: historyForApi,
           userContext: userInfo
         }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
+      // Parse the response even if it's not OK (our API now returns error info with 200)
       const data = await response.json();
+      
+      // Check for error response with custom message
+      if (!response.ok || data.error) {
+        console.warn("API returned an error:", data.error || 'Unknown error');
+        // Still use the reply if provided
+        if (data.reply) {
+          setMessages(prev => [...prev, { sender: 'bot', text: data.reply }]);
+          setIsLoading(false);
+          return;
+        }
+        throw new Error(data.error || 'Connection failed');
+      }
       
       // Check if response indicates we should display a form
       const shouldShowForm = data.showForm && ['contact', 'appointment', 'feedback'].includes(data.formType);
       const shouldShowPrompts = data.showPrompts && Array.isArray(data.promptOptions) && data.promptOptions.length > 0;
       
-      // Add bot response to state
       const botMessage: Message = { // Add explicit type annotation
         sender: 'bot', 
         text: data.reply,

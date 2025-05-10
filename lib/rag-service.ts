@@ -42,7 +42,7 @@ async function loadDocuments() {
 }
 
 // Split documents into chunks for better retrieval
-async function splitDocuments(docs) {
+async function splitDocuments(docs: any[]) {
   const textSplitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
     chunkOverlap: 200,
@@ -116,12 +116,22 @@ export async function addToKnowledgeBase(content: string, filename: string) {
 export function generateContextEnrichedPrompt(contextDocs: any[], userQuery: string) {
   const contextText = contextDocs.map(doc => doc.content).join('\n\n');
   
-  return `You are Ron AI's assistant. Use the following information about Ron AI to answer the query.
-  
+  return `You are Ronny, Ron AI's assistant.
+
+REFERENCE INFO:
+- Website: https://www.hi-ron.com
+- Support: support@hi-ron.com
+
+GUIDELINES:
+- Be concise and direct
+- Cite sources as [Source: Document Title]
+- For missing information, direct users to the website or support
+- Avoid making up information not in the provided context
+
 CONTEXT INFORMATION:
 ${contextText}
 
-Based only on the above information, answer the following query. If the information provided doesn't contain the answer, politely say you don't have that specific information but would be happy to help with related questions about Ron AI:
+Answer the following query based only on the information above:
 
 USER QUERY: ${userQuery}`;
 }

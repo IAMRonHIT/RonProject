@@ -36,12 +36,20 @@ if not SONAR_API_KEY:
     sys.exit(1)
 
 # Initialize the Perplexity client
+print("Attempting to initialize Perplexity client...")
 try:
     perplexity_client = get_perplexity_client()
-    print("Perplexity client initialized successfully")
+    print("Perplexity client initialized successfully.")
 except Exception as e:
-    print(f"ERROR: Failed to initialize Perplexity client: {str(e)}")
+    print(f"ERROR: Failed during Perplexity client initialization: {str(e)}")
+    import traceback
+    traceback.print_exc() # Print full traceback for detailed debugging
     sys.exit(1)
+
+@app.route('/api/healthcheck', methods=['GET'])
+def healthcheck():
+    """Basic healthcheck endpoint"""
+    return jsonify({"status": "ok", "message": "Care Plan API is running"}), 200
 
 @app.route('/api/careplan/test', methods=['POST'])
 def test_connection():
