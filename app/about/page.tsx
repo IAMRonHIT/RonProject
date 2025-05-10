@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import CompetitionMatrix from '@/components/competition';
 import TeamProjector from '@/components/team-projector';
 import Image from 'next/image';
-import StreamlitIde from '@/components/streamlit-ide';
+// StreamlitIde removed - only needed on home page
 // Removing the import for monaco-ide-section as it doesn't exist as a module
 
 export default function AboutPage() {
@@ -89,31 +89,14 @@ export default function AboutPage() {
 
       {/* Why Ron AI Section with competitive advantage */}
       <section className="py-16">
-        <div className="container mx-auto px-4 md:px-6 mb-12">
-          <motion.div 
-            className="max-w-3xl mx-auto text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-[#06b6d4] to-[#3b82f6] text-transparent bg-clip-text">
-              The Ron AI Difference
-            </h2>
-            <p className="text-xl text-[#94a3b8]">
-              While others focus on reactive documentation, Ron AI leads with proactive intelligence that transforms healthcare workflows. Our advanced hallucination mitigation, deep integration capabilities, and multi-agent architecture create a system that doesn't just record healthcare - it enhances it.
-            </p>
-          </motion.div>
-        </div>
-
         {/* Competition Matrix Component */}
-        <StreamlitIde />
-        
-        <CompetitionMatrix 
-          title="How We Compare"
-          description="See how our innovative approach sets a new standard in healthcare AI compared to other solutions in the market."
-          className="mt-16 mb-20" 
-        />
+        <div className="container mx-auto px-4 md:px-6">
+          <CompetitionMatrix 
+            title="The Ron AI Difference"
+            description="While others focus on reactive documentation, Ron AI leads with proactive intelligence that transforms healthcare workflows. Our advanced hallucination mitigation, deep integration capabilities, and multi-agent architecture create a system that doesn't just record healthcare - it enhances it."
+            className="mt-2 mb-20" 
+          />
+        </div>
       </section>
 
       {/* Our Values Section with icons */}

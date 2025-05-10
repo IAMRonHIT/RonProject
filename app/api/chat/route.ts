@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, Content } from "@google/generative-ai";
+import { queryKnowledgeBase, generateContextEnrichedPrompt } from '@/lib/rag-service';
 
 const MODEL_NAME = "gemini-2.0-flash-lite"; // Use the specific model
 const API_KEY = process.env.GOOGLE_API_KEY;
@@ -28,6 +29,24 @@ function formatHistoryForGemini(history: { sender: 'user' | 'bot'; text: string 
   }));
 }
 
+// Function to detect if a message is a potential lead
+function isPotentialLead(message: string): boolean {
+  const leadIndicators = [
+    /contact.*sales/i, 
+    /pricing/i, 
+    /demo/i, 
+    /quote/i, 
+    /interested in/i,
+    /how (much|many)/i,
+    /email/i,
+    /phone/i,
+    /call/i,
+    /contact/i
+  ];
+  
+  return leadIndicators.some(pattern => pattern.test(message));
+}
+
 export async function POST(request: Request) {
   if (!API_KEY) {
      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
@@ -37,11 +56,18 @@ export async function POST(request: Request) {
     const body = await request.json();
     const userMessage = body.message;
     const incomingHistory = body.history || []; // Full history from client, *including* the current userMessage
+    const userContext = body.userContext || {}; // Get user context if available
 
     if (!userMessage) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
+    // Check if this is a potential lead
+    const isPotentialLeadMessage = isPotentialLead(userMessage);
+    
+    // Get relevant knowledge from RAG system
+    const relevantKnowledge = await queryKnowledgeBase(userMessage, 3);
+    
     const model = genAI.getGenerativeModel({ model: MODEL_NAME, safetySettings });
 
     // History for the API should be everything *before* the current user message
@@ -62,8 +88,19 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("Sending message to Gemini:", userMessage);
-    const result = await chat.sendMessage(userMessage);
+    // Create a system prompt with context from the RAG system
+    let enrichedPrompt = userMessage;
+    if (relevantKnowledge.length > 0) {
+      enrichedPrompt = generateContextEnrichedPrompt(relevantKnowledge, userMessage);
+    }
+
+    // If potential lead, add lead capture instructions
+    if (isPotentialLeadMessage) {
+      enrichedPrompt += "\n\nThis user appears to be a potential lead. Politely gather contact information (name, email, company) if they haven't provided it. If they've shown specific interest in Ron AI services, help qualify them by asking about their timeline, budget, or specific needs. Be helpful and conversational, not pushy.";
+    }
+
+    console.log("Sending message to Gemini:", enrichedPrompt);
+    const result = await chat.sendMessage(enrichedPrompt);
     const response = result.response;
 
     if (!response) {
@@ -74,7 +111,16 @@ export async function POST(request: Request) {
     const botReply = response.text();
     console.log("Received reply from Gemini:", botReply);
 
-    return NextResponse.json({ reply: botReply });
+    // Prepare response object
+    const responseData = { 
+      reply: botReply,
+      isPotentialLead: isPotentialLeadMessage
+    };
+
+    // If this is a potential lead, we could also trigger HubSpot integration here
+    // This would be handled by a separate function or API endpoint
+
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error('Error in chat API:', error);

@@ -9,8 +9,8 @@ export function TokenizationAnimation() {
   const tokens = sampleText.split(' ')
   
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-900/20 to-purple-900/20 rounded-lg p-4">
-      <div className="w-full max-w-3xl h-full flex flex-col items-center justify-center">
+    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-900/10 to-purple-900/10 rounded-lg p-6">
+      <div className="w-full max-w-4xl h-full flex flex-col items-center justify-center scale-[0.8]">
         <div className="text-center mb-12">
           <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500 mb-4">
             Tokenization Process
@@ -56,8 +56,8 @@ export function TokenizationAnimation() {
                 scale: [0, 1.2, 1],
                 transition: { 
                   duration: 0.8,
-                  delay: 0.8,
-                  type: "spring"
+                  delay: 0.8
+                  // Removed spring type to support multiple keyframes
                 }
               }}
             >

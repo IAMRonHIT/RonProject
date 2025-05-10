@@ -1,0 +1,91 @@
+/* Markdown styles for chatbot */
+.markdown {
+  @apply text-sm text-neutral-200;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  @apply text-cyan-300 font-medium;
+}
+
+.markdown h1 {
+  @apply text-lg mb-2;
+}
+
+.markdown h2 {
+  @apply text-base mb-1.5;
+}
+
+.markdown h3 {
+  @apply text-sm mb-1;
+}
+
+.markdown p {
+  @apply my-1.5;
+}
+
+.markdown ul {
+  @apply list-disc pl-5 my-1.5;
+}
+
+.markdown ol {
+  @apply list-decimal pl-5 my-1.5;
+}
+
+.markdown li {
+  @apply my-0.5;
+}
+
+.markdown a {
+  @apply text-cyan-400 hover:text-cyan-300 underline;
+}
+
+.markdown blockquote {
+  @apply border-l-2 border-cyan-500/40 pl-2 italic text-neutral-300/80 my-2;
+}
+
+.markdown code {
+  @apply bg-black/60 text-cyan-300 px-1.5 py-0.5 rounded text-xs font-mono;
+}
+
+.markdown pre {
+  @apply bg-black/60 text-cyan-100 p-2 rounded my-2 overflow-x-auto;
+}
+
+.markdown hr {
+  @apply border-cyan-500/20 my-3;
+}
+
+.markdown table {
+  @apply border-collapse w-full my-2;
+}
+
+.markdown th,
+.markdown td {
+  @apply border border-cyan-500/20 px-2 py-1 text-xs;
+}
+
+.markdown th {
+  @apply bg-cyan-900/20 text-cyan-300 font-medium;
+}
+
+.markdown strong {
+  @apply text-cyan-300 font-medium;
+}
+
+.markdown em {
+  @apply text-neutral-300/90 italic;
+}
+
+/* Special styling for lists */
+.markdown ul li::marker {
+  @apply text-cyan-500;
+}
+
+.markdown ol li::marker {
+  @apply text-cyan-400;
+}

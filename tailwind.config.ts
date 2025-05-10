@@ -58,6 +58,28 @@ const config = {
           dark: "hsl(var(--ron-navy-dark))",
         },
         "ron-cyan": "hsl(var(--ron-cyan))",
+        // Cyberpunk theme colors
+        "electric-cyan": "#00f3ff",
+        "cyber-magenta": "#ff00ff",
+        "acid-green": "#7dff7d",
+        "volcanic-orange": "#ff5e1a",
+        "alert-red": "#ff1a1a",
+        "cyber-dark-bg": "#0D0515", // For overall page background
+        "light-text": "#E0E0E0", // General light text color
+      },
+      boxShadow: {
+        // Glow effects
+        "glow-cyan-xs": "0 0 5px 0px rgba(0, 243, 255, 0.5)",
+        "glow-cyan-sm": "0 0 8px 1px rgba(0, 243, 255, 0.5)",
+        "glow-cyan-md": "0 0 15px 3px rgba(0, 243, 255, 0.5)",
+        "glow-cyan-lg": "0 0 25px 5px rgba(0, 243, 255, 0.5)",
+        "glow-magenta-sm": "0 0 8px 1px rgba(255, 0, 255, 0.5)",
+        "glow-magenta-md": "0 0 15px 3px rgba(255, 0, 255, 0.5)",
+        "glow-panel-cyan": "0 8px 32px rgba(0, 243, 255, 0.2)", // Outer glow for panels
+        "glow-panel-magenta": "0 8px 32px rgba(255, 0, 255, 0.2)",
+        // Subtle inner edge for glass (can be combined with outer glow if needed or used on pseudo-elements)
+        "inner-edge-cyan": "inset 0 0 2px 0px rgba(0, 243, 255, 0.3)",
+        "inner-edge-white": "inset 0 0 2px 0px rgba(255, 255, 255, 0.2)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -101,7 +123,7 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config
 
 export default config

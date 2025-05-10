@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ProcessStageCard } from '@/components/ui/stagecard'
 import { Database, Cpu, BarChart3, BookOpen } from 'lucide-react'
+import { FrameworkDetailedAnimation } from '@/components/framework-detailed-animation'
 
 export function FrameworkAnimationSequence() {
   const [activeStage, setActiveStage] = useState(0)
@@ -45,6 +46,15 @@ export function FrameworkAnimationSequence() {
     setActiveStage((prev) => (prev - 1 + stages.length) % stages.length)
   }
 
+  // Automatic stage advancement
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      nextStage()
+    }, 25000)  // Change stage every 25 seconds to give more time to appreciate each animation
+
+    return () => clearTimeout(timer)
+  }, [activeStage])
+
   return (
     <div className="w-full">
       <div className="max-w-5xl mx-auto">
@@ -66,30 +76,39 @@ export function FrameworkAnimationSequence() {
           ))}
         </div>
 
+        {/* Detailed Animation */}
+        <AnimatePresence mode="wait">
+          <FrameworkDetailedAnimation activeStage={activeStage} key={activeStage} />
+        </AnimatePresence>
+
         {/* Stage navigation */}
-        <div className="flex justify-center space-x-4 mt-8">
-          <button
+        <div className="flex justify-center space-x-6 mt-10">
+          <motion.button
             onClick={prevStage}
-            className="px-4 py-2 rounded-md bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 transition-colors"
+            className="px-6 py-2.5 rounded-md bg-blue-500/20 hover:bg-blue-500/40 text-blue-200 transition-all border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)] backdrop-blur-sm"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
             Previous Stage
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={nextStage}
-            className="px-4 py-2 rounded-md bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 transition-colors"
+            className="px-6 py-2.5 rounded-md bg-blue-500/30 hover:bg-blue-500/50 text-blue-100 transition-all border border-blue-400/40 shadow-[0_0_15px_rgba(59,130,246,0.3)] backdrop-blur-sm"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
             Next Stage
-          </button>
+          </motion.button>
         </div>
 
         {/* Stage details */}
         <motion.div
-          key={activeStage}
+          key={`details-${activeStage}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.5 }}
-          className="mt-16 bg-slate-900/50 border border-blue-500/20 rounded-xl p-8"
+          transition={{ duration: 0.8 }}
+          className="mt-16 bg-slate-900/40 border border-blue-500/30 rounded-xl p-8 shadow-[0_0_30px_rgba(59,130,246,0.15)]"
         >
           <h3 className="text-2xl font-bold text-cyan-400 mb-4">
             {stages[activeStage].title}

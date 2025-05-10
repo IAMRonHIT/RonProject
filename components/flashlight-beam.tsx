@@ -90,10 +90,10 @@ export function FlashlightBeam({ className }: FlashlightBeamProps) {
       outerRadius,
     )
 
-    // Cyan color for Ron AI branding (#00BFFF)
-    outerGradient.addColorStop(0, `rgba(31, 206, 203, ${0.25 * flashlightIntensity})`)
-    outerGradient.addColorStop(0.6, `rgba(31, 206, 203, ${0.15 * flashlightIntensity})`)
-    outerGradient.addColorStop(1, "rgba(31, 206, 203, 0)")
+    // Teal color for Ron AI branding
+    outerGradient.addColorStop(0, `rgba(20, 184, 166, ${0.25 * flashlightIntensity})`)
+    outerGradient.addColorStop(0.6, `rgba(20, 184, 166, ${0.15 * flashlightIntensity})`)
+    outerGradient.addColorStop(1, "rgba(20, 184, 166, 0)")
 
     ctx.fillStyle = outerGradient
     ctx.beginPath()
@@ -111,9 +111,9 @@ export function FlashlightBeam({ className }: FlashlightBeamProps) {
       mainRadius,
     )
 
-    mainGradient.addColorStop(0, `rgba(31, 206, 203, ${0.9 * flashlightIntensity})`)
-    mainGradient.addColorStop(0.4, `rgba(31, 206, 203, ${0.5 * flashlightIntensity})`)
-    mainGradient.addColorStop(1, "rgba(31, 206, 203, 0)")
+    mainGradient.addColorStop(0, `rgba(20, 184, 166, ${0.9 * flashlightIntensity})`)
+    mainGradient.addColorStop(0.4, `rgba(20, 184, 166, ${0.5 * flashlightIntensity})`)
+    mainGradient.addColorStop(1, "rgba(20, 184, 166, 0)")
 
     ctx.fillStyle = mainGradient
     ctx.beginPath()
@@ -132,8 +132,8 @@ export function FlashlightBeam({ className }: FlashlightBeamProps) {
     )
 
     innerGradient.addColorStop(0, `rgba(255, 255, 255, ${1.0 * flashlightIntensity})`)
-    innerGradient.addColorStop(0.5, `rgba(180, 255, 250, ${0.8 * flashlightIntensity})`)
-    innerGradient.addColorStop(1, `rgba(31, 206, 203, ${0.3 * flashlightIntensity})`)
+    innerGradient.addColorStop(0.5, `rgba(153, 246, 228, ${0.8 * flashlightIntensity})`)
+    innerGradient.addColorStop(1, `rgba(20, 184, 166, ${0.3 * flashlightIntensity})`)
 
     ctx.fillStyle = innerGradient
     ctx.beginPath()
@@ -152,7 +152,7 @@ export function FlashlightBeam({ className }: FlashlightBeamProps) {
     )
 
     centerGradient.addColorStop(0, `rgba(255, 255, 255, ${1.0 * flashlightIntensity})`)
-    centerGradient.addColorStop(1, `rgba(200, 255, 250, ${0.9 * flashlightIntensity})`)
+    centerGradient.addColorStop(1, `rgba(153, 246, 228, ${0.9 * flashlightIntensity})`)
 
     ctx.fillStyle = centerGradient
     ctx.beginPath()
@@ -187,7 +187,7 @@ export function FlashlightBeam({ className }: FlashlightBeamProps) {
         const flareGradient = ctx.createRadialGradient(flareX, flareY, 0, flareX, flareY, flare.size * beamScale)
 
         flareGradient.addColorStop(0, `rgba(255, 255, 255, ${flare.opacity * flashlightIntensity})`)
-        flareGradient.addColorStop(1, "rgba(31, 206, 203, 0)")
+        flareGradient.addColorStop(1, "rgba(20, 184, 166, 0)")
 
         ctx.fillStyle = flareGradient
         ctx.beginPath()

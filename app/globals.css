@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@tailwind base; /* stylelint-disable-line */
+@tailwind components; /* stylelint-disable-line */
+@tailwind utilities; /* stylelint-disable-line */
 
 /* Remove the Google Fonts import that was causing the error */
 /* @import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap'); */
@@ -71,10 +71,10 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border; /* stylelint-disable-line */
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground; /* stylelint-disable-line */
   }
 }
 
@@ -114,4 +114,296 @@
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 229, 224, 0.5) rgba(30, 41, 59, 0.5);
+}
+
+/* Reasoning tokens animations with Ron AI green */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.reasoning-line-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(50, 255, 137, 0) 0%,
+    rgba(50, 255, 137, 0.15) 25%,
+    rgba(50, 255, 137, 0.3) 50%,
+    rgba(50, 255, 137, 0.15) 75%,
+    rgba(50, 255, 137, 0) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 2s infinite !important;
+}
+
+/* Neural pulse animation */
+@keyframes neuralPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+  }
+}
+
+.neural-pulse {
+  animation: neuralPulse 2s ease-in-out;
+}
+
+/* Button animations */
+@keyframes glow-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+  }
+}
+
+.animate-glow-slide {
+  animation: glow-slide 2s ease-in-out infinite;
+}
+
+.animate-pulse-border {
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+/* Cinematic Crawl Animation */
+@keyframes crawl {
+  0% {
+    /* Starts off-screen at the bottom, rotated for perspective */
+    transform: rotateX(25deg) translateY(100%);
+    opacity: 1;
+  }
+  90% {
+    /* Ensure content is visible for most of the animation duration */
+    opacity: 1;
+  }
+  100% {
+    /* Scrolls well past the top and fades out */
+    transform: rotateX(25deg) translateY(-150%);
+    opacity: 0;
+  }
+}
+
+/* Particle animation (formerly twinkle) */
+@keyframes particle-twinkle {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.perspective-scroll-container {
+  position: relative;
+  height: 400px; /* Adjust as needed for your layout */
+  /* color: #32FF89; /* Text color will be handled by prose-invert or specific title/subtitle styles */
+  font-family: var(--font-inter), system-ui, sans-serif; /* Base font for titles if not overridden */
+  perspective: 300px; /* Adjust for desired 3D effect intensity */
+  overflow: hidden;
+  background: #000; /* Dark background for the cinematic effect */
+  border-radius: 0.5rem;
+  z-index: 1; /* Ensure it's above other static content if necessary */
+}
+
+/* Optional: Starfield effect using pseudo-element */
+.perspective-scroll-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 4px),
+    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+    radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+  background-size: 550px 550px, 350px 350px, 250px 250px;
+  background-position: 0 0, 40px 60px, 130px 270px;
+  z-index: -1; /* Behind the particles and text */
+}
+
+/* Optional: Fade out at the bottom edge */
+.perspective-scroll-container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 80px; /* Adjust fade height */
+  background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  z-index: 2; /* Above particles, below text if text has higher z-index */
+  pointer-events: none;
+}
+
+.perspective-scroll-content {
+  position: absolute;
+  /* top: 100%; /* Initial position handled by animation start */
+  left: 0;
+  right: 0;
+  width: 100%; /* Content will be centered by prose styles' mx-auto */
+  height: auto;
+  transform-origin: 50% 100%; /* Rotate around bottom center */
+  /* Initial transform handled by animation start */
+  text-align: justify; /* Justify text for crawl effect */
+  padding: 2rem 3rem; /* Padding for the text block */
+  z-index: 1; /* Ensure text is above background effects */
+  color: #feda4a; /* Default text color for crawl, Tailwind prose will override for markdown */
+}
+
+.animating-crawl {
+  animation: crawl 60s linear; /* Adjust duration as needed */
+   /* Ensure it starts from the beginning of the animation */
+  transform: rotateX(25deg) translateY(100%);
+}
+
+.scroll-main-title {
+  text-align: center;
+  margin-bottom: 2em;
+  font-size: 2em; /* Made larger, adjust as needed */
+  font-weight: bold;
+  color: #4bd5ee; /* Contrasting color for title */
+  text-shadow: 0 0 10px rgba(75, 213, 238, 0.7);
+}
+
+.scroll-sub-title {
+  text-align: center;
+  margin-bottom: 1.5em;
+  font-size: 1.5em; /* Made larger, adjust as needed */
+  color: #4bd5ee; /* Consistent with main title */
+  text-shadow: 0 0 8px rgba(75, 213, 238, 0.5);
+}
+
+/* Animated particles (formerly stars) */
+.animated-particle {
+  position: absolute;
+  background-color: white;
+  border-radius: 50%;
+  animation: particle-twinkle 3s infinite ease-in-out;
+}
+
+/* Progress bar animation for loading spinner */
+@keyframes progress {
+  0% {
+    width: 0%;
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
+.animate-progress {
+  animation: progress 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+    background-color: transparent;
+  }
+  50% {
+    opacity: 0.9;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+}
+
+/* Glassmorphism utilities */
+.backdrop-blur-sm {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.backdrop-blur-md {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.backdrop-blur-lg {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.backdrop-blur-xl {
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* Apply cyberpunk background to the body if not overridden by a specific page */
+/* This is a general suggestion; specific page layouts might override this. */
+/* We'll apply this directly in the component or layout for better control. */
+/*
+body {
+  @apply bg-cyber-dark-bg;
+}
+*/
+
+/* Example of a subtle grid pattern for backgrounds */
+.bg-cyber-grid-sm {
+  background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.bg-cyber-grid-md {
+  background-image: linear-gradient(rgba(0, 243, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 243, 255, 0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
 }

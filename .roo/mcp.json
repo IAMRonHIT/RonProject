@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "github.com/pashpashpash/perplexity-mcp": {
+      "command": "node",
+      "args": [
+        "/Users/timmys/Documents/Claude/MCP/perplexity-mcp/build/index.js"
+      ],
+      "env": {
+        "SONAR_API_KEY": "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"
+      },
+      "autoApprove": [
+        "search",
+        "get_documentation"
+      ]
+    }
+  }
+}

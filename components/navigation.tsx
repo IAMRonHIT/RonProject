@@ -44,6 +44,9 @@ export default function Navigation() {
               <NavLink href="/blog" isActive={isActive("/blog")}>
                 Blog
               </NavLink>
+              <NavLink href="/care-plan-generator" isActive={isActive("/care-plan-generator")}>
+                Care Plan
+              </NavLink>
               <NavLink href="/about" isActive={isActive("/about")}>
                 About
               </NavLink>
@@ -105,6 +108,9 @@ export default function Navigation() {
           </MobileNavLink>
           <MobileNavLink href="/blog" isActive={isActive("/blog")}>
             Blog
+          </MobileNavLink>
+          <MobileNavLink href="/care-plan-generator" isActive={isActive("/care-plan-generator")}>
+            Care Plan
           </MobileNavLink>
           <MobileNavLink href="/about" isActive={isActive("/about")}>
             About

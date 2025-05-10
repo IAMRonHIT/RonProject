@@ -295,7 +295,11 @@ const CompetitionMatrix: React.FC<CompetitionMatrixProps> = ({
                             scale: rowIndex < visibleRows ? 1 : 0,
                             opacity: rowIndex < visibleRows ? 1 : 0 
                           }}
-                          transition={{ delay: rowIndex * 0.1 + 0.2, type: "spring", stiffness: 300 }}
+                          transition={{ 
+                            delay: rowIndex * 0.1 + 0.2, 
+                            type: "tween", // Changed from spring to tween to avoid animation issues
+                            duration: 0.4
+                          }}
                         >
                           {featureRow[competitor.key] ? (
                             <div className="relative flex items-center justify-center">

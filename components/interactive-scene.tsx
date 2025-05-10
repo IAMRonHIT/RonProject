@@ -49,7 +49,12 @@ export function InteractiveScene({ className, onLoad }: InteractiveSceneProps) {
         videoElements.current.push(video)
         safePlayVideo(video)
       })
-    }, 1500)
+
+      // Ensure flashlight is visible by focusing on container
+      if (containerRef.current) {
+        containerRef.current.focus()
+      }
+    }, 1000) // Reduced timeout for faster loading
 
     return () => clearTimeout(timer)
   }, [onLoad])
@@ -156,6 +161,13 @@ export function InteractiveScene({ className, onLoad }: InteractiveSceneProps) {
       ref={containerRef}
       className={`relative w-full bg-[#000511] overflow-hidden ${className}`}
       style={{ height: isMobile ? "50vh" : "100%" }}
+      tabIndex={0} // Make container focusable
+      onMouseMove={() => {
+        // Make sure flashlight is active on any mouse movement
+        if (containerRef.current) {
+          containerRef.current.focus()
+        }
+      }}
     >
       {/* Loading indicator */}
       {!isLoaded && (
@@ -175,7 +187,28 @@ export function InteractiveScene({ className, onLoad }: InteractiveSceneProps) {
 
         {/* Flashlight beam overlay */}
         <FlashlightBeam />
+        
+        {/* Instruction overlay (only shown briefly on initial load) */}
+        {isLoaded && (
+          <div 
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            style={{ opacity: 0.8, animation: "fadeOut 3s forwards" }}
+          >
+            <div className="bg-black/30 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm">
+              Move your cursor to control the flashlight
+            </div>
+          </div>
+        )}
       </FlashlightController>
+      
+      {/* Add animation for instruction fade-out */}
+      <style jsx>{`
+        @keyframes fadeOut {
+          0% { opacity: 0.8; }
+          20% { opacity: 0.8; }
+          100% { opacity: 0; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -13,6 +13,12 @@ export default function RonAiHero() {
   const [sceneLoaded, setSceneLoaded] = useState(false)
   const isMobile = useIsMobile()
 
+  // Handle scene loading
+  const handleSceneLoad = () => {
+    setSceneLoaded(true);
+    console.log("Interactive scene loaded");
+  }
+
   // Handle resize for better mobile experience
   useEffect(() => {
     const handleResize = () => {
@@ -33,6 +39,22 @@ export default function RonAiHero() {
       clearTimeout(resizeTimer)
     }
   }, [])
+  
+  // Initialize the scene on load
+  useEffect(() => {
+    // Short timeout to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (heroRef.current) {
+        const sceneContainer = heroRef.current.querySelector('.interactive-scene-container');
+        if (sceneContainer) {
+          // Force focus to activate flashlight
+          (sceneContainer as HTMLElement).focus();
+        }
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen w-full bg-[#000511] text-white relative overflow-hidden pt-16" ref={heroRef}>
@@ -75,7 +97,10 @@ export default function RonAiHero() {
 
         {/* 3D Scene with flashlight reveal effect - Right side (hidden on small mobile, shown on larger screens) */}
         <div className="w-full md:w-1/2 h-[50vh] md:h-full relative mt-4 md:mt-0">
-          <InteractiveScene onLoad={() => setSceneLoaded(true)} />
+          <InteractiveScene 
+            onLoad={handleSceneLoad} 
+            className="interactive-scene-container" 
+          />
         </div>
       </div>
 

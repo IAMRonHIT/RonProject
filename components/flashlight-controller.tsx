@@ -83,7 +83,7 @@ export function FlashlightController({ children }: FlashlightControllerProps) {
 
     // Activate flashlight immediately with higher intensity
     setIsFlashlightActive(true)
-    setFlashlightIntensity(1.2) // Slightly higher intensity for brighter effect
+    setFlashlightIntensity(1.4) // Higher intensity for a brighter teal effect
 
     // Set initial position to center of container
     if (containerRef.current) {

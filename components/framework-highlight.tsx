@@ -5,11 +5,13 @@ import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
+import { FrameworkAnimationSequence } from '@/components/framework-animation-sequence'
+import React from 'react'
 
 export default function FrameworkHighlight() {
   const [ref, inView] = useInView({
     triggerOnce: false,
-    threshold: 0.2,
+    threshold: 0.15,
   })
 
   return (
@@ -17,94 +19,170 @@ export default function FrameworkHighlight() {
       ref={ref}
       className="relative py-20 bg-gradient-to-b from-[#050818] to-[#0a0e24] overflow-hidden"
     >
-      {/* Background grid */}
-      <div className="absolute inset-0 z-0 opacity-[0.03] bg-[url('/images/subtle-grid.svg')] bg-repeat"></div>
+      {/* Background grid with enhanced style */}
+      <BackgroundEffect inView={inView} />
       
-      {/* Background glow */}
-      <div
-        className="absolute inset-0 z-0 opacity-20"
-        style={{
-          backgroundImage: `radial-gradient(circle at 20% 30%, rgba(45, 212, 191, 0.3) 0%, transparent 50%), 
-                            radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.2) 0%, transparent 50%)`,
-          filter: "blur(100px)",
-        }}
-      ></div>
-
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
-          className="text-center mb-12"
+          className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-            Our <span className="text-[#00E5E0]">Framework</span>
+          <h2 className="text-3xl md:text-6xl font-bold mb-4 text-center font-audiowide bg-gradient-to-r from-blue-400 via-cyan-300 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(56,189,248,0.3)]">
+            Our Framework
           </h2>
-          <p className="text-gray-200 max-w-3xl mx-auto text-base md:text-lg">
+          <motion.p 
+            className="text-base md:text-lg text-blue-100/90 max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 10 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Explore our innovative approach to healthcare AI through interactive animations
             that explain our framework step by step.
-          </p>
+          </motion.p>
         </motion.div>
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          {/* Framework Feature 1 */}
-          <div className="bg-[#0a1230]/50 border border-blue-500/20 rounded-xl p-6 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all duration-300">
-            <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#00E5E0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Data Processing</h3>
-            <p className="text-gray-300">
-              Our framework starts with advanced data processing techniques that transform raw healthcare data into structured formats.
-            </p>
-          </div>
-
-          {/* Framework Feature 2 */}
-          <div className="bg-[#0a1230]/50 border border-blue-500/20 rounded-xl p-6 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all duration-300">
-            <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#00E5E0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Model Training</h3>
-            <p className="text-gray-300">
-              We use specialized tokenization and fine-tuning techniques to create AI models that understand healthcare context.
-            </p>
-          </div>
-
-          {/* Framework Feature 3 */}
-          <div className="bg-[#0a1230]/50 border border-blue-500/20 rounded-xl p-6 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all duration-300">
-            <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#00E5E0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Continuous Learning</h3>
-            <p className="text-gray-300">
-              Our models continuously improve through feedback loops and real-world healthcare data integration.
-            </p>
-          </div>
-        </motion.div>
+        {/* Framework Animation - Will only render when in view for better performance */}
+        {inView && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="mb-16"
+          >
+            <FrameworkAnimationSequence />
+          </motion.div>
+        )}
 
         <motion.div
           className="text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <Button className="bg-[#00BFFF] hover:bg-[#00BFFF]/80 text-[#000511] font-medium px-8 py-6" asChild>
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-6 shadow-[0_0_20px_rgba(59,130,246,0.3)]" asChild>
             <Link href="/framework">
-              Explore Interactive Animations <ArrowRight className="ml-2 h-4 w-4" />
+              Explore Full Animations <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </motion.div>
       </div>
     </section>
+  )
+}
+
+// Extracted background component for cleaner code
+function BackgroundEffect({ inView }: { inView: boolean }) {
+  // Floating elements for the background - enhanced with varying sizes for more visual interest
+  const floatingElements = [
+    { id: 1, size: 160, x: "15%", y: "20%", duration: 25, delay: 0 },
+    { id: 2, size: 140, x: "80%", y: "25%", duration: 28, delay: 5 },
+    { id: 3, size: 120, x: "65%", y: "80%", duration: 32, delay: 2 },
+  ]
+
+  return (
+    <>
+      {/* Enhanced Background grid */}
+      <div className="absolute inset-0 z-0 opacity-[0.07]">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#4F6BFF" stopOpacity="0.6" />
+              <stop offset="50%" stopColor="#8BAAFC" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#4F6BFF" stopOpacity="0.6" />
+            </linearGradient>
+          </defs>
+          
+          {/* Grid lines with dashed pattern */}
+          {Array.from({ length: 20 }).map((_, i) => {
+            const position = i * 5;
+            return (
+              <React.Fragment key={`grid-${i}`}>
+                <line 
+                  x1="0" 
+                  y1={`${position}%`} 
+                  x2="100%" 
+                  y2={`${position}%`} 
+                  stroke="url(#lineGradient)" 
+                  strokeWidth="1"
+                  vectorEffect="non-scaling-stroke"
+                  strokeDasharray={i % 4 === 0 ? "none" : "1,4"}
+                />
+                <line 
+                  x1={`${position}%`} 
+                  y1="0" 
+                  x2={`${position}%`} 
+                  y2="100%" 
+                  stroke="url(#lineGradient)" 
+                  strokeWidth="1"
+                  vectorEffect="non-scaling-stroke"
+                  strokeDasharray={i % 4 === 0 ? "none" : "1,4"}
+                />
+              </React.Fragment>
+            );
+          })}
+        </svg>
+      </div>
+      
+      {/* Enhanced Background glow */}
+      <motion.div
+        className="absolute inset-0 z-0 opacity-[0.25]"
+        style={{
+          backgroundImage: `radial-gradient(circle at 20% 30%, rgba(45, 212, 191, 0.35) 0%, transparent 50%), 
+                            radial-gradient(circle at 80% 70%, rgba(56, 189, 248, 0.35) 0%, transparent 50%),
+                            radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.25) 0%, transparent 60%)`,
+          filter: "blur(100px)",
+        }}
+        initial={{ opacity: 0 }}
+        animate={inView ? { opacity: 0.25 } : { opacity: 0 }}
+        transition={{ duration: 1.2 }}
+      />
+      
+      {/* Floating glow elements with enhanced intensity and colors */}
+      {floatingElements.map((element) => (
+        <motion.div
+          key={element.id}
+          className="absolute rounded-full blur-[120px] opacity-0 pointer-events-none"
+          style={{
+            width: element.size,
+            height: element.size,
+            left: element.x,
+            top: element.y,
+            background: element.id % 3 === 0 
+              ? 'radial-gradient(circle, rgba(56, 189, 248, 0.9) 0%, rgba(20, 70, 140, 0) 70%)' 
+              : element.id % 3 === 1
+                ? 'radial-gradient(circle, rgba(168, 85, 247, 0.9) 0%, rgba(50, 20, 90, 0) 70%)'
+                : 'radial-gradient(circle, rgba(52, 211, 153, 0.9) 0%, rgba(20, 80, 70, 0) 70%)'
+          }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={inView ? { 
+            opacity: 0.22,
+            scale: 1,
+            x: ["-5%", "5%", "-5%"],
+            y: ["-5%", "5%", "-5%"],
+          } : { 
+            opacity: 0,
+            scale: 0.8
+          }}
+          transition={{
+            opacity: { duration: 1.5 },
+            scale: { duration: 1.5 },
+            x: { duration: element.duration, ease: "easeInOut", repeat: Infinity, delay: element.delay },
+            y: { duration: element.duration, ease: "easeInOut", repeat: Infinity, delay: element.delay },
+          }}
+        />
+      ))}
+      
+      {/* Subtle noise texture overlay */}
+      <div className="absolute inset-0 z-0 opacity-[0.03] bg-noise mix-blend-overlay pointer-events-none"></div>
+      
+      {/* Add style for noise texture */}
+      <style jsx global>{`
+        .bg-noise {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+      `}</style>
+    </>
   )
 }

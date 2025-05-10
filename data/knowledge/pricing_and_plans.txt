@@ -1,0 +1,74 @@
+# Ron AI Pricing and Plans
+
+Ron AI offers flexible pricing models designed to accommodate healthcare organizations of all sizes. Our goal is to provide solutions that deliver clear ROI while remaining accessible to the entire healthcare ecosystem.
+
+## Subscription Plans
+
+### Starter Plan
+- Suitable for small practices or departments
+- Core automation and communication features
+- Up to 5 users
+- Basic integrations with major EHRs
+- Email and chat support
+- Starting at $499/month
+
+### Professional Plan
+- Designed for mid-sized practices and organizations
+- All Starter features plus:
+- Advanced workflow automation
+- Custom integration capabilities
+- Extended API access
+- Up to 20 users
+- Priority support
+- Implementation assistance
+- Starting at $1,499/month
+
+### Enterprise Plan
+- Comprehensive solution for hospitals and large organizations
+- All Professional features plus:
+- Unlimited users
+- Full system integration
+- Custom AI model training
+- Dedicated account manager
+- 24/7 support
+- Advanced analytics dashboard
+- Custom contract pricing based on organization size and needs
+
+## Implementation Services
+
+- **Basic Setup**: Configuration and user training - $2,500
+- **Standard Implementation**: EHR integration, workflow customization, and extended training - $7,500
+- **Enterprise Implementation**: Complete system integration, extensive customization, and organizational change management - Custom pricing
+
+## Add-On Modules
+
+Extend your Ron AI implementation with specialized modules:
+
+- **Patient Engagement Suite**: $399/month
+- **Revenue Cycle Optimizer**: $599/month
+- **Clinical Documentation Assistant**: $499/month
+- **Advanced Analytics Package**: $799/month
+- **Multi-location Management**: $299/month per additional location
+
+## Value-Based Options
+
+For qualifying organizations, we offer value-based pricing models where a portion of our fees is tied to achieved outcomes such as:
+
+- Reduction in administrative costs
+- Improvement in quality measures
+- Enhanced patient satisfaction scores
+- Increased provider productivity
+
+## ROI Guarantee
+
+Ron AI stands behind our solutions with an ROI guarantee for Enterprise clients. If you don't achieve the agreed-upon financial or operational improvements within the first year, we'll provide additional services at no cost until you reach your targets.
+
+## Free Trial
+
+Evaluate Ron AI with our 30-day free trial for up to 3 users. Experience the core functionality and see the potential impact on your organization before making a commitment.
+
+## Non-Profit and Research Discounts
+
+We offer special pricing for qualifying non-profit healthcare organizations, research institutions, and academic medical centers. Contact our sales team for details.
+
+For a personalized quote or to discuss custom requirements, contact our sales team at sales@ronai.health or schedule a consultation through our website.
