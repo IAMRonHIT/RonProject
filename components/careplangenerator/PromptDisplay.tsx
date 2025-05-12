@@ -8,6 +8,8 @@ interface PromptDisplayProps {
   patientName?: string;
   patientAge?: string | number;
   primaryDiagnosis?: string;
+  careEnvironment?: string;
+  focusAreas?: string[];
   isVisible: boolean;
 }
 
@@ -15,39 +17,29 @@ const PromptDisplay: React.FC<PromptDisplayProps> = ({
   patientName,
   patientAge,
   primaryDiagnosis,
+  careEnvironment,
+  focusAreas,
   isVisible,
 }) => {
-  const [displayedText, setDisplayedText] = useState("");
-  const [showCursor, setShowCursor] = useState(true);
+  const patientInfo = patientName && patientAge
+    ? `Patient: ${patientName}, ${patientAge} years old`
+    : "Patient information loading...";
 
-  const simplifiedPrompt = patientName && primaryDiagnosis
-    ? `Please generate a comprehensive ADPIE nursing care plan for ${patientName}, a ${patientAge}-year-old patient. Key focus should be on their primary diagnosis of "${primaryDiagnosis}". Ensure the plan is evidence-based and tailored to their specific needs, considering all provided clinical data.`
-    : "Preparing your request for Ron AI...";
+  const diagnosisInfo = primaryDiagnosis
+    ? `Primary Diagnosis: ${primaryDiagnosis}`
+    : "Diagnosis information pending...";
 
-  useEffect(() => {
-    if (isVisible && simplifiedPrompt) {
-      setDisplayedText(""); // Reset before typing
-      let i = 0;
-    const typingInterval = setInterval(() => {
-      if (i < simplifiedPrompt.length) {
-        // Use a functional update that doesn't depend on previous state
-        setDisplayedText(simplifiedPrompt.substring(0, i + 1));
-        i++;
-      } else {
-        clearInterval(typingInterval);
-        setShowCursor(false);
-      }
-    }, 50); // Slow down the typing speed slightly
+  const environmentInfo = careEnvironment
+    ? `Care Setting: ${careEnvironment}`
+    : "";
 
-    return () => {
-      clearInterval(typingInterval);
-      setShowCursor(true); // Reset cursor state
-    };
-  } else if (!isVisible) {
-    setDisplayedText(""); // Clear text if not visible
-    setShowCursor(true); // Reset cursor
-  }
-}, [isVisible, simplifiedPrompt]);
+  const focusInfo = focusAreas && focusAreas.length > 0
+    ? `Clinical Focus: ${focusAreas.join(', ')}`
+    : "";
+
+  const generationInfo = "Generating multi-stage care plan using ADPIE nursing process framework...";
+
+  const requestHeader = "🔶 REQUEST TO RON AI HEALTHCARE ASSISTANT 🔶";
 
   if (!isVisible) {
     return null;
@@ -55,17 +47,24 @@ const PromptDisplay: React.FC<PromptDisplayProps> = ({
 
   return (
     <Card className="mb-6 shadow-lg border-blue-700 bg-gradient-to-br from-blue-700 to-blue-900 text-white animate-fade-in">
-      <CardHeader>
-        <CardTitle className="flex items-center text-xl">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center text-xl font-bold">
           <MessageSquareText size={24} className="mr-3" />
-          Sending Request to Ron AI
+          {requestHeader}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-base leading-relaxed font-mono min-h-[100px]"> {/* Increased font size, leading, and min height */}
-          {displayedText}
-          {showCursor && <span className="animate-ping">|</span>}
-        </p>
+        <div className="bg-blue-800/50 p-4 rounded-md border border-blue-600 font-mono space-y-3">
+          <p className="text-base font-semibold text-cyan-300">{patientInfo}</p>
+          <p className="text-base">{diagnosisInfo}</p>
+          {environmentInfo && <p className="text-base">{environmentInfo}</p>}
+          {focusInfo && <p className="text-base">{focusInfo}</p>}
+          <div className="h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent my-2" />
+          <p className="text-yellow-300 font-semibold flex items-center">
+            <span className="animate-pulse mr-2">⟳</span>
+            {generationInfo}
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

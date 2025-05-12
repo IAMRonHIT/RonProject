@@ -21,28 +21,21 @@ export function FrameworkDetailedAnimation({ activeStage }: FrameworkDetailedAni
   const [isInitialRender, setIsInitialRender] = useState(true)
   const controls = useAnimation()
 
-  // Enhanced Animation variants for the container
+  // Simplified animation variants for the container to avoid animation issues
   const containerVariants = {
-    hidden: { opacity: 0, y: 50, scale: 0.92 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      scale: 1,
-      transition: { 
-        duration: 1.0,
-        when: "beforeChildren",
-        staggerChildren: 0.3,
-        ease: [0.25, 0.1, 0.25, 1.0] // Cubic bezier for smoother motion
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut"
       }
     },
-    exit: { 
-      opacity: 0, 
-      y: -50,
-      scale: 0.92,
-      filter: "blur(10px)",
-      transition: { 
-        duration: 0.7,
-        ease: [0.4, 0.0, 0.2, 1.0]
+    exit: {
+      opacity: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeIn"
       }
     }
   }

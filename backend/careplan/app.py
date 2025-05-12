@@ -105,7 +105,7 @@ def stream_generator(stream_id):
         yield f"data: {json.dumps({'type': 'start', 'content': 'Starting care plan generation'})}\n\n"
         
         # Use the Perplexity client to stream the care plan generation
-        for chunk in perplexity_client.stream_care_plan(patient_data):
+        for chunk in perplexity_client.stream_full_care_plan_sequentially(patient_data["patient_form_data"], patient_data["care_environment"], patient_data["focus_areas"]):
             # Forward the chunk to the client
             yield f"data: {json.dumps(chunk)}\n\n"
         

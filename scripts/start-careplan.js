@@ -8,14 +8,22 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const chalk = require('chalk');
+require('dotenv').config(); // Load environment variables from .env file
 
 // Kill any existing processes first
 console.log(chalk.blue('🧹 Cleaning up any existing processes...'));
 require('./kill-servers.sh');
 
-// Set the API key
-const SONAR_API_KEY = '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';
+// Get API key from environment variables
+const SONAR_API_KEY = process.env.SONAR_API_KEY;
 const CARE_PLAN_SERVER_PORT = '5001';
+
+// Check if the API key exists
+if (!SONAR_API_KEY) {
+  console.error(chalk.red('Error: SONAR_API_KEY not found in environment variables.'));
+  console.error(chalk.yellow('Please make sure your .env file contains the SONAR_API_KEY variable.'));
+  process.exit(1);
+}
 
 // Start the Python backend
 console.log(chalk.blue('🚀 Starting Care Plan Python backend with site environment...'));

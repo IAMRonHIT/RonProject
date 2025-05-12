@@ -58,109 +58,44 @@ export function FrameworkAnimationSequence() {
   // Get current stage data
   const currentStage = stages[activeStage]
 
-  // Function to advance to the next stage with enhanced animation
+  // Function to advance to the next stage - SIMPLIFIED to avoid animation issues
   const nextStage = () => {
+    // Change stage immediately
+    setActiveStage((prev) => (prev + 1) % stages.length)
     // Reset progress
-    setProgressPercentage(0)
-    // Pause autoplay briefly to prevent immediate advancement
-    setIsAutoplayPaused(true)
-    setTimeout(() => setIsAutoplayPaused(false), 500)
-    
-    // Trigger exit animation for current stage
-    stageControls.start({
-      opacity: 0,
-      x: -50,
-      transition: { duration: 0.4, ease: [0.4, 0.0, 0.2, 1.0] }
-    }).then(() => {
-      // Change stage
-      setActiveStage((prev) => (prev + 1) % stages.length)
-      // Trigger entry animation for new stage
-      stageControls.start({
-        opacity: 1,
-        x: 0,
-        transition: { duration: 0.5, ease: [0.0, 0.0, 0.2, 1.0] }
-      })
-    })
+    setProgressPercentage(50)
   }
 
-  // Function to go back to the previous stage
+  // Function to go back to the previous stage - SIMPLIFIED to avoid animation issues
   const prevStage = () => {
+    // Change stage immediately
+    setActiveStage((prev) => (prev - 1 + stages.length) % stages.length)
     // Reset progress
-    setProgressPercentage(0)
-    // Pause autoplay briefly
-    setIsAutoplayPaused(true)
-    setTimeout(() => setIsAutoplayPaused(false), 500)
-    
-    // Trigger exit animation for current stage
-    stageControls.start({
-      opacity: 0,
-      x: 50,
-      transition: { duration: 0.4, ease: [0.4, 0.0, 0.2, 1.0] }
-    }).then(() => {
-      // Change stage
-      setActiveStage((prev) => (prev - 1 + stages.length) % stages.length)
-      // Trigger entry animation for new stage
-      stageControls.start({
-        opacity: 1,
-        x: 0,
-        transition: { duration: 0.5, ease: [0.0, 0.0, 0.2, 1.0] }
-      })
-    })
+    setProgressPercentage(50)
   }
 
-  // Handle direct stage selection
+  // Handle direct stage selection - SIMPLIFIED to avoid animation issues
   const selectStage = (stageId) => {
     if (stageId === activeStage) return
-    
-    setProgressPercentage(0)
-    setIsAutoplayPaused(true)
-    setTimeout(() => setIsAutoplayPaused(false), 500)
-    
-    // Determine direction for animation
-    const isForward = stageId > activeStage
-    
-    stageControls.start({
-      opacity: 0,
-      x: isForward ? -50 : 50,
-      transition: { duration: 0.4, ease: [0.4, 0.0, 0.2, 1.0] }
-    }).then(() => {
-      setActiveStage(stageId)
-      stageControls.start({
-        opacity: 1,
-        x: 0,
-        transition: { duration: 0.5, ease: [0.0, 0.0, 0.2, 1.0] }
-      })
-    })
+
+    // Change stage immediately
+    setActiveStage(stageId)
+    // Reset progress
+    setProgressPercentage(50)
   }
 
-  // Automatic stage advancement with progress bar
+  // Disable automatic stage advancement - use buttons only
   useEffect(() => {
-    if (!inView || isAutoplayPaused) return
-    
-    // Initialize animation control
+    // Initialize animation control immediately
     stageControls.start({
       opacity: 1,
       x: 0,
       transition: { duration: 0.5 }
     })
-    
-    const duration = currentStage.duration
-    const interval = 100 // Update progress every 100ms
-    let elapsed = 0
-    
-    const timer = setInterval(() => {
-      elapsed += interval
-      const newProgress = (elapsed / duration) * 100
-      setProgressPercentage(newProgress)
-      
-      if (elapsed >= duration) {
-        clearInterval(timer)
-        nextStage()
-      }
-    }, interval)
-    
-    return () => clearInterval(timer)
-  }, [activeStage, inView, isAutoplayPaused, currentStage.duration])
+
+    // Show some progress even without auto-advance
+    setProgressPercentage(50)
+  }, [activeStage, stageControls])
 
   // Reset progress when component goes out of view
   useEffect(() => {

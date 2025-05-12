@@ -4,42 +4,79 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import PatientDataForm, { FormState } from '@/components/careplangenerator/PatientDataForm';
-// PatientInfo from scenario-data might not be needed if CarePlanJsonData covers it
-// import { PatientInfo } from '@/lib/scenario-data'; 
-import ReasoningDisplay from '@/components/careplangenerator/ReasoningDisplay';
-// Import the component AND the type definition
-import CarePlanTemplate, { CarePlanJsonData } from '@/components/careplangenerator/careplan-template'; 
+import ReasoningDisplay, { ReasoningStage } from '@/components/careplangenerator/ReasoningDisplay';
+import CarePlanTemplate, { CarePlanJsonData } from '@/components/careplangenerator/careplan-template';
 import PromptDisplay from '@/components/careplangenerator/PromptDisplay';
 import LoadingSpinner from '@/components/careplangenerator/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, FileText } from 'lucide-react';
 import { SonarService } from '@/lib/sonar-service';
 
-// Removed local interface definitions - using imported CarePlanJsonData now
+// Helper for deep merging, similar to Python's but for JS objects
+// This is a simplified version. For robust merging, a library like lodash.merge might be better.
+const deepMerge = (target: any, source: any): any => {
+  const output = { ...target };
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach(key => {
+      if (isObject(source[key])) {
+        if (!(key in target))
+          Object.assign(output, { [key]: source[key] });
+        else
+          output[key] = deepMerge(target[key], source[key]);
+      } else if (Array.isArray(source[key]) && Array.isArray(target[key]) && key === 'nursingDiagnoses') {
+        // Special handling for nursingDiagnoses: merge items by index or a unique key if available
+        const targetDiagnoses = target[key] as any[];
+        const sourceDiagnoses = source[key] as any[];
+        const mergedDiagnoses = targetDiagnoses.map((diag: any, index: number) => {
+          if (sourceDiagnoses[index]) {
+            return deepMerge(diag, sourceDiagnoses[index]);
+          }
+          return diag;
+        });
+        // Add any new diagnoses from source if source is longer
+        if (sourceDiagnoses.length > targetDiagnoses.length) {
+          mergedDiagnoses.push(...sourceDiagnoses.slice(targetDiagnoses.length));
+        }
+        output[key] = mergedDiagnoses;
+
+      } else if (Array.isArray(source[key])) {
+        // For other arrays, source replaces target or extends if target is shorter.
+        // A more sophisticated merge might try to merge array items.
+        // For simplicity here, if source provides an array, it's often the complete version for that stage.
+        output[key] = [...source[key]];
+      }
+      else {
+        Object.assign(output, { [key]: source[key] });
+      }
+    });
+  }
+  return output;
+};
+
+const isObject = (item: any): item is Object => {
+  return (item && typeof item === 'object' && !Array.isArray(item));
+};
+
 
 const CarePlanGeneratorPage = () => {
-  const [carePlanData, setCarePlanData] = useState<CarePlanJsonData | null>(null); // Will store final_json
-  const [isLoading, setIsLoading] = useState(false);
+  const [carePlanData, setCarePlanData] = useState<CarePlanJsonData | null>(null);
+  const [reasoningStages, setReasoningStages] = useState<ReasoningStage[]>([]);
+  const [overallIsLoading, setOverallIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [activeTab, setActiveTab] = useState('form');
-  // streamingReasoning will be replaced by finalReasoningMarkdown for the main display
-  // but we might keep a form of live update if desired, or remove it.
-  // For now, let's assume finalReasoningMarkdown is the primary one.
-  // const [streamingReasoning, setStreamingReasoning] = useState(''); // Original state
-  const [liveReasoningText, setLiveReasoningText] = useState<string>(""); // For live streaming display
-  const [finalReasoningMarkdown, setFinalReasoningMarkdown] = useState<string | null>(null); // For final formatted display
   const [error, setError] = useState<string | null>(null);
-  const [topLevelCitations, setTopLevelCitations] = useState<string[]>([]); // Renamed from citations and typed
+  // topLevelCitations might be deprecated if citations are part of sourcesData in CarePlanJsonData
+  const [topLevelCitations, setTopLevelCitations] = useState<string[]>([]); 
   const [showPromptDisplay, setShowPromptDisplay] = useState(false);
   const [promptDisplayData, setPromptDisplayData] = useState<{
     patientName?: string;
     patientAge?: string | number;
     primaryDiagnosis?: string;
+    careEnvironment?: string;
+    focusAreas?: string[];
   } | null>(null);
   
   const eventSourceRef = useRef<EventSource | null>(null);
-  const streamIdRef = useRef<string | null>(null);
-  const rawAccumulatedStreamRef = useRef<string>("");
   const sonarService = useRef(new SonarService()).current;
 
   useEffect(() => {
@@ -50,35 +87,29 @@ const CarePlanGeneratorPage = () => {
     };
   }, []);
 
-  const extractSingleThinkBlockJS = (responseText: string): string => {
-    const pattern = /<think>([\s\S]*?)<\/think>/;
-    const match = responseText.match(pattern);
-    return match && match[1] ? match[1].trim() : "";
-  };
-
-  const handleFormSubmit = async (formData: FormState) => {
+  const handleFormSubmit = async (formData: FormState, careEnvironment: string, focusAreas: string[]) => {
     try {
-      setIsLoading(true);
-      setLoadingMessage('Your patient scenario is being sent to Ron AI.');
+      setOverallIsLoading(true);
+      setLoadingMessage('Initializing multi-stage care plan generation...');
       setError(null);
       setCarePlanData(null);
-      setLiveReasoningText(""); // Reset live reasoning
-      setFinalReasoningMarkdown(null);
-      rawAccumulatedStreamRef.current = "";
-      setTopLevelCitations([]);
+      setReasoningStages([]); // Reset stages
+      setTopLevelCitations([]); // Reset if still used
+      
       setPromptDisplayData({
         patientName: formData.patient_full_name,
         patientAge: formData.patient_age,
         primaryDiagnosis: formData.primary_diagnosis_text,
+        careEnvironment: careEnvironment,
+        focusAreas: focusAreas,
       });
       setShowPromptDisplay(true);
       
-      console.log('Starting care plan generation with data:', formData);
+      console.log('Starting sequential care plan generation with data:', { formData, careEnvironment, focusAreas });
       setActiveTab('reasoning');
       
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
-        eventSourceRef.current = null;
       }
 
       const isConnected = await sonarService.testBackendConnection();
@@ -86,135 +117,165 @@ const CarePlanGeneratorPage = () => {
         throw new Error('Cannot connect to care plan backend service. Please ensure the service is running.');
       }
       
-      try {
-        console.log('Initiating streaming session...');
-        const streamId = await sonarService.initiateStream(formData);
-        streamIdRef.current = streamId;
-        setLoadingMessage('Ron AI is analyzing the data and generating the care plan...');
-
-        console.log(`Connecting to stream with ID: ${streamId}`);
-        const streamingUrl = sonarService.getStreamingUrl(streamId);
+      // Assuming SonarService will have a method like initiateSequentialStream
+      // that takes patient_form_data, care_environment, and focus_areas
+      const streamId = await sonarService.initiateSequentialStream(formData, careEnvironment, focusAreas);
+      const streamingUrl = sonarService.getStreamingUrl(streamId); // getStreamingUrl might need streamId
         
-        eventSourceRef.current = new EventSource(streamingUrl, { withCredentials: true });
+      eventSourceRef.current = new EventSource(streamingUrl, { withCredentials: true });
         
-        eventSourceRef.current.onerror = (err) => {
-          console.error('EventSource error:', err);
-          setError('Connection error during streaming. Please try again.');
-          setShowPromptDisplay(false);
-          setIsLoading(false);
-          eventSourceRef.current?.close();
-          eventSourceRef.current = null;
-          rawAccumulatedStreamRef.current = ""; 
-        };
-        
-        eventSourceRef.current.onmessage = (event) => {
-          // The '[DONE]' event might become redundant if 'final_json' is the true end signal.
-          // For now, keep it to ensure stream closure, but primary logic will rely on typed events.
-          if (event.data === '[DONE]') {
-            console.log('Stream signaled [DONE]');
-            // If final_json hasn't arrived, it implies an incomplete stream or error.
-            // isLoading should be managed by final_json or error event.
-            if (isLoading) { // If still loading when DONE arrives, it might be an issue.
-                console.warn("Stream ended with [DONE] but still in loading state.");
-                // setError("Stream ended prematurely."); // Optional: set error
-                // setIsLoading(false); // Force loading to false
-            }
-            eventSourceRef.current?.close();
-            eventSourceRef.current = null;
-            return;
-          }
-          
-          try {
-            const parsedData = JSON.parse(event.data);
-            
-            switch (parsedData.type) {
-              case "citations":
-                console.log("Received citations:", parsedData.content);
-                setTopLevelCitations(parsedData.content as string[]);
-                break;
-              case "content_chunk":
-                // Append to raw stream
-                rawAccumulatedStreamRef.current += parsedData.content;
-                // Extract potential reasoning from the accumulated raw stream
-                const currentRawThink = extractSingleThinkBlockJS(rawAccumulatedStreamRef.current);
-                // Update the live reasoning state
-                setLiveReasoningText(currentRawThink);
-                break;
-              case "final_reasoning":
-                console.log("Received final_reasoning (first 100 chars):", (parsedData.content as string).substring(0,100));
-                // Set the final formatted markdown
-                setFinalReasoningMarkdown(parsedData.content as string);
-                // Ensure the live text matches the final markdown in case chunks were missed/out of order
-                setLiveReasoningText(extractSingleThinkBlockJS(rawAccumulatedStreamRef.current)); 
-                // Switch view to Care Plan tab only AFTER reasoning is final
-                setActiveTab('careplan'); 
-                // Keep loading until final_json arrives
-                break;
-              case "final_json":
-                console.log("Received final_json");
-                // Ensure the received data conforms to the interface, especially required fields like next_steps
-                const receivedData = parsedData.content || {};
-                const validatedData: CarePlanJsonData = {
-                  ...receivedData,
-                  next_steps: Array.isArray(receivedData.next_steps) ? receivedData.next_steps : [], // Default to empty array if missing/invalid
-                };
-                setCarePlanData(validatedData);
-                setShowPromptDisplay(false); 
-                setIsLoading(false); // Loading is now complete
-                // Do NOT switch tab here, it was switched on final_reasoning
-                rawAccumulatedStreamRef.current = ""; // Clear accumulated raw data
-                eventSourceRef.current?.close(); 
-                eventSourceRef.current = null;
-                break;
-              case "error":
-                console.error("Received error event from stream:", parsedData.content);
-                setError(parsedData.content || 'An error occurred during generation');
-                setShowPromptDisplay(false);
-                setIsLoading(false); 
-                rawAccumulatedStreamRef.current = ""; 
-                eventSourceRef.current?.close();
-                eventSourceRef.current = null;
-                break;
-              case "start": // Backend sends this, can be used for UI updates
-                console.log("Stream started event from backend:", parsedData.content);
-                setLoadingMessage(parsedData.content || 'Care plan generation initiated...');
-                break;
-              default:
-                // console.warn("Received unknown event type from stream:", parsedData.type, parsedData);
-                // It's possible that 'content_chunk' from the Python backend (which is just the delta)
-                // is the only thing that doesn't have a 'type' if the Python side isn't wrapping it.
-                // The Python client was updated to wrap it as {"type": "content_chunk", "content": ...}
-                // So, unhandled types should be logged.
-                if (parsedData.content) { // If it's an untyped content chunk (fallback)
-                    // rawAccumulatedStreamRef.current += parsedData.content;
-                } else {
-                    console.warn("Received unknown or malformed event from stream:", parsedData);
-                }
-            }
-          } catch (err) {
-            console.error('Error parsing stream data:', err, event.data);
-            // Potentially set a generic error if parsing fails repeatedly
-            // setError("Error processing data from server.");
-            // setIsLoading(false);
-          }
-        };
-      } catch (streamErr) {
-        console.error('Error setting up streaming connection:', streamErr);
-        setError(streamErr instanceof Error ? streamErr.message : 'Failed to set up streaming connection');
+      eventSourceRef.current.onerror = (err) => {
+        console.error('EventSource error:', err);
+        setError('Connection error during streaming. Please try again.');
         setShowPromptDisplay(false);
-        setIsLoading(false);
-      }
-    } catch (err) {
+        setOverallIsLoading(false);
+        setReasoningStages(prev => prev.map(s => ({ ...s, isLoading: false, error: s.isLoading ? "Stream connection failed" : s.error })));
+        eventSourceRef.current?.close();
+      };
+        
+      eventSourceRef.current.onmessage = (event) => {
+        if (event.data === '[DONE]') { // Should be handled by full_care_plan_complete ideally
+          console.log('Stream signaled [DONE]');
+          if (overallIsLoading) {
+            console.warn("Stream ended with [DONE] but overall generation not marked complete.");
+            // setOverallIsLoading(false); // Force loading to false if necessary
+          }
+          eventSourceRef.current?.close();
+          return;
+        }
+          
+        try {
+          const parsedEvent = JSON.parse(event.data);
+          
+          switch (parsedEvent.type) {
+            case "overall_generation_start":
+              console.log("Overall generation started");
+              setOverallIsLoading(true);
+              setCarePlanData(null);
+              setReasoningStages([]);
+              setLoadingMessage("AI is starting the care plan generation process...");
+              break;
+
+            case "stage_start":
+              console.log(`Stage started: ${parsedEvent.stage_name}`);
+              setLoadingMessage(`Processing: ${parsedEvent.accordion_title}`);
+              setReasoningStages(prevStages => {
+                const existingStageIndex = prevStages.findIndex(s => s.stageName === parsedEvent.stage_name);
+                const newStage: ReasoningStage = {
+                  stageName: parsedEvent.stage_name,
+                  accordionTitle: parsedEvent.accordion_title,
+                  reasoningMarkdown: null,
+                  isComplete: false,
+                  isLoading: true,
+                  error: null,
+                };
+                if (existingStageIndex > -1) {
+                  const updatedStages = [...prevStages];
+                  updatedStages[existingStageIndex] = newStage;
+                  return updatedStages;
+                }
+                return [...prevStages, newStage];
+              });
+              break;
+
+            case "reasoning_text_chunk":
+              console.log(`Received reasoning chunk for stage: ${parsedEvent.stage_name}`);
+              setReasoningStages(prevStages => {
+                const updatedStages = [...prevStages];
+                const stageIndex = updatedStages.findIndex(s => s.stageName === parsedEvent.stage_name);
+
+                if (stageIndex > -1) {
+                  // Append new content to existing reasoning markdown
+                  const stage = updatedStages[stageIndex];
+                  updatedStages[stageIndex] = {
+                    ...stage,
+                    reasoningMarkdown: (stage.reasoningMarkdown || '') + parsedEvent.content,
+                    isLoading: true
+                  };
+                }
+
+                return updatedStages;
+              });
+              break;
+
+            case "stage_reasoning_complete":
+              console.log(`Reasoning complete for stage: ${parsedEvent.stage_name}`);
+              setReasoningStages(prevStages =>
+                prevStages.map(s =>
+                  s.stageName === parsedEvent.stage_name
+                    ? { ...s, reasoningMarkdown: parsedEvent.reasoning_markdown, isLoading: true } // Still loading until JSON chunk
+                    : s
+                )
+              );
+              break;
+
+            case "stage_json_chunk": // This contains the JSON for the completed stage
+              console.log(`JSON chunk for stage: ${parsedEvent.stage_name}`);
+              setReasoningStages(prevStages =>
+                prevStages.map(s =>
+                  s.stageName === parsedEvent.stage_name
+                    ? { ...s, isLoading: false, isComplete: true, error: null }
+                    : s
+                )
+              );
+              // JSON for the stage is received. We won't set carePlanData for the template here.
+              // The full care plan will be set on "full_care_plan_complete".
+              // We can still log or temporarily store stage-specific JSON if needed for debugging,
+              // but it won't drive the main CarePlanTemplate rendering.
+              console.log(`JSON received for stage: ${parsedEvent.stage_name}. Data will be fully rendered at the end.`);
+              // If you needed to inspect intermediate states, you could accumulate them:
+              // accumulatedCarePlanData.current = deepMerge(accumulatedCarePlanData.current || {}, parsedEvent.json_data);
+              break;
+
+            case "full_care_plan_complete":
+              console.log("Full care plan generation complete. Rendering final care plan.");
+              setCarePlanData(parsedEvent.care_plan as CarePlanJsonData); // Set the final data here
+              setOverallIsLoading(false);
+              setShowPromptDisplay(false);
+              setLoadingMessage("Care plan successfully generated!");
+              setActiveTab('careplan');
+              // Mark all stages as complete and not loading
+              setReasoningStages(prevStages => prevStages.map(s => ({ ...s, isLoading: false, isComplete: true, error: s.error }))); // Keep existing errors
+              eventSourceRef.current?.close();
+              break;
+            
+            case "error": // This can be a general error or a stage-specific error
+              console.error("Error event from stream:", parsedEvent);
+              const errorMessage = parsedEvent.content || 'An error occurred during generation.';
+              if (parsedEvent.stage_name) {
+                setReasoningStages(prevStages =>
+                  prevStages.map(s =>
+                    s.stageName === parsedEvent.stage_name
+                      ? { ...s, isLoading: false, isComplete: true, error: errorMessage } // Mark as 'done' with error
+                      : s
+                  )
+                );
+              } else {
+                setError(errorMessage);
+                setOverallIsLoading(false);
+              }
+              // Potentially close stream on first major error, or let backend decide
+              // eventSourceRef.current?.close(); 
+              break;
+              
+            default:
+              console.warn("Received unknown event type from stream:", parsedEvent);
+          }
+        } catch (err) {
+          console.error('Error parsing stream data:', err, event.data);
+        }
+      };
+    } catch (err: any) {
       console.error('Error during form submission or connection test:', err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred before streaming');
+      setError(err.message || 'An unknown error occurred before streaming');
       setShowPromptDisplay(false);
-      setIsLoading(false);
+      setOverallIsLoading(false);
     }
   };
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Care Plan Generator</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">Care Plan Generator (Multi-Stage)</h1>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -229,7 +290,7 @@ const CarePlanGeneratorPage = () => {
           <TabsTrigger
             value="careplan"
             className={`flex items-center justify-center ${carePlanData ? "animate-pulse-subtle" : ""}`}
-            disabled={!carePlanData}
+            disabled={!carePlanData && !overallIsLoading}
           >
             <FileText className="mr-2 h-4 w-4" />
             Care Plan
@@ -237,7 +298,11 @@ const CarePlanGeneratorPage = () => {
         </TabsList>
         
         <TabsContent value="form" className="mt-6 transition-all duration-300 ease-in-out">
-          <PatientDataForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+          {/* Pass careEnvironment and focusAreas from PatientDataForm's onSubmit */}
+          <PatientDataForm 
+            onSubmit={handleFormSubmit} 
+            isLoading={overallIsLoading} 
+          />
         </TabsContent>
         
         <TabsContent value="reasoning" className="mt-6 transition-all duration-300 ease-in-out space-y-6">
@@ -246,10 +311,12 @@ const CarePlanGeneratorPage = () => {
             patientName={promptDisplayData?.patientName}
             patientAge={promptDisplayData?.patientAge}
             primaryDiagnosis={promptDisplayData?.primaryDiagnosis}
+            careEnvironment={promptDisplayData?.careEnvironment}
+            focusAreas={promptDisplayData?.focusAreas}
           />
           
-          {isLoading && !finalReasoningMarkdown && !error && !showPromptDisplay && (
-            <LoadingSpinner message={loadingMessage} />
+          {overallIsLoading && reasoningStages.length === 0 && !error && !showPromptDisplay && (
+            <LoadingSpinner message={loadingMessage || "Initializing care plan generation..."} />
           )}
 
           {error && !showPromptDisplay && ( 
@@ -258,17 +325,16 @@ const CarePlanGeneratorPage = () => {
               <span className="block sm:inline"> {error}</span>
             </div>
           )}
-
-          {/* Display ReasoningDisplay if liveReasoningText has content OR if loading */}
-          {(liveReasoningText || isLoading) && !error && (
+          
+          {/* Render ReasoningDisplay if there are stages or overall loading is active */}
+          {(reasoningStages.length > 0 || (overallIsLoading && !error)) && (
             <ReasoningDisplay
-              isLoading={isLoading && !finalReasoningMarkdown} // Loading is true until final_reasoning arrives
-              liveReasoningText={liveReasoningText} // Pass live text
-              finalReasoningMarkdown={finalReasoningMarkdown} // Pass final formatted text
+              reasoningStages={reasoningStages}
+              overallIsLoading={overallIsLoading && reasoningStages.length === 0}
             />
           )}
           
-          {!isLoading && !error && !liveReasoningText && !finalReasoningMarkdown && !showPromptDisplay && (
+          {!overallIsLoading && !error && reasoningStages.length === 0 && !showPromptDisplay && (
             <div className="text-center p-8 text-gray-500">
               Reasoning process will appear here once generated. Submit patient data to begin.
             </div>
@@ -276,14 +342,24 @@ const CarePlanGeneratorPage = () => {
         </TabsContent>
         
         <TabsContent value="careplan" className="mt-6 transition-all duration-300 ease-in-out">
+          {overallIsLoading && !carePlanData && (
+             <LoadingSpinner message="Care plan is being generated progressively..." />
+          )}
           {carePlanData && (
             <div className="fade-in">
+              {/* topLevelCitations might be removed if not used with sequential stream */}
               <CarePlanTemplate data={carePlanData} topLevelCitations={topLevelCitations} />
             </div>
           )}
-          {!carePlanData && !isLoading && (
+          {!carePlanData && !overallIsLoading && !error && (
             <div className="text-center p-8 text-gray-500">
               The generated care plan will appear here.
+            </div>
+          )}
+           {error && ( // Display error on care plan tab too if it occurred
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+              <strong className="font-bold">Error:</strong>
+              <span className="block sm:inline"> {error}</span>
             </div>
           )}
         </TabsContent>

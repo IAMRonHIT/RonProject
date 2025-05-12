@@ -69,6 +69,55 @@ export class SonarService {
       throw new Error(`Failed to initiate streaming session: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
+
+  /**
+   * Initiates a sequential, multi-stage streaming session.
+   *
+   * @param patientFormData - The patient form data
+   * @param careEnvironment - The selected care environment
+   * @param focusAreas - The selected focus areas
+   * @returns A Promise resolving to the stream ID for this session
+   */
+  async initiateSequentialStream(
+    patientFormData: FormState,
+    careEnvironment: string,
+    focusAreas: string[]
+  ): Promise<string> {
+    try {
+      console.log('Initiating sequential streaming care plan generation');
+      const payload = {
+        patient_form_data: patientFormData,
+        care_environment: careEnvironment,
+        focus_areas: focusAreas,
+      };
+      
+      const response = await fetch(`${this.apiUrl}/initiate-stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Sequential stream initiation error: ${response.status}. Response: ${errorText}`);
+        throw new Error(`Sequential stream initiation error: ${response.status}. ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.stream_id) {
+        throw new Error('No stream ID returned from backend for sequential stream');
+      }
+      
+      console.log(`Sequential stream initiated with ID: ${data.stream_id}`);
+      return data.stream_id;
+    } catch (error) {
+      console.error('Error initiating sequential streaming session:', error);
+      throw new Error(`Failed to initiate sequential streaming session: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
   
   /**
    * Constructs the URL for connecting to the streaming endpoint

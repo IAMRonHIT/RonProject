@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import styles from './PatientDataForm.module.css';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,7 +48,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from '@/lib/utils';
-import { SCENARIOS } from '@/components/careplangenerator/scenarios';
+import { SCENARIOS_BY_ENVIRONMENT, CareEnvironment, PatientScenario as ScenarioInterface } from '@/components/careplangenerator/scenarios'; // Updated import
 
 // TypeScript Interfaces
 export interface VitalSigns {
@@ -115,8 +116,8 @@ interface PatientScenario {
 }
 
 interface PatientDataFormProps {
-  onSubmit: (data: FormState, useStreaming: boolean) => void;
   isLoading: boolean;
+  onSubmit: (data: FormState, careEnvironment: string, focusAreas: string[]) => void; // Updated signature
 }
 
 type Notification = {
@@ -666,8 +667,15 @@ const PatientDataForm = ({ onSubmit, isLoading }: PatientDataFormProps) => {
     .animate-pulse-slower { animation: pulseSlow 12s infinite ease-in-out; }
   `;
 
-  const [formState, setFormState] = useState<FormState>(() => JSON.parse(JSON.stringify(SCENARIOS[0].data))); // Deep copy
-  const [selectedScenario, setSelectedScenario] = useState<string>(SCENARIOS[0].name);
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string>(SCENARIOS_BY_ENVIRONMENT[0].id);
+  const [selectedScenarioName, setSelectedScenarioName] = useState<string>(SCENARIOS_BY_ENVIRONMENT[0].scenarios[0].name);
+  
+  const [formState, setFormState] = useState<FormState>(() => {
+    const initialEnv = SCENARIOS_BY_ENVIRONMENT.find(env => env.id === selectedEnvironmentId);
+    const initialScenario = initialEnv?.scenarios.find(sc => sc.name === selectedScenarioName);
+    return JSON.parse(JSON.stringify(initialScenario?.data || EMPTY_FORM_STATE)); // Deep copy
+  });
+
   const [expandedSections, setExpandedSections] = useState<string[]>([]); // Accordions collapsed by default
   const [isFormComplete, setIsFormComplete] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('unknown');
@@ -748,17 +756,42 @@ const PatientDataForm = ({ onSubmit, isLoading }: PatientDataFormProps) => {
     setFormState(prev => ({ ...prev, [arrayName]: prev[arrayName].filter((_, i) => i !== index) }));
   };
 
-  const handleScenarioChange = (scenarioName: string) => {
-    setSelectedScenario(scenarioName);
-    const scenarioData = SCENARIOS.find((s: PatientScenario) => s.name === scenarioName);
+  const handleScenarioChange = (newScenarioName: string, environmentId?: string) => {
+    const currentEnvId = environmentId || selectedEnvironmentId;
+    const environment = SCENARIOS_BY_ENVIRONMENT.find(env => env.id === currentEnvId);
+    if (!environment) return;
+
+    const scenarioData = environment.scenarios.find((s: ScenarioInterface) => s.name === newScenarioName);
+    
+    setSelectedScenarioName(newScenarioName);
+
     if (scenarioData) {
       setFormState(JSON.parse(JSON.stringify(scenarioData.data))); // Deep copy
-      showNotification(`Loaded scenario: ${scenarioName}`, 'success');
-    } else if (scenarioName === "Custom") {
-      setFormState(JSON.parse(JSON.stringify(EMPTY_FORM_STATE))); // Deep copy
-      showNotification('Started with blank form', 'info');
+      showNotification(`Loaded scenario: ${newScenarioName} from ${environment.name}`, 'success');
+    } else if (newScenarioName === "Custom" || (environment.id === "custom" && environment.scenarios[0]?.name === newScenarioName)) {
+      // Special handling for the "Build Your Own Scenario" under "Custom" environment
+      const customEnv = SCENARIOS_BY_ENVIRONMENT.find(env => env.id === "custom");
+      const customScenarioData = customEnv?.scenarios[0]?.data;
+      setFormState(JSON.parse(JSON.stringify(customScenarioData || EMPTY_FORM_STATE)));
+      showNotification('Started with blank custom scenario', 'info');
     }
     setPopoverOpenState({}); // Reset all popover states
+  };
+
+  const handleEnvironmentChange = (newEnvironmentId: string) => {
+    setSelectedEnvironmentId(newEnvironmentId);
+    const environment = SCENARIOS_BY_ENVIRONMENT.find(env => env.id === newEnvironmentId);
+    if (environment && environment.scenarios.length > 0) {
+      // Auto-select the first scenario of the new environment
+      handleScenarioChange(environment.scenarios[0].name, newEnvironmentId);
+    } else {
+      // Handle case where environment has no scenarios or is not found (e.g., custom with no pre-defined)
+      setSelectedScenarioName(""); // Or a specific placeholder
+      setFormState(JSON.parse(JSON.stringify(EMPTY_FORM_STATE)));
+      if (environment) {
+        showNotification(`Switched to ${environment.name}. Select a scenario or build custom.`, 'info');
+      }
+    }
   };
 
   const handleSubmit = (useStreaming: boolean) => {
@@ -782,8 +815,19 @@ const PatientDataForm = ({ onSubmit, isLoading }: PatientDataFormProps) => {
       }, 100);
       return;
     }
-    showNotification(useStreaming ? 'Starting streaming generation...' : 'Generating care plan...', 'info');
-    onSubmit(formState, useStreaming);
+    
+    const currentEnv = SCENARIOS_BY_ENVIRONMENT.find(env => env.id === selectedEnvironmentId);
+    const currentScenario = currentEnv?.scenarios.find(sc => sc.name === selectedScenarioName);
+
+    const envName = currentEnv?.name || "Unknown Environment"; // Provide a fallback
+    const focusAreas = currentScenario?.focusAreas || []; // Provide a fallback
+
+    // The `useStreaming` parameter is no longer directly passed from here,
+    // as the new backend endpoint implies streaming.
+    // If you need to differentiate, the main page component would decide which SonarService method to call.
+    // For now, we assume the new `onSubmit` always triggers the sequential stream.
+    showNotification('Starting multi-stage streaming generation...', 'info');
+    onSubmit(formState, envName, focusAreas);
   };
 
   const testBackend = async (): Promise<void> => {
@@ -848,9 +892,22 @@ const PatientDataForm = ({ onSubmit, isLoading }: PatientDataFormProps) => {
     }
 
     // Treatments: if any treatment item exists, its core fields must be filled
-    for (const treatment of data.treatments) {
-      if (!treatment.treatment_n_name.trim() || !treatment.treatment_n_status.trim() || !treatment.treatment_n_details.trim() || !treatment.treatment_n_date.trim()) return false;
+    if (data.treatments && Array.isArray(data.treatments)) {
+      for (const treatment of data.treatments) {
+        if (!treatment || 
+            typeof treatment.treatment_n_name !== 'string' || !treatment.treatment_n_name.trim() ||
+            typeof treatment.treatment_n_status !== 'string' || !treatment.treatment_n_status.trim() ||
+            typeof treatment.treatment_n_details !== 'string' || !treatment.treatment_n_details.trim() ||
+            typeof treatment.treatment_n_date !== 'string' || !treatment.treatment_n_date.trim()) {
+          return false;
+        }
+      }
+    } else if (data.treatments === null || data.treatments === undefined) {
+      // If treatments array itself is null/undefined, consider it incomplete if it's expected.
+      // However, an empty array is fine. If it must exist, this check might need adjustment.
+      // For now, assume null/undefined means it's not properly initialized if it should be an array.
     }
+
 
     return true;
   };
@@ -887,18 +944,15 @@ const PatientDataForm = ({ onSubmit, isLoading }: PatientDataFormProps) => {
     <div className="container mx-auto py-8 px-4 relative min-h-screen">
       <style>{fadeInDownKeyframes}</style>
       <div
-        className="fixed inset-0 -z-10 bg-[#080810]"
-        style={{
-          backgroundImage: `radial-gradient(circle at 15% 50%, rgba(var(--cyan-500-rgb), 0.07), transparent 35%), radial-gradient(circle at 85% 30%, rgba(var(--indigo-500-rgb), 0.07), transparent 35%), linear-gradient(to bottom, rgba(var(--sky-500-rgb), 0.02) 1px, transparent 1px), linear-gradient(to right, rgba(var(--sky-500-rgb), 0.02) 1px, transparent 1px)`,
-          backgroundSize: '100% 100%, 100% 100%, 40px 40px, 40px 40px',
-          '--cyan-500-rgb': '6, 182, 212', '--indigo-500-rgb': '99, 102, 241', '--sky-500-rgb': '14, 165, 233',
-        } as React.CSSProperties}
+        className={styles.backgroundPattern}
       />
       <div className="fixed top-[10%] left-[5%] w-56 h-56 bg-cyan-500/5 rounded-full blur-3xl animate-pulse-slow -z-10"></div>
       <div className="fixed bottom-[15%] right-[10%] w-72 h-72 bg-indigo-500/5 rounded-full blur-3xl animate-pulse-slower -z-10"></div>
 
       <div className="text-center mb-10">
         <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-cyan-400 via-sky-400 to-indigo-500 pb-2">AI Care Plan Synthesizer</h1>
+        // ... (rest of the code remains the same)
+```
         <p className="text-zinc-400 text-lg max-w-2xl mx-auto">Input patient data to generate comprehensive, AI-powered care plans.</p>
       </div>
 
@@ -918,43 +972,65 @@ const PatientDataForm = ({ onSubmit, isLoading }: PatientDataFormProps) => {
 
       <Card className="backdrop-blur-xl bg-black/40 border border-zinc-700/60 shadow-2xl shadow-black/50 rounded-xl overflow-hidden">
         <div className="p-6 sm:p-8">
-          <div className="mb-6 relative z-30">
-            <Label htmlFor="scenario-select-trigger" className="block text-zinc-200 font-semibold mb-2">Load Patient Scenario</Label>
-            <Select value={selectedScenario} onValueChange={handleScenarioChange}>
-              <SelectTrigger 
-                id="scenario-select-trigger" 
-                className="w-full bg-zinc-800/70 border-zinc-700/60 text-zinc-100 ring-offset-black focus:ring-1 focus:ring-cyan-500 data-[placeholder]:text-zinc-400"
-              >
-                <SelectValue placeholder="Select a scenario" />
-              </SelectTrigger>
-              <SelectContent 
-                className="bg-zinc-900/95 border-zinc-700 text-zinc-200 backdrop-blur-md max-h-72 scenario-scrollbar"
-                // position="popper" // Ensures it can overlay other elements if needed, though default might be fine
-                // sideOffset={5} // Standard offset
-              >
-                {SCENARIOS.map((scenario: PatientScenario) => (
-                  <SelectItem 
-                    key={scenario.name} 
-                    value={scenario.name} 
-                    className="hover:!bg-cyan-600/20 focus:!bg-cyan-600/20 data-[state=checked]:!bg-cyan-500/30"
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">{scenario.name}</span>
-                      <span className="text-xs text-zinc-400">{scenario.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-                <SelectItem 
-                  value="Custom" 
-                  className="hover:!bg-cyan-600/20 focus:!bg-cyan-600/20 data-[state=checked]:!bg-cyan-500/30"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 relative z-30">
+            <div>
+              <Label htmlFor="environment-select-trigger" className="block text-zinc-200 font-semibold mb-2">Select Care Environment</Label>
+              <Select value={selectedEnvironmentId} onValueChange={handleEnvironmentChange}>
+                <SelectTrigger 
+                  id="environment-select-trigger" 
+                  className="w-full bg-zinc-800/70 border-zinc-700/60 text-zinc-100 ring-offset-black focus:ring-1 focus:ring-cyan-500 data-[placeholder]:text-zinc-400"
                 >
-                  <div className="flex flex-col">
-                    <span className="font-medium">Custom / Blank Form</span>
-                    <span className="text-xs text-zinc-400">Start with an empty patient record</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                  <SelectValue placeholder="Select care environment" />
+                </SelectTrigger>
+                <SelectContent 
+                  className="bg-zinc-900/95 border-zinc-700 text-zinc-200 backdrop-blur-md max-h-72 scenario-scrollbar"
+                >
+                  {SCENARIOS_BY_ENVIRONMENT.map((env: CareEnvironment) => (
+                    <SelectItem 
+                      key={env.id} 
+                      value={env.id} 
+                      className="hover:!bg-cyan-600/20 focus:!bg-cyan-600/20 data-[state=checked]:!bg-cyan-500/30"
+                    >
+                      <div className="flex items-center">
+                        <env.icon className="h-4 w-4 mr-2 text-cyan-400" />
+                        <span>{env.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="scenario-select-trigger" className="block text-zinc-200 font-semibold mb-2">Select Patient Scenario</Label>
+              <Select 
+                value={selectedScenarioName} 
+                onValueChange={(value) => handleScenarioChange(value)}
+                disabled={!selectedEnvironmentId || (SCENARIOS_BY_ENVIRONMENT.find(env => env.id === selectedEnvironmentId)?.scenarios.length === 0 && selectedEnvironmentId !== 'custom')}
+              >
+                <SelectTrigger 
+                  id="scenario-select-trigger" 
+                  className="w-full bg-zinc-800/70 border-zinc-700/60 text-zinc-100 ring-offset-black focus:ring-1 focus:ring-cyan-500 data-[placeholder]:text-zinc-400"
+                >
+                  <SelectValue placeholder="Select a scenario" />
+                </SelectTrigger>
+                <SelectContent 
+                  className="bg-zinc-900/95 border-zinc-700 text-zinc-200 backdrop-blur-md max-h-72 scenario-scrollbar"
+                >
+                  {SCENARIOS_BY_ENVIRONMENT.find(env => env.id === selectedEnvironmentId)?.scenarios.map((scenario: ScenarioInterface) => (
+                    <SelectItem 
+                      key={scenario.name} 
+                      value={scenario.name} 
+                      className="hover:!bg-cyan-600/20 focus:!bg-cyan-600/20 data-[state=checked]:!bg-cyan-500/30"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{scenario.name}</span>
+                        <span className="text-xs text-zinc-400">{scenario.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex justify-between items-center mb-6">
@@ -1218,8 +1294,25 @@ const PatientDataForm = ({ onSubmit, isLoading }: PatientDataFormProps) => {
           <Separator className="my-8 bg-zinc-700/50" />
           {connectionStatus === 'error' && (<div className="mb-6 p-4 bg-red-900/30 border border-red-700/50 rounded-lg text-red-200"><div className="font-semibold mb-1.5 flex items-center"><AlertCircle className="h-5 w-5 mr-2 text-red-400" /> Backend Connection Error</div><p className="text-sm">{connectionError || "Unable to connect to the care plan generation service. Please check your connection or try again later."}</p><Button variant="link" size="sm" className="text-red-300 hover:text-red-200 p-0 h-auto mt-1" onClick={testBackend}>Retry Connection</Button></div>)}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <TooltipProvider delayDuration={100}><Tooltip><TooltipTrigger asChild><Button onClick={() => handleSubmit(false)} disabled={isLoading || connectionStatus === 'error'} className="w-full sm:w-auto text-base px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold shadow-lg hover:shadow-blue-500/30 transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed">{isLoading ? (<Loader2 className="mr-2 h-5 w-5 animate-spin" />) : <FilePlus className="mr-2 h-5 w-5" />}Generate Full Plan</Button></TooltipTrigger><TooltipContent className="bg-zinc-800/90 text-zinc-200 border-zinc-700 backdrop-blur-sm"><p>Generate the complete care plan at once.</p></TooltipContent></Tooltip></TooltipProvider>
-            <TooltipProvider delayDuration={100}><Tooltip><TooltipTrigger asChild><Button onClick={() => handleSubmit(true)} disabled={isLoading || connectionStatus === 'error'} variant="outline" className="w-full sm:w-auto text-base px-8 py-3 border-sky-500/70 text-sky-400 hover:bg-sky-500/10 hover:text-sky-300 hover:border-sky-400 font-semibold shadow-lg hover:shadow-sky-500/20 transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed">{isLoading ? (<Loader2 className="mr-2 h-5 w-5 animate-spin" />) : <Activity className="mr-2 h-5 w-5" />}Stream Plan</Button></TooltipTrigger><TooltipContent className="bg-zinc-800/90 text-zinc-200 border-zinc-700 backdrop-blur-sm"><p>Generate the care plan section by section in real-time.</p></TooltipContent></Tooltip></TooltipProvider>
+            {/* The distinction between streaming/non-streaming is now handled by which SonarService method is called in page.tsx */}
+            {/* This button will now always trigger the sequential streaming via the updated onSubmit */}
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => handleSubmit(true)} // `true` for useStreaming is now implicit for this flow
+                    disabled={isLoading || connectionStatus === 'error'} 
+                    className="w-full sm:w-auto text-base px-8 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (<Loader2 className="mr-2 h-5 w-5 animate-spin" />) : <Activity className="mr-2 h-5 w-5" />}
+                    Generate Multi-Stage Plan
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-zinc-800/90 text-zinc-200 border-zinc-700 backdrop-blur-sm">
+                  <p>Generate the care plan sequentially, stage by stage.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </Card>
