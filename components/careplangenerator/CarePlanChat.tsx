@@ -22,7 +22,7 @@ const CarePlanChat: React.FC<CarePlanChatProps> = ({
   // Add a welcome message on first load
   useEffect(() => {
     const welcomeMessage: ChatMessage = {
-      id: `welcome-${Date.now()}`,
+      id: `welcome-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'assistant',
       content: "Hello! I'm RON AI, your clinical assistant. I can help answer questions about this patient's care plan, provide explanations on clinical decisions, or suggest next steps in care. How can I assist you today?",
       timestamp: new Date().toISOString()
@@ -35,7 +35,7 @@ const CarePlanChat: React.FC<CarePlanChatProps> = ({
   const handleSendMessage = async (message: string) => {
     // Add user message to the chat
     const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
       content: message,
       timestamp: new Date().toISOString()
@@ -44,7 +44,7 @@ const CarePlanChat: React.FC<CarePlanChatProps> = ({
     setMessages(prev => [...prev, userMessage]);
     
     // Add placeholder for assistant's response
-    const assistantMsgId = `assistant-${Date.now()}`;
+    const assistantMsgId = `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const placeholderMessage: ChatMessage = {
       id: assistantMsgId,
       role: 'assistant',

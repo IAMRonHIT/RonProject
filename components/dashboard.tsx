@@ -1,8 +1,8 @@
 "use client"
 
-import type React from "react"
+import React, { useEffect, useState, Suspense } from "react" // Added Suspense
+import { useRouter, useSearchParams } from 'next/navigation' // Added useSearchParams
 
-import { useEffect, useState } from "react"
 // Ron AI Relevant Icons
 import {
   Activity,
@@ -36,6 +36,7 @@ import {
   Headphones,
   GraduationCap,
   type LucideIcon,
+  X // Added X for close button
 } from "lucide-react"
 
 // UI component imports
@@ -48,7 +49,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-// Import missing icons (Moved to top level)
 import {
   InfoIcon,
   CheckCircleIcon,
@@ -59,26 +59,99 @@ import {
   FolderSyncIcon as UserSync,
 } from "lucide-react"
 
+// Define a type for our specific notification
+interface SimulationNotification {
+  title: string;
+  message: string;
+  detail1: string;
+  detail2: string;
+  patientName: string;
+  mrn: string;
+}
 
-export default function Dashboard() {
+// Notification Component (can be moved to its own file if preferred)
+const SimulationNotificationPopup = ({ notification, onClose, onViewCarePlan }: { notification: SimulationNotification; onClose: () => void; onViewCarePlan: () => void; }) => {
+  if (!notification) return null;
+
+  return (
+    <div className="fixed top-24 right-5 bg-slate-900/80 backdrop-blur-lg rounded-xl shadow-2xl border border-sky-500 p-5 w-96 z-[200] animate-fade-in-down transition-all duration-300 glow-sky-500">
+      <div className="flex items-start">
+        <div className="bg-sky-600 rounded-full p-2 mr-3.5 flex-shrink-0 border border-sky-400 shadow-lg glow-sky-500">
+          <AlertTriangle size={22} className="text-white" />
+        </div>
+        <div className="flex-grow">
+          <h4 className="font-bold text-lg text-slate-100">{notification.title}</h4>
+          <p className="text-sm text-slate-300 my-1.5 leading-relaxed">{notification.message}</p>
+          {notification.detail1 && <p className="text-xs text-slate-400 mt-1">{notification.detail1}</p>}
+          {notification.detail2 && <p className="text-xs text-slate-400 mt-1">{notification.detail2}</p>}
+          <div className="mt-4">
+            <Button 
+              onClick={onViewCarePlan}
+              className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold"
+            >
+              View Care Plan for {notification.patientName}
+            </Button>
+          </div>
+        </div>
+        <button onClick={onClose} className="ml-2 text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-full hover:bg-slate-700" title="Close">
+          <X size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper component to use useSearchParams
+const DashboardContent = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [theme, setTheme] = useState<"dark" | "light">("dark")
-
-  // --- Ron AI State Variables ---
-  const [agentPerformance, setAgentPerformance] = useState(92) // % success rate
-  const [complianceScore, setComplianceScore] = useState(98) // % checks passed
-  const [dataThroughput, setDataThroughput] = useState(75) // tasks/hour or % capacity
+  const [agentPerformance, setAgentPerformance] = useState(92)
+  const [complianceScore, setComplianceScore] = useState(98)
+  const [dataThroughput, setDataThroughput] = useState(75)
   const [tasksProcessedToday, setTasksProcessedToday] = useState(1450)
-  const [avgProcessingTime, setAvgProcessingTime] = useState(2.5) // seconds or minutes
+  const [avgProcessingTime, setAvgProcessingTime] = useState(2.5)
   const [criticalAlerts, setCriticalAlerts] = useState(3)
-  const [currentAutomationLevel, setCurrentAutomationLevel] = useState(80) // %
+  const [currentAutomationLevel, setCurrentAutomationLevel] = useState(80)
   const [activePatientLoad, setActivePatientLoad] = useState(2345)
   const [priorAuthQueue, setPriorAuthQueue] = useState(45)
-  const [agentConcurrency, setAgentConcurrency] = useState(65) // % used
-  const [fhirConversionRate, setFhirConversionRate] = useState(99.8) // % success
-  // --- End Ron AI State ---
-
+  const [agentConcurrency, setAgentConcurrency] = useState(65)
+  const [fhirConversionRate, setFhirConversionRate] = useState(99.8)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [isLoading, setIsLoading] = useState(true)
+
+  const [simulationNotification, setSimulationNotification] = useState<SimulationNotification | null>(null);
+
+  useEffect(() => {
+    if (searchParams) { // Check if searchParams is not null
+      const event = searchParams.get('event');
+      if (event === 'new_stroke_plan_simulation') {
+        const patientName = searchParams.get('patientName');
+      const mrn = searchParams.get('mrn');
+      const title = searchParams.get('title');
+      const message = searchParams.get('message');
+      const detail1 = searchParams.get('detail1');
+      const detail2 = searchParams.get('detail2');
+
+      if (patientName && mrn && title && message && detail1 && detail2) {
+        setSimulationNotification({ patientName, mrn, title, message, detail1, detail2 });
+        // Clean the URL (optional, to prevent re-triggering on refresh)
+        // router.replace('/dashboard', undefined); // next/navigation way
+      }
+    } // This closes if (event === 'new_stroke_plan_simulation')
+    } // Add missing closing brace for if (searchParams)
+  }, [searchParams, router]);
+
+  const handleCloseSimulationNotification = () => {
+    setSimulationNotification(null);
+    // Clean the URL to prevent re-triggering on refresh or back navigation
+    router.replace('/dashboard', { scroll: false });
+  };
+
+  const handleViewCarePlan = () => {
+    setSimulationNotification(null); // Close notification
+    router.push('/care-plan-generator'); // Navigate to care plan page
+  };
 
   // Simulate data loading
   useEffect(() => {
@@ -99,25 +172,23 @@ export default function Dashboard() {
   // Simulate changing Ron AI data
   useEffect(() => {
     const interval = setInterval(() => {
-      setAgentPerformance(Math.floor(Math.random() * 10) + 90) // High 90s
-      setComplianceScore(Math.floor(Math.random() * 5) + 95) // Very High 95+
-      setDataThroughput(Math.floor(Math.random() * 30) + 60) // 60-90%
+      setAgentPerformance(Math.floor(Math.random() * 10) + 90)
+      setComplianceScore(Math.floor(Math.random() * 5) + 95)
+      setDataThroughput(Math.floor(Math.random() * 30) + 60)
       setTasksProcessedToday((prev) => prev + Math.floor(Math.random() * 10))
-      setAvgProcessingTime(Number((Math.random() * 1 + 2).toFixed(1))) // 2.0-3.0
-      setCriticalAlerts(Math.floor(Math.random() * 5)) // 0-4
-      setPriorAuthQueue(Math.floor(Math.random() * 30) + 20) // 20-50
-      setAgentConcurrency(Math.floor(Math.random() * 20) + 55) // 55-75%
-      setFhirConversionRate(Number((Math.random() * 0.5 + 99.5).toFixed(1))) // 99.5-100.0
+      setAvgProcessingTime(Number((Math.random() * 1 + 2).toFixed(1)))
+      setCriticalAlerts(Math.floor(Math.random() * 5))
+      setPriorAuthQueue(Math.floor(Math.random() * 30) + 20)
+      setAgentConcurrency(Math.floor(Math.random() * 20) + 55)
+      setFhirConversionRate(Number((Math.random() * 0.5 + 99.5).toFixed(1)))
     }, 5000)
     return () => clearInterval(interval)
   }, [])
 
-  // Toggle theme
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark")
   }
 
-  // Format time
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("en-US", {
       hour12: false,
@@ -127,7 +198,6 @@ export default function Dashboard() {
     })
   }
 
-  // Format date
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -142,6 +212,14 @@ export default function Dashboard() {
       bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] 
       from-[#000000] via-[#0D0D0D] to-[#020202]`}
     >
+      {simulationNotification && (
+        <SimulationNotificationPopup 
+          notification={simulationNotification}
+          onClose={handleCloseSimulationNotification}
+          onViewCarePlan={handleViewCarePlan}
+        />
+      )}
+
       {/* Subtle moving background glows */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-64 -left-64 h-96 w-96 rounded-full bg-cyan-500 opacity-20 mix-blend-soft-light blur-3xl animate-pulse-slow" />
@@ -149,11 +227,9 @@ export default function Dashboard() {
         <div className="absolute top-1/4 left-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500 opacity-10 mix-blend-soft-light blur-3xl animate-pulse-slower" />
       </div>
 
-      {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="flex flex-col items-center">
-            {/* Spinner animation */}
             <div className="relative w-24 h-24">
               <div className="absolute inset-0 border-4 border-cyan-500/30 rounded-full animate-ping"></div>
               <div className="absolute inset-2 border-4 border-t-cyan-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
@@ -824,6 +900,9 @@ export default function Dashboard() {
 }
 
 // --- Helper Components ---
+// NavItem, StatusItem, MetricCard, RonAIPerformanceChart, AgentActivityRow, DataMetricItem, AlertItem, CommunicationItem, ActionButton, CyberBadge
+// These helper components remain unchanged from the original file.
+// For brevity, their code is not repeated here but should be included in the final file.
 
 // NavItem
 function NavItem({ icon: Icon, label, active }: { icon: LucideIcon; label: string; active?: boolean }) {
@@ -917,7 +996,7 @@ function MetricCard({
       case "purple":
         return "from-purple-500 to-pink-500 border-purple-500/30"
       case "blue":
-        return "from-red-500 to-orange-500 border-red-500/30"
+        return "from-red-500 to-orange-500 border-red-500/30" // This was blue, changed to red/orange for variety
       default:
         return "from-cyan-500 to-blue-500 border-cyan-500/30"
     }
@@ -926,7 +1005,7 @@ function MetricCard({
   const getTrendIcon = () => {
     switch (trend) {
       case "up":
-        return <ArrowUp className="h-4 w-4 text-red-500" />
+        return <ArrowUp className="h-4 w-4 text-red-500" /> // Trend up is often red if it's bad (e.g. alerts)
       case "down":
         return <ArrowDown className="h-4 w-4 text-green-500" />
       case "stable":
@@ -962,32 +1041,27 @@ function RonAIPerformanceChart() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Generate data only on the client side after mount
     const data = Array.from({ length: 24 }).map(() => ({
       priorAuthHeight: Math.floor(Math.random() * 60) + 20,
       carePlanHeight: Math.floor(Math.random() * 40) + 30,
       sdohHeight: Math.floor(Math.random() * 30) + 10,
     }));
     setChartData(data);
-    setIsClient(true); // Indicate client-side rendering is complete
-  }, []); // Empty dependency array ensures this runs only once on mount
+    setIsClient(true); 
+  }, []); 
 
-  // Render placeholder or initial state during SSR and before client-side effect runs
   if (!isClient) {
-    // Render a loading state or a static version if preferred
     return <div className="h-full w-full flex items-center justify-center text-slate-500 text-sm">Loading chart...</div>;
   };
 
   return (
     <div className="h-full w-full flex items-end justify-between px-4 pt-4 pb-8 relative">
-      {/* Y-axis labels */}
       <div className="absolute left-2 top-0 h-full flex flex-col justify-between py-4">
         <div className="text-xs text-slate-500">High</div>
         <div className="text-xs text-slate-500">Med</div>
         <div className="text-xs text-slate-500">Low</div>
         <div className="text-xs text-slate-500">Idle</div>
       </div>
-      {/* X-axis grid lines */}
       <div className="absolute left-0 right-0 top-0 h-full flex flex-col justify-between py-4 px-10 pointer-events-none">
         <div className="border-b border-white/10 w-full h-1/4"></div>
         <div className="border-b border-white/10 w-full h-1/4"></div>
@@ -995,7 +1069,6 @@ function RonAIPerformanceChart() {
         <div className="border-b border-white/10 w-full h-1/4"></div>
         <div className="h-0"></div>
       </div>
-      {/* Chart bars */}
       <div className="flex-1 h-full flex items-end justify-between px-2 z-10 ml-4">
         {chartData.map((data, i) => (
           <div key={i} className="flex space-x-0.5 h-full items-end">
@@ -1011,7 +1084,6 @@ function RonAIPerformanceChart() {
           </div>
         ))}
       </div>
-      {/* X-axis labels */}
       <div className="absolute bottom-0 left-0 right-0 flex justify-between px-10 ml-4">
         <div className="text-xs text-slate-500">-24h</div>
         <div className="text-xs text-slate-500">-18h</div>
@@ -1023,7 +1095,6 @@ function RonAIPerformanceChart() {
   )
 }
 
-// Agent Activity Row
 function AgentActivityRow({
   id,
   name,
@@ -1058,7 +1129,6 @@ function AgentActivityRow({
   )
 }
 
-// Data Metric Item
 function DataMetricItem({
   name,
   total,
@@ -1103,7 +1173,6 @@ function DataMetricItem({
   )
 }
 
-// Alert Item (Replaced with clean version)
 function AlertItem({
   title,
   time,
@@ -1152,7 +1221,6 @@ function AlertItem({
   );
 }
 
-// Communication Item
 function CommunicationItem({
   sender,
   time,
@@ -1160,7 +1228,6 @@ function CommunicationItem({
   avatar,
   unread,
 }: { sender: string; time: string; message: string; avatar: string; unread?: boolean }) {
-  // Extract initials from sender for fallback
   const senderInitials = sender
     .split(" ")
     .map((n) => n[0])
@@ -1193,7 +1260,6 @@ function CommunicationItem({
   )
 }
 
-// Action Button
 function ActionButton({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
     <Button
@@ -1209,7 +1275,6 @@ function ActionButton({ icon: Icon, label }: { icon: LucideIcon; label: string }
   )
 }
 
-// Cyberpunk Badge Component
 function CyberBadge({
   children,
   variant = "neutral",
@@ -1262,4 +1327,13 @@ function CyberBadge({
       <span className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_1px,rgba(255,255,255,0.05)_1px,rgba(255,255,255,0.05)_2px)] opacity-10"></span>
     </span>
   )
+}
+
+// Main Dashboard component that uses Suspense for useSearchParams
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div>Loading Dashboard...</div>}> {/* Or a more styled loader */}
+      <DashboardContent />
+    </Suspense>
+  );
 }

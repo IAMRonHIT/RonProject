@@ -1,12 +1,12 @@
 "use client";
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import {
   X, CheckSquare, Users, Calendar, Tag, Info, MessageSquare, Paperclip, LinkIcon, BarChart, Edit, Trash2, Clock, AlertTriangle, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { KanbanTask } from './kanban-helpers'; // Assuming types are exported
 
@@ -17,6 +17,8 @@ interface TaskDetailModalProps {
   patientName?: string;
   patientId?: string;
 }
+
+const ScrollArea = dynamic(() => import('@/components/ui/scroll-area').then(mod => mod.ScrollArea), { ssr: false });
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   task,
@@ -121,7 +123,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <ul className="space-y-2">
                   {task.details.subTasks.map((subTask: {id: string, text: string, completed: boolean}, index: number) => (
                     <li key={subTask.id || index} className="flex items-center text-slate-300">
-                      <input type="checkbox" checked={subTask.completed} readOnly className="mr-2 h-4 w-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500/50 bg-slate-700 cursor-not-allowed" />
+                      <input type="checkbox" checked={subTask.completed} readOnly className="mr-2 h-4 w-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500/50 bg-slate-700 cursor-not-allowed" aria-label={`Status of sub-task: ${subTask.text}`} />
                       <span>{subTask.text}</span>
                     </li>
                   ))}
@@ -173,7 +175,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           <Button variant="outline" className="text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-slate-100" disabled>
             <Edit size={16} className="mr-2" /> Edit Task
           </Button>
-          <Button variant="destructive_outline" className="text-red-400 border-red-500/70 hover:bg-red-500/10 hover:text-red-300" disabled>
+          <Button variant="outline" className="text-red-400 border-red-500/70 hover:bg-red-500/10 hover:text-red-300" disabled>
             <Trash2 size={16} className="mr-2" /> Delete Task
           </Button>
         </div>
@@ -199,7 +201,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
   <div>
     <h3 className="text-lg font-semibold text-slate-100 mb-3 flex items-center">
-      {React.cloneElement(icon as React.ReactElement, { className: "mr-2 text-blue-400" })}
+      <span className="mr-2 text-blue-400">{icon}</span>
       {title}
     </h3>
     <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600/70">
@@ -210,7 +212,7 @@ const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.
 
 const DetailItem: React.FC<{ label: string; value: string; icon: React.ReactNode; isLink?: boolean }> = ({ label, value, icon, isLink }) => (
   <div className="flex items-start">
-    {React.cloneElement(icon as React.ReactElement, { className: "mr-2 mt-1 text-slate-500 flex-shrink-0" })}
+    <span className="mr-2 mt-1 text-slate-500 flex-shrink-0">{icon}</span>
     <div>
       <span className="text-slate-400 block">{label}:</span>
       {isLink ? (

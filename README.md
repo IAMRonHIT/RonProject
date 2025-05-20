@@ -2,7 +2,7 @@
 
 This project includes three main components:
 1. A Next.js application with a Plan of Care Generator that uses Sonar Pro for reasoning and Gemini 2.5 Pro for care plan generation
-2. A Streamlit application that simulates Ron AI's multi-agent framework for coordinating healthcare workflows
+2. A Streamlit application that  Ron AI's multi-agent framework for coordinating healthcare workflows
 3. An enhanced RAG-powered chatbot with lead capture and HubSpot integration
 
 ## Plan of Care Generator
@@ -201,6 +201,6 @@ The UI is designed based on the "Visual Blueprint" described in the prompt, prio
 ## Technical Details
 
 *   **Stack:** Python, Streamlit, asyncio, Plotly (for the gauge). Next.js, React, Tailwind CSS.
-*   **Concurrency:** `asyncio` is used to run mock agent tasks concurrently (`asyncio.gather`). Each agent simulates work with `asyncio.sleep`.
+*   **Concurrency:** `asyncio` is used to run mock agent tasks concurrently (`asyncio.gather`). Each agent  work with `asyncio.sleep`.
 *   **Data:** Uses hardcoded synthetic patient and policy data. No external databases required.
 *   **Extensibility:** Agent definitions are stored in the `AGENT_DEFINITIONS` dictionary, making it easier to add or modify agents.

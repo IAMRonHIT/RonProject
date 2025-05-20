@@ -41,7 +41,7 @@ Provide thorough reasoning for your clinical decisions.`;
 }
 
 /**
- * Simulates sending a prompt to Grok-3 Mini API and streaming the response
+ *  sending a prompt to Grok-3 Mini API and streaming the response
  * In a real implementation, this would use the actual API
  */
 export async function sendToGrok(

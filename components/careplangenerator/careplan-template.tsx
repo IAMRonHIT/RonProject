@@ -7,18 +7,24 @@ import {
   Link, BookOpen, ImageIcon, PlayCircle, Send, ThumbsUp, ThumbsDown, Archive, AlertTriangle, Loader2, Palette, Users, MessageSquare
 } from 'lucide-react';
 import KanbanBoard from './KanbanBoard';
-import ChatInterface, { ChatMessage } from './ChatInterface'; // Added ChatInterface import
+import ChatInterface, { ChatMessage } from './ChatInterface';
+import ReasoningDisplay from './ReasoningDisplay';
 import {
   generateKanbanData,
   updateTaskStatus as updateTask,
   assignTaskToAgent as assignTask,
   TaskStatus,
   KanbanEpic,
-  KanbanTask
+  KanbanTask,
+  CarePlanDataForKanban,
+  NursingDiagnosis,
+  CarePlanIntervention,
+  CarePlanGoal,
+  CarePlanEvaluation
 } from './kanban-helpers';
 
 // --- Data Types ---
-type SectionType = 'assessment' | 'diagnosis' | 'implementation' | 'evaluation' | 'sources' | 'kanban' | 'chat'; // Added 'chat'
+type SectionType = 'assessment' | 'diagnosis' | 'implementation' | 'evaluation' | 'sources' | 'kanban' | 'chat' | 'summary_coordination_sources' | 'prior_authorizations';
 type ActiveTabType = 'overview' | SectionType;
 
 interface VitalSigns {
@@ -90,22 +96,19 @@ interface AgentType {
   evaluationContribution?: string;
 }
 
-// New type for Recommended Assessment Item
 interface RecommendedAssessmentItem {
   item: string;
   rationale: string;
   status: 'pending' | 'in_progress' | 'completed' | 'deferred';
 }
 
-// New type for Intervention (within a Goal)
-interface InterventionType {
+export interface InterventionType {
   interventionText: string;
   interventionType: 'general' | 'health_teaching' | 'monitoring' | 'psychosocial';
   rationale: string;
 }
 
-// New type for Evaluation (within a Goal)
-interface EvaluationType {
+export interface EvaluationType {
   evaluationText: string;
   evaluationMethod: string;
   evaluationTargetDate?: string;
@@ -113,34 +116,40 @@ interface EvaluationType {
 }
 
 interface PriorAuthCriterion {
-  name?: string;
-  met?: boolean | string;
-  notes?: string;
+  name?: string; // This seems to be part of pa_n_criteria_met_details now
+  met?: boolean | string; // This seems to be part of pa_n_criteria_met_details now
+  notes?: string; // This seems to be part of pa_n_criteria_met_details now
 }
 
 interface PriorAuthItem {
-  id?: string;
-  item?: string;
-  type?: string;
-  status?: string;
-  submittedDate?: string;
-  approvedDate?: string;
-  expirationDate?: string;
-  estimatedResponse?: string;
-  estimatedSubmission?: string;
-  confidence?: string;
-  criteria?: PriorAuthCriterion[];
-  [key: string]: any;
+  pa_n_id?: string;
+  pa_n_item_name?: string;
+  pa_n_type?: 'Medication' | 'Outpatient Service' | 'Outpatient Procedure' | 'Inpatient Admission Potential';
+  pa_n_status?: string;
+  pa_n_cpt_code?: string;
+  pa_n_description?: string;
+  pa_n_pos_code?: string;
+  pa_n_units?: string;
+  pa_n_dates_of_service?: string;
+  pa_n_criteria_met_details?: string; // This will contain text and inline citations like [S1]
+  pa_n_estimated_response?: string;
+  pa_n_approval_confidence?: string; // Should be number, but schema says string. Will parse.
+  // Adding back date fields for simulation logic, prefixed
+  pa_n_submitted_date?: string;
+  pa_n_approved_date?: string;
+  pa_n_expiration_date?: string;
+  pa_n_estimated_submission?: string; // This was in the old schema, might be useful for mock
+  [key: string]: any; // Keep for flexibility if backend sends extra fields
 }
 
 interface SourceData {
-  id?: string;
-  title?: string;
-  type?: string;
-  url?: string;
-  snippet?: string;
-  retrieval_date?: string;
-  agent_source?: string;
+  source_n_id?: string;
+  source_n_title?: string;
+  source_n_type?: string;
+  source_n_url?: string;
+  source_n_snippet?: string;
+  source_n_retrieval_date?: string;
+  source_n_agent_source?: string;
   [key: string]: any;
 }
 
@@ -148,22 +157,18 @@ export interface CarePlanJsonData {
   patientData?: PatientData;
   clinicalData?: ClinicalData;
   aiAgents?: AgentType[];
-  priorAuthItems?: PriorAuthItem[];
-  sourcesData?: SourceData[];
-
+  priorAuthItems?: PriorAuthItem[]; // Uses the new PriorAuthItem interface
+  sourcesData?: SourceData[]; // Uses the new SourceData interface
   assessment_subjective_chief_complaint?: string;
   assessment_subjective_hpi?: string;
   assessment_subjective_goals?: string;
   assessment_subjective_other?: string;
-
   assessment_objective_vitals_summary?: string;
   assessment_objective_physical_exam?: string;
   assessment_objective_diagnostics?: string;
   assessment_objective_meds_reviewed?: string;
   assessment_objective_other?: string;
-
-  recommendedAssessmentsList?: RecommendedAssessmentItem[]; // ADDED
-
+  recommendedAssessmentsList?: RecommendedAssessmentItem[];
   nursingDiagnoses?: {
     diagnosis_nanda: string;
     diagnosis_related_to?: string;
@@ -175,32 +180,36 @@ export interface CarePlanJsonData {
       goal_target_date?: string;
       goal_outcomes: string[];
       goal_rationale?: string;
-      interventions: InterventionType[]; // MOVED HERE
-      evaluation: EvaluationType;      // MOVED HERE & singular
+      interventions: InterventionType[];
+      evaluation: EvaluationType;
     }[];
-    // Interventions array removed from here
   }[];
-
-  // Top-level evaluations array removed
-
   interdisciplinaryPlan?: {
       discipline: string;
       plan_item: string;
   }[];
-
   overall_plan_summary?: string;
   next_steps: string[];
-
   notification_title?: string;
   notification_message?: string;
   notification_detail_1?: string;
   notification_detail_2?: string;
 }
 
+// Definition for ReasoningStage, used by CarePlanTemplateProps
+interface ReasoningStage {
+  markdownContent: string | null;
+  isLoading: boolean;
+  isComplete: boolean;
+}
+
 interface CarePlanTemplateProps {
   data: CarePlanJsonData | null;
   enableSimulations?: boolean;
-  topLevelCitations?: string[];
+  sectionReasoning?: { [sectionId: string]: ReasoningStage };
+  sectionUiStates?: { [sectionId: string]: { isReady: boolean; displayName: string; } };
+  onSectionToggle?: (sectionKey: string) => void;
+  expandedSectionsFromParent?: Record<string, boolean>;
 }
 
 interface InfoCardProps {
@@ -220,6 +229,7 @@ const randomDate = (start = new Date(2023, 0, 1), end = new Date()) => {
 };
 
 const generateMockCarePlanData = (): CarePlanJsonData => {
+  // ... (mock data generation remains the same) ...
   const createMockInterventions = (goalDesc: string, count: number = 20): InterventionType[] => {
     const interventions: InterventionType[] = [];
     const commonActions = [
@@ -322,13 +332,97 @@ const generateMockCarePlanData = (): CarePlanJsonData => {
     ],
     recommendedAssessmentsList: mockRecommendedAssessments,
     priorAuthItems: [
-      { id: "PA001", item: "Entresto 49/51mg", type: "Medication", status: "Pending Submission", estimatedResponse: "3-5 business days", estimatedSubmission: randomDate(new Date(Date.now() + 86400000)), confidence: "0.75", criteria: [{ name: "Documented CHF Diagnosis", met: true, notes: "Diagnosis confirmed in chart." },{ name: "Trial of ACEi/ARB", met: "partially met", notes: "Currently on Lisinopril, efficacy to be evaluated." },{ name: "EF < 40%", met: "pending", notes: "Awaiting recent Echocardiogram results." }] },
-      { id: "PA002", item: "Echocardiogram", type: "Diagnostic Procedure", status: "Pending Submission", estimatedResponse: "1-2 business days", estimatedSubmission: randomDate(new Date(Date.now() + 86400000*2)), confidence: "0.90", criteria: [{ name: "Symptomatic CHF", met: true, notes: "Patient presenting with dyspnea and edema." },{ name: "Relevant to treatment plan", met: true, notes: "Results will guide medication adjustments." }] }
+      { 
+        pa_n_id: "PA-RX-001", 
+        pa_n_item_name: "Entresto 49/51mg", 
+        pa_n_type: "Medication", 
+        pa_n_status: "Pending Submission", 
+        pa_n_cpt_code: "J0123 (example NDC)", 
+        pa_n_description: "Sacubitril/valsartan for HFrEF",
+        pa_n_pos_code: "11", // Office
+        pa_n_units: "60 tablets",
+        pa_n_dates_of_service: `${randomDate()} - ${randomDate(new Date(Date.now() + 30 * 86400000))}`,
+        pa_n_criteria_met_details: "Patient has symptomatic HFrEF with LVEF < 40% on recent echo [S2]. Currently on Lisinopril, but per guidelines [S1], Entresto is preferred for further risk reduction. Meets payer criteria for ACEi trial.",
+        pa_n_estimated_response: "3-5 business days", 
+        pa_n_approval_confidence: "0.75"
+      },
+      { 
+        pa_n_id: "PA-OUTPT-001", 
+        pa_n_item_name: "Echocardiogram, complete", 
+        pa_n_type: "Outpatient Procedure", 
+        pa_n_status: "Requires Submission", 
+        pa_n_cpt_code: "93306",
+        pa_n_description: "Comprehensive echocardiogram to assess LV function and valvular status.",
+        pa_n_pos_code: "22", // Outpatient Hospital
+        pa_n_units: "1 procedure",
+        pa_n_dates_of_service: randomDate(new Date(Date.now() + 2 * 86400000)),
+        pa_n_criteria_met_details: "Patient presenting with CHF exacerbation symptoms (dyspnea, edema) [S2]. Necessary to evaluate current cardiac function to guide therapy adjustments as per AHA/ACC guidelines [S1].",
+        pa_n_estimated_response: "1-2 business days", 
+        pa_n_approval_confidence: "0.90" 
+      },
+      // Add 3 more outpatient and 1 inpatient potential mock PAs
+      {
+        pa_n_id: "PA-OUTPT-002",
+        pa_n_item_name: "Cardiac Rehabilitation Program",
+        pa_n_type: "Outpatient Service",
+        pa_n_status: "Pending Review",
+        pa_n_cpt_code: "93798",
+        pa_n_description: "Physician-supervised cardiac rehabilitation program, 36 sessions.",
+        pa_n_pos_code: "22",
+        pa_n_units: "36 sessions",
+        pa_n_dates_of_service: `${randomDate(new Date(Date.now() + 7 * 86400000))} - ${randomDate(new Date(Date.now() + 90 * 86400000))}`,
+        pa_n_criteria_met_details: "Post-CHF exacerbation, to improve functional capacity and reduce readmission risk [S1, S3]. Patient motivated.",
+        pa_n_estimated_response: "5-7 business days",
+        pa_n_approval_confidence: "0.80"
+      },
+      {
+        pa_n_id: "PA-OUTPT-003",
+        pa_n_item_name: "Sleep Study (Polysomnography)",
+        pa_n_type: "Outpatient Procedure", // Changed to "Outpatient Procedure"
+        pa_n_status: "Requires Submission",
+        pa_n_cpt_code: "95810",
+        pa_n_description: "Overnight sleep study to evaluate for obstructive sleep apnea, a common comorbidity in CHF.",
+        pa_n_pos_code: "11", // Can be done in sleep lab (office setting for some) or hospital outpatient
+        pa_n_units: "1 study",
+        pa_n_dates_of_service: randomDate(new Date(Date.now() + 14 * 86400000)),
+        pa_n_criteria_met_details: "Patient reports daytime fatigue and partner notes snoring [S2]. OSA is prevalent in CHF and impacts outcomes [S3].",
+        pa_n_estimated_response: "7-10 business days",
+        pa_n_approval_confidence: "0.70"
+      },
+      {
+        pa_n_id: "PA-OUTPT-004",
+        pa_n_item_name: "Nutritional Counseling for CHF",
+        pa_n_type: "Outpatient Service",
+        pa_n_status: "Likely Approved",
+        pa_n_cpt_code: "97802",
+        pa_n_description: "Medical nutrition therapy, initial assessment and intervention.",
+        pa_n_pos_code: "11",
+        pa_n_units: "1 session",
+        pa_n_dates_of_service: randomDate(new Date(Date.now() + 3 * 86400000)),
+        pa_n_criteria_met_details: "Essential for CHF management, focusing on low sodium diet and fluid balance [S1]. Patient has Type 2 Diabetes, further indicating need [S2].",
+        pa_n_estimated_response: "1-2 business days",
+        pa_n_approval_confidence: "0.95"
+      },
+      {
+        pa_n_id: "PA-INPT-001",
+        pa_n_item_name: "Inpatient Hospital Admission for CHF Exacerbation",
+        pa_n_type: "Inpatient Admission Potential",
+        pa_n_status: "Likely Approved (based on presentation)",
+        pa_n_cpt_code: "DRG 291 (Heart Failure & Shock w MCC)", // Example DRG
+        pa_n_description: "Admission for acute decompensated heart failure requiring IV diuretics and intensive monitoring.",
+        pa_n_pos_code: "21", // Inpatient Hospital
+        pa_n_units: "Est. 3-5 days",
+        pa_n_dates_of_service: randomDate(new Date(2024,0,1)), // Use randomDate or a fixed mock date
+        pa_n_criteria_met_details: "Patient presents with worsening dyspnea, bibasilar crackles, 2+ pitting edema, and elevated BNP (450 pg/mL) [S2]. Meets InterQual/Milliman criteria for inpatient admission due to acute decompensation and need for IV therapy [S4 - hypothetical payer policy source].",
+        pa_n_estimated_response: "Concurrent Review",
+        pa_n_approval_confidence: "0.88"
+      }
     ],
     sourcesData: [
-      { id: "SRC001", title: "AHA/ACC CHF Guidelines 2023", type: "Clinical Guideline", url: "#", snippet: "Guideline for management of heart failure, including pharmacologic and non-pharmacologic interventions.", retrieval_date: randomDate(), agent_source: "Clinical Insight Agent" },
-      { id: "SRC002", title: "Patient EHR Record - Admission Note", type: "EHR Note", url: "#", snippet: "Admission H&P detailing patient presentation and initial assessment by Dr. Marcus.", retrieval_date: randomDate(), agent_source: "All Agents" },
-      { id: "SRC003", title: "United HealthCare Formulary Tier List Q1 2024", type: "Insurance Document", url: "#", snippet: "Entresto listed as Tier 3, PA required. Copay assistance programs available.", retrieval_date: randomDate(), agent_source: "Authorization & Benefits Agent" }
+      { source_n_id: "S1", source_n_title: "AHA/ACC CHF Guidelines 2023", source_n_type: "Clinical Guideline", source_n_url: "https://www.ahajournals.org/doi/10.1161/CIR.0000000000001063", source_n_snippet: "Guideline for management of heart failure, including pharmacologic and non-pharmacologic interventions, and indications for procedures.", source_n_retrieval_date: randomDate(), source_n_agent_source: "Ron of Ron AI" },
+      { source_n_id: "S2", source_n_title: "Patient EHR Record - Admission Note (Simulated)", source_n_type: "EHR Note", source_n_url: "#", source_n_snippet: "Admission H&P detailing patient presentation (dyspnea, edema, weight gain, BNP 450) and initial assessment by Dr. Marcus.", source_n_retrieval_date: randomDate(), source_n_agent_source: "Ron of Ron AI" },
+      { source_n_id: "S3", source_n_title: "UpToDate: Overview of Cardiac Rehabilitation", source_n_type: "Review Article", source_n_url: "https://www.uptodate.com/contents/overview-of-cardiac-rehabilitation", source_n_snippet: "Cardiac rehabilitation is recommended for patients with stable heart failure to improve functional capacity and quality of life.", source_n_retrieval_date: randomDate(), source_n_agent_source: "Ron of Ron AI" },
+      { source_n_id: "S4", source_n_title: "Simulated Payer Policy: Inpatient Admission for CHF (Policy #CHF123)", source_n_type: "Payer Policy", source_n_url: "#", source_n_snippet: "Criteria for inpatient admission for CHF exacerbation include NYHA Class III/IV symptoms, evidence of fluid overload refractory to oral diuretics, or need for IV vasoactive agents.", source_n_retrieval_date: randomDate(), source_n_agent_source: "Ron of Ron AI" }
     ],
     assessment_subjective_chief_complaint: "Patient reports increased shortness of breath and leg swelling over the past 3 days. States, 'I can barely walk to the bathroom without getting winded.'",
     assessment_subjective_hpi: "Symptoms worsened with minimal exertion, unable to sleep flat (requires 3 pillows). Denies chest pain, palpitations, or syncope. Reports adherence to home medications (Lisinopril, Metformin) until 2 days ago when 'ran out of Lisinopril'. Noted 5lb weight gain on home scale.",
@@ -379,122 +473,121 @@ const generateMockCarePlanData = (): CarePlanJsonData => {
 
 const TabButton = ({ active, icon, label, onClick, anonClick }: { active: boolean; icon: ReactNode; label: string; onClick: () => void; anonClick?: (label: string) => void; }) => (
   <button
-    className={`flex items-center px-8 py-4 text-sm font-medium tracking-wide transition-all duration-300 whitespace-nowrap group relative border-b-2 mx-4 ${
+    className={`flex items-center px-6 py-3 text-sm font-medium tracking-wider transition-all duration-300 whitespace-nowrap group relative border-b-2 mx-2 rounded-t-md ${
       active
-        ? 'text-white border-blue-500 bg-gradient-to-r from-blue-600 to-teal-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-gradient-to-r after:from-blue-500 after:to-teal-500' // Active tab with solid gradient background and underline
-        : 'text-slate-300 hover:text-white border-transparent hover:border-slate-500' // Inactive tab
+        ? 'text-sky-400 border-sky-500 bg-slate-800 glow-sky-500'
+        : 'text-slate-400 hover:text-sky-400 border-transparent hover:border-slate-700 hover:bg-slate-800'
     }`}
     onClick={() => { onClick(); if(anonClick) anonClick(label); }}
   >
-    {React.cloneElement(icon as React.ReactElement<any>, { className: `mr-2 transition-colors duration-300 ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}` } as any)}
-    <span className="tracking-wide">{label}</span>
+    {React.cloneElement(icon as React.ReactElement<any>, { className: `mr-2.5 transition-colors duration-300 ${active ? 'text-sky-400' : 'text-slate-500 group-hover:text-sky-500'}` } as any)}
+    <span className="tracking-wider">{label}</span>
   </button>
 );
 
 const SectionHeader = ({ title, icon, expanded, onToggle, actionButton }: { title: string; icon: ReactNode; expanded: boolean; onToggle: () => void; actionButton?: ReactNode }) => (
   <div
-    className={`flex justify-between items-center py-8 px-10 rounded-t-lg cursor-pointer transition-all duration-300 ease-in-out ${
-      expanded ? 'bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md' : 'bg-slate-700 hover:bg-slate-600 text-slate-100 border-b border-slate-600' // Enhanced header
+    className={`flex justify-between items-center py-6 px-8 rounded-t-lg cursor-pointer transition-all duration-300 ease-in-out ${
+      expanded ? 'bg-slate-800 text-white shadow-lg border-b-2 border-sky-500 glow-sky-500' : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-b border-slate-700'
     }`}
     onClick={onToggle}
   >
     <div className="flex items-center min-w-0 mr-3 pl-2">
-      {React.cloneElement(icon as React.ReactElement<any>, { className: `mr-2 transition-colors duration-300 ${expanded ? 'text-white' : 'text-blue-400'} flex-shrink-0` } as any)}
+      {React.cloneElement(icon as React.ReactElement<any>, { className: `mr-3 transition-colors duration-300 ${expanded ? 'text-sky-400' : 'text-slate-400'} flex-shrink-0` } as any)}
       <h3 className="font-semibold text-xl tracking-wide leading-relaxed truncate" title={title}>{title}</h3>
     </div>
     <div className="flex items-center flex-shrink-0">
       {actionButton && <div className="mr-5">{actionButton}</div>}
-      {expanded ? <ChevronUp size={20} className={expanded ? "text-white" : "text-slate-300"} /> : <ChevronDown size={20} className={expanded ? "text-white" : "text-slate-300"} />}
+      {expanded ? <ChevronUp size={22} className={expanded ? "text-sky-400" : "text-slate-300"} /> : <ChevronDown size={22} className={expanded ? "text-sky-400" : "text-slate-300"} />}
     </div>
   </div>
 );
 
-const InfoCard = ({ icon, label, value, color = "blue" }: InfoCardProps) => {
-  // Dark mode color adjustments - text will be light, backgrounds darker shades of the color
-  const colorClasses = {
-    blue: "bg-blue-800 border-blue-700 text-blue-200", green: "bg-green-800 border-green-700 text-green-200",
-    purple: "bg-purple-800 border-purple-700 text-purple-200", amber: "bg-amber-800 border-amber-700 text-amber-200",
-    indigo: "bg-indigo-800 border-indigo-700 text-indigo-200", teal: "bg-teal-800 border-teal-700 text-teal-200",
-    red: "bg-red-800 border-red-700 text-red-200", pink: "bg-pink-800 border-pink-700 text-pink-200",
-    cyan: "bg-cyan-800 border-cyan-700 text-cyan-200",
+const InfoCard = ({ icon, label, value, color = "sky" }: InfoCardProps) => {
+  // Electric color mapping
+  const electricColorClasses = {
+    sky: "text-sky-400 border-sky-500 glow-sky-500",
+    lime: "text-lime-400 border-lime-500 glow-lime-500",
+    amber: "text-amber-400 border-amber-500 glow-amber-500",
+    fuchsia: "text-fuchsia-400 border-fuchsia-500 glow-fuchsia-500",
+    teal: "text-teal-400 border-teal-500 glow-teal-500",
+    purple: "text-purple-400 border-purple-500 glow-purple-500",
+    red: "text-red-400 border-red-500 glow-red-500",
   };
-  const safeColor = (color as keyof typeof colorClasses) in colorClasses ? (color as keyof typeof colorClasses) : 'blue';
-  
+  const safeColor = (color as keyof typeof electricColorClasses) in electricColorClasses ? (color as keyof typeof electricColorClasses) : 'sky';
+  const currentElectricColor = electricColorClasses[safeColor];
+
   return (
-    <div className="bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-600 flex items-start hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"> {/* Dark mode InfoCard */}
-      <div className={`rounded-lg p-4 mr-6 ${colorClasses[safeColor]} flex-shrink-0`}>
-        {React.cloneElement(icon as React.ReactElement<any>, { size: 28 } as any)}
+    <div className="bg-slate-900 rounded-xl p-6 shadow-xl border border-slate-700 flex items-start hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:border-slate-600">
+      <div className={`rounded-lg p-3.5 mr-5 bg-slate-800 border ${currentElectricColor.split(' ')[1]} ${currentElectricColor.split(' ')[2]} flex-shrink-0`}>
+        {React.cloneElement(icon as React.ReactElement<any>, { size: 28, className: currentElectricColor.split(' ')[0] } as any)}
       </div>
       <div className="min-w-0">
-        <p className="text-base font-medium text-slate-400 tracking-wide mb-2 truncate">{label}</p>
-        <p className="font-semibold text-slate-100 text-xl tracking-wide leading-snug truncate" title={String(value || '')}>{value || <span className="italic text-slate-500">N/A</span>}</p>
+        <p className="text-base font-medium text-slate-400 tracking-wide mb-1.5 truncate">{label}</p>
+        <p className="font-bold text-slate-100 text-2xl tracking-wide leading-snug truncate" title={String(value || '')}>{value || <span className="italic text-slate-500">N/A</span>}</p>
       </div>
     </div>
   );
 };
 
 const StatusBadge = ({ status }: StatusBadgeProps) => {
-  let bgColor, textColor, icon, ringColor;
+  let textColorClass, iconElement, glowClass;
   const displayStatus = status || 'Unknown';
 
-  // Dark mode status badge colors
   switch(displayStatus.toLowerCase()) {
     case 'approved': case 'active': case 'met': case 'completed':
-      bgColor = 'bg-green-700'; textColor = 'text-green-100'; icon = <CheckCircle size={14} className="text-green-300 mr-1.5" />; ringColor = 'ring-green-500'; break;
+      textColorClass = 'text-lime-400'; iconElement = <CheckCircle size={14} className="text-lime-400 mr-1.5" />; glowClass = 'glow-lime-400'; break;
     case 'in progress': case 'pending': case 'partially met': case 'ongoing':
-      bgColor = 'bg-amber-700'; textColor = 'text-amber-100'; icon = <Clock size={14} className="text-amber-300 mr-1.5 animate-pulse" />; ringColor = 'ring-amber-500'; break;
+      textColorClass = 'text-amber-400'; iconElement = <Clock size={14} className="text-amber-400 mr-1.5 animate-pulse" />; glowClass = 'glow-amber-400'; break;
     case 'pending submission': case 'scheduled':
-      bgColor = 'bg-blue-700'; textColor = 'text-blue-100'; icon = <FileText size={14} className="text-blue-300 mr-1.5" />; ringColor = 'ring-blue-500'; break;
+      textColorClass = 'text-sky-400'; iconElement = <FileText size={14} className="text-sky-400 mr-1.5" />; glowClass = 'glow-sky-400'; break;
     case 'denied': case 'not met': case 'rejected':
-      bgColor = 'bg-red-700'; textColor = 'text-red-100'; icon = <X size={14} className="text-red-300 mr-1.5" />; ringColor = 'ring-red-500'; break;
+      textColorClass = 'text-red-500'; iconElement = <X size={14} className="text-red-500 mr-1.5" />; glowClass = 'glow-red-500'; break;
     case 'new order':
-      bgColor = 'bg-orange-700'; textColor = 'text-orange-100'; icon = <Plus size={14} className="text-orange-300 mr-1.5" />; ringColor = 'ring-orange-500'; break;
+      textColorClass = 'text-fuchsia-400'; iconElement = <Plus size={14} className="text-fuchsia-400 mr-1.5" />; glowClass = 'glow-fuchsia-400'; break;
     default:
-      bgColor = 'bg-slate-600'; textColor = 'text-slate-100'; icon = <Info size={14} className="text-slate-300 mr-1.5" />; ringColor = 'ring-slate-500';
+      textColorClass = 'text-slate-400'; iconElement = <Info size={14} className="text-slate-400 mr-1.5" />; glowClass = 'shadow-none';
   }
   return (
-    <div className={`inline-flex items-center px-3.5 py-2 rounded-full text-sm font-semibold ${bgColor} ${textColor} ring-1 ring-opacity-70 ${ringColor} shadow-sm`}>
-      {icon}
+    <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-800 ${textColorClass} ${glowClass} border border-slate-700`}>
+      {iconElement}
       {displayStatus}
     </div>
   );
 };
 
 const getAgentGradient = (agentName: string) => {
-  const name = (agentName || '').toLowerCase();
-  if (name.includes('clinical')) {
+  const name = (agentName || "").toLowerCase();
+  // Define electric colors for agent types
+  if (name.includes("clinical")) {
     return {
-      header: 'from-blue-500 via-blue-600 to-indigo-600', 
-      bg: 'bg-gradient-to-br from-blue-900/30 to-indigo-900/30',
-      border: 'border-blue-500',
-      icon: <Activity size={24} className="text-white" />,
-      iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600'
+      accentColor: "sky", // Corresponds to electricColorClasses in InfoCard
+      icon: <Activity size={24} className="text-sky-400" />,
+      borderColor: "border-sky-500",
+      glowClass: "glow-sky-500",
     };
   }
-  if (name.includes('authorization') || name.includes('benefits')) {
+  if (name.includes("authorization") || name.includes("benefits")) {
     return {
-      header: 'from-purple-500 via-purple-600 to-indigo-600', 
-      bg: 'bg-gradient-to-br from-purple-900/30 to-indigo-900/30',
-      border: 'border-purple-500',
-      icon: <Shield size={24} className="text-white" />,
-      iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600'
+      accentColor: "purple",
+      icon: <Shield size={24} className="text-purple-400" />,
+      borderColor: "border-purple-500",
+      glowClass: "glow-purple-500",
     };
   }
-  if (name.includes('discharge') || name.includes('coordination')) {
+  if (name.includes("discharge") || name.includes("coordination")) {
     return {
-      header: 'from-green-500 via-green-600 to-teal-600', 
-      bg: 'bg-gradient-to-br from-green-900/30 to-teal-900/30',
-      border: 'border-green-500',
-      icon: <Users size={24} className="text-white" />,
-      iconBg: 'bg-gradient-to-br from-green-500 to-green-600'
+      accentColor: "teal",
+      icon: <Users size={24} className="text-teal-400" />,
+      borderColor: "border-teal-500",
+      glowClass: "glow-teal-500",
     };
   }
-  return {
-    header: 'from-blue-500 via-indigo-600 to-purple-600', 
-    bg: 'bg-gradient-to-br from-blue-900/30 to-indigo-900/30',
-    border: 'border-indigo-500',
-    icon: <Zap size={24} className="text-white" />,
-    iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600'
+  return { // Default
+    accentColor: "slate", // A neutral, non-electric default
+    icon: <Zap size={24} className="text-slate-400" />,
+    borderColor: "border-slate-500",
+    glowClass: "shadow-none",
   };
 };
 
@@ -504,71 +597,70 @@ const AgentCard = ({ agent, isExpanded, onToggle, section }: { agent: AgentType;
   const agentConfidence = agent?.confidenceScore || 0;
   const insights = agent?.insights || [];
 
-  // Enhanced styling with gradients
   const styles = getAgentGradient(agentName);
 
   const getContributionText = (currentSection: ActiveTabType): string | React.ReactNode => {
-    if (!agent) return <span className="italic text-slate-400">N/A</span>;
+    if (!agent) return <span className="italic text-slate-500">N/A</span>;
     switch (currentSection) {
       case 'overview':
         return agent.assessmentContribution || agent.planningContribution || agent.implementationContribution || agent.evaluationContribution || "Provides overall strategic insights.";
       case 'assessment':
-        return agent.assessmentContribution || <span className="italic text-slate-400">No specific assessment contribution.</span>;
+        return agent.assessmentContribution || <span className="italic text-slate-500">No specific assessment contribution.</span>;
       case 'diagnosis': // Covers Diagnosis & Goals
-        return agent.planningContribution || <span className="italic text-slate-400">No specific planning contribution.</span>;
+        return agent.planningContribution || <span className="italic text-slate-500">No specific planning contribution.</span>;
       case 'implementation': // Covers Interventions
-        return agent.implementationContribution || <span className="italic text-slate-400">No specific implementation contribution.</span>;
+        return agent.implementationContribution || <span className="italic text-slate-500">No specific implementation contribution.</span>;
       case 'evaluation':
-        return agent.evaluationContribution || <span className="italic text-slate-400">No specific evaluation contribution.</span>;
+        return agent.evaluationContribution || <span className="italic text-slate-500">No specific evaluation contribution.</span>;
       case 'kanban':
          return agent.implementationContribution || "Contributes to task execution and monitoring.";
       case 'sources':
         return "Agent may cite sources; direct contribution is through evidence provided.";
       default:
-        return <span className="italic text-slate-400">N/A</span>;
+        return <span className="italic text-slate-500">N/A</span>;
     }
   };
   
   return (
-    <div className={`bg-slate-700 rounded-xl shadow-lg overflow-hidden border ${isExpanded ? `ring-2 ring-offset-2 ring-offset-slate-800 ${styles.border.replace('border-', 'ring-')}` : styles.border} hover:shadow-xl transition-all duration-300 ease-in-out`}>
-      <div className={`bg-gradient-to-r ${styles.header} px-5 py-4 text-white flex justify-between items-center cursor-pointer`} onClick={onToggle}>
+    <div className={`bg-slate-900 rounded-xl shadow-xl overflow-hidden border ${isExpanded ? `ring-2 ring-offset-2 ring-offset-slate-950 ${styles.borderColor.replace('border-', 'ring-')}` : styles.borderColor} ${styles.glowClass} hover:shadow-2xl transition-all duration-300 ease-in-out`}>
+      <div className={`bg-slate-800 px-5 py-4 text-white flex justify-between items-center cursor-pointer border-b ${styles.borderColor}`} onClick={onToggle}>
         <div className="flex items-center min-w-0 mr-3">
-          <div className={`p-2.5 ${styles.iconBg} rounded-lg mr-4 shadow-inner flex-shrink-0`}>{styles.icon}</div>
+          <div className={`p-2.5 bg-slate-700 rounded-lg mr-4 shadow-inner flex-shrink-0 border ${styles.borderColor} ${styles.glowClass}`}>{styles.icon}</div>
           <div className="min-w-0">
-            <h4 className="font-bold text-xl text-white truncate" title={agentName}>{agentName}</h4>
-            <p className="text-sm text-white text-opacity-90 truncate" title={agentSpecialty}>{agentSpecialty}</p>
+            <h4 className="font-bold text-xl text-slate-100 truncate" title={agentName}>{agentName}</h4>
+            <p className="text-sm text-slate-300 truncate" title={agentSpecialty}>{agentSpecialty}</p>
           </div>
         </div>
         <div className="flex items-center flex-shrink-0">
-          <div className="bg-white bg-opacity-20 px-3.5 py-2 rounded-md text-sm font-semibold mr-4 shadow-sm">
-            {(agentConfidence * 100).toFixed(0)}% Conf.
+          <div className={`bg-slate-700 border ${styles.borderColor} px-3.5 py-2 rounded-md text-sm font-semibold mr-4 shadow-sm ${styles.glowClass}`}>
+            <span className={`font-bold ${styles.accentColor === 'slate' ? 'text-slate-200' : `text-${styles.accentColor}-400`}`}>{(agentConfidence * 100).toFixed(0)}%</span> Conf.
           </div>
-          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {isExpanded ? <ChevronUp size={20} className={styles.accentColor === 'slate' ? 'text-slate-300' : `text-${styles.accentColor}-400`} /> : <ChevronDown size={20} className={styles.accentColor === 'slate' ? 'text-slate-300' : `text-${styles.accentColor}-400`} />}
         </div>
       </div>
       {isExpanded && (
-        <div className={`p-5 space-y-5 border-t-2 ${styles.border} ${styles.bg}`}>
-          <div className={`rounded-lg p-4 border ${styles.border} bg-slate-700/80 backdrop-blur-sm shadow-sm`}>
+        <div className={`p-5 space-y-5 border-t ${styles.borderColor} bg-slate-900`}>
+          <div className={`rounded-lg p-4 border ${styles.borderColor} bg-slate-800 shadow-md`}>
             <div className="font-semibold text-slate-100 text-lg mb-2.5 flex items-center">
-              <Palette size={18} className="mr-2.5 text-slate-300" /> {section.charAt(0).toUpperCase() + section.slice(1)} Contribution:
+              <Palette size={18} className={`mr-2.5 ${styles.accentColor === 'slate' ? 'text-slate-400' : `text-${styles.accentColor}-400`}`} /> {section.charAt(0).toUpperCase() + section.slice(1)} Contribution:
             </div>
             <p className="text-base text-slate-200 leading-relaxed">{getContributionText(section)}</p>
           </div>
           <div>
-            <h5 className="text-lg font-semibold text-slate-100 mb-3 flex items-center"><Zap size={18} className="mr-2 text-amber-400" /> AI Insights</h5>
+            <h5 className="text-lg font-semibold text-slate-100 mb-3 flex items-center"><Zap size={18} className="mr-2 text-amber-400 glow-amber-400" /> AI Insights</h5>
             {insights.length > 0 ? (
               <ul className="space-y-2.5">
                 {insights.map((insight, idx) => (
-                  <li key={idx} className="text-base text-slate-200 flex items-start p-3 bg-slate-700/80 backdrop-blur-sm border border-slate-600 rounded-md shadow-sm hover:shadow-md transition-all duration-300">
+                  <li key={idx} className="text-base text-slate-200 flex items-start p-3 bg-slate-800 border border-slate-700 rounded-md shadow-md hover:shadow-lg transition-all duration-300 hover:border-slate-600">
                     <ArrowRight size={16} className="text-amber-500 mr-2.5 mt-1 flex-shrink-0" /> {insight || 'N/A'}
                   </li>
                 ))}
               </ul>
-            ) : <div className="text-base text-slate-400 italic p-3 bg-slate-700/80 backdrop-blur-sm border border-slate-600 rounded-md">No insights provided for this agent.</div>}
+            ) : <div className="text-base text-slate-500 italic p-3 bg-slate-800 border border-slate-700 rounded-md">No insights provided for this agent.</div>}
           </div>
-           <div className="mt-4 pt-4 border-t border-slate-500/50">
-             <p className="text-sm text-slate-300 italic flex items-center">
-               <Zap size={16} className="mr-2 text-teal-400 animate-pulse" />
+           <div className="mt-4 pt-4 border-t border-slate-700">
+             <p className="text-sm text-slate-400 italic flex items-center">
+               <Zap size={16} className={`mr-2 ${styles.accentColor === 'slate' ? 'text-slate-500' : `text-${styles.accentColor}-500 animate-pulse`}`} />
                {agentName} is actively monitoring and processing information related to {section === 'overview' ? 'overall care coordination' : String(section)}...
              </p>
            </div>
@@ -579,81 +671,85 @@ const AgentCard = ({ agent, isExpanded, onToggle, section }: { agent: AgentType;
 };
 
 const PriorAuthCard = ({ item, onUpdateStatus }: { item: PriorAuthItem; onUpdateStatus?: (id: string, newStatus: string) => void }) => {
-  const paId = item?.id || item?.pa_n_id || 'N/A';
-  const paItemName = item?.item || item?.pa_n_item_name || 'N/A';
-  const paType = item?.type || item?.pa_n_type || 'N/A';
-  const paStatus = item?.status || item?.pa_n_status || 'Unknown';
-  const paSubmittedDate = item?.submittedDate || item?.pa_n_submitted_date || null;
-  const paEstSubmission = item?.estimatedSubmission || item?.pa_n_estimated_submission || 'N/A';
-  const paApprovedDate = item?.approvedDate || item?.pa_n_approved_date || null;
-  const paExpirationDate = item?.expirationDate || item?.pa_n_expiration_date || null;
-  const paEstResponse = item?.estimatedResponse || item?.pa_n_estimated_response || 'N/A';
-  const paConfidence = item?.confidence || item?.pa_n_approval_confidence ? (parseFloat(item.confidence || item.pa_n_approval_confidence || '0') || 0) : 0;
-  const paCriteria = Array.isArray(item?.criteria) ? item.criteria : [];
+  const paId = item?.pa_n_id || 'N/A';
+  const paItemName = item?.pa_n_item_name || 'N/A';
+  const paType = item?.pa_n_type || 'N/A';
+  const paStatus = item?.pa_n_status || 'Unknown';
+  const paCptCode = item?.pa_n_cpt_code || 'N/A';
+  const paDescription = item?.pa_n_description || 'No description provided.';
+  const paPosCode = item?.pa_n_pos_code || 'N/A';
+  const paUnits = item?.pa_n_units || 'N/A';
+  const paDatesOfService = item?.pa_n_dates_of_service || 'N/A';
+  const paCriteriaMetDetails = item?.pa_n_criteria_met_details || 'No criteria details provided.';
+  const paEstResponse = item?.pa_n_estimated_response || 'N/A';
+  const paApprovalConfidence = parseFloat(item?.pa_n_approval_confidence || '0') * 100 || 0;
+
+  // Simple regex to find citations like [S1] or [S1, S2]
+  const renderCriteriaDetails = (details: string) => {
+    const parts = details.split(/(\[[Ss]\d+(?:,\s*[Ss]\d+)*\])/g);
+    return parts.map((part, index) => {
+      if (/^\[[Ss]\d+(?:,\s*[Ss]\d+)*\]$/.test(part)) {
+        return <strong key={index} className="text-sky-400 font-semibold">{part}</strong>;
+      }
+      return part;
+    });
+  };
 
   return (
-    <div className="border border-slate-600 rounded-xl shadow-lg mb-6 bg-slate-700 overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      <div className="border-b border-slate-600 p-5 flex justify-between items-start">
-          <div>
-            <div className="flex items-center mb-2">
-              <StatusBadge status={paStatus} />
-              <span className="ml-3 text-sm font-medium text-slate-400 tracking-wider">ID: {paId}</span>
-            </div>
-            <h4 className="font-semibold text-slate-100 text-xl">{paItemName}</h4>
-            <div className="text-sm text-slate-300 mt-1.5">
-              {paType} • {paSubmittedDate ? `Submitted: ${paSubmittedDate}` : `Est. Submission: ${paEstSubmission}`}
-            </div>
+    <div className="border border-slate-700 rounded-xl shadow-xl mb-6 bg-slate-900 overflow-hidden hover:shadow-2xl transition-shadow duration-300 hover:border-slate-600">
+      <div className="border-b border-slate-700 p-5 flex justify-between items-start">
+        <div>
+          <div className="flex items-center mb-2.5">
+            <StatusBadge status={paStatus} />
+            <span className="ml-3 text-xs font-medium text-slate-500 tracking-wider">ID: {paId}</span>
           </div>
-          <div className="text-center flex-shrink-0 ml-5 p-3 bg-gradient-to-br from-blue-800/70 to-indigo-800/70 rounded-lg border border-blue-600 shadow-lg">
-            <div className="text-4xl font-bold text-blue-200">{(paConfidence * 100).toFixed(0)}%</div>
-            <div className="text-sm text-slate-200">Approval Conf.</div>
+          <h4 className="font-semibold text-slate-100 text-xl">{paItemName}</h4>
+          <div className="text-sm text-slate-400 mt-1">
+            Type: {paType}
           </div>
-      </div>
-      <div className="p-5 bg-slate-700">
-        <h5 className="text-base font-semibold text-slate-200 mb-4">Criteria Assessment</h5>
-        <div className="space-y-3">
-          {paCriteria.length > 0 ? paCriteria.map((criterion, i) => (
-            <div key={`criterion-${i}`} className="border-t border-slate-600 pt-3 mt-3 first:mt-0 first:border-t-0 first:pt-0">
-              <div className="text-base flex justify-between items-center">
-                <span className="font-medium text-slate-100">{criterion.name}</span>
-                <span className={`text-sm px-3 py-1.5 rounded-full font-semibold ${criterion.met === true || String(criterion.met).toLowerCase() === 'true' || String(criterion.met).toLowerCase() === 'yes' ? 'bg-green-700 text-green-100 ring-1 ring-green-500' : String(criterion.met).toLowerCase() === 'pending' ? 'bg-amber-700 text-amber-100 ring-1 ring-amber-500' : 'bg-red-700 text-red-100 ring-1 ring-red-500'}`}>
-                  {criterion.met === true || String(criterion.met).toLowerCase() === 'true' || String(criterion.met).toLowerCase() === 'yes' ? 'Met' : String(criterion.met).toLowerCase() === 'pending' ? 'Pending' : 'Not Met'}
-                </span>
-              </div>
-              {criterion.notes && <p className="text-sm text-slate-400 mt-2 italic">Notes: {criterion.notes}</p>}
-            </div>
-          )) : <p className="text-sm text-slate-400 italic text-center py-3">No criteria specified.</p>}
+        </div>
+        <div className="text-center flex-shrink-0 ml-5 p-3.5 bg-slate-800 rounded-lg border border-sky-700 shadow-lg glow-sky-500">
+          <div className="text-3xl font-bold text-sky-400">{paApprovalConfidence.toFixed(0)}%</div>
+          <div className="text-xs text-slate-300 mt-0.5">Approval Conf.</div>
         </div>
       </div>
-        {paStatus.toLowerCase() === 'approved' && paApprovedDate && paExpirationDate && (
-        <div className="p-4 bg-gradient-to-r from-green-800 to-green-700 border-t border-green-600 flex justify-between items-center text-sm text-green-200 font-medium">
-          <span><CheckCircle size={16} className="inline mr-1.5" />Approved: {paApprovedDate}</span> <span><Calendar size={16} className="inline mr-1.5" />Expires: {paExpirationDate}</span>
+      
+      <div className="p-5 bg-slate-900 space-y-3">
+        <div>
+          <strong className="text-sm text-slate-300 block">Description:</strong>
+          <p className="text-slate-200 text-base">{paDescription}</p>
         </div>
-      )}
-      { (paStatus.toLowerCase() === 'in progress' || paStatus.toLowerCase() === 'pending submission') && paEstResponse && (
-          <div className="p-4 bg-gradient-to-r from-amber-800 to-amber-700 border-t border-amber-600 flex justify-between items-center text-sm text-amber-200 font-medium">
-          <span><Clock size={16} className="inline mr-1.5 animate-spin" />Est. Response: {paEstResponse}</span>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <div><strong className="text-slate-300">CPT/HCPCS:</strong> <span className="text-slate-200">{paCptCode}</span></div>
+          <div><strong className="text-slate-300">POS Code:</strong> <span className="text-slate-200">{paPosCode}</span></div>
+          <div><strong className="text-slate-300">Units:</strong> <span className="text-slate-200">{paUnits}</span></div>
+          <div><strong className="text-slate-300">Dates of Service:</strong> <span className="text-slate-200">{paDatesOfService}</span></div>
+        </div>
+        <div>
+          <strong className="text-sm text-slate-300 block mb-1">Criteria Met & How:</strong>
+          <div className="text-slate-200 text-base bg-slate-800 p-3 rounded-md border border-slate-700">
+            {renderCriteriaDetails(paCriteriaMetDetails)}
+          </div>
+        </div>
+      </div>
+
+      { (paStatus.toLowerCase() === 'in progress' || paStatus.toLowerCase() === 'pending submission' || paStatus.toLowerCase() === 'requires submission') && paEstResponse && (
+          <div className="p-3.5 bg-slate-800 border-t border-amber-700 flex justify-between items-center text-xs text-amber-300 font-medium glow-amber-500">
+          <span><Clock size={14} className="inline mr-1.5 animate-pulse" />Est. Response: {paEstResponse}</span>
         </div>
       )}
       {onUpdateStatus && (
-        <div className="p-4 bg-slate-800 border-t border-slate-600 space-x-3 text-right">
+        <div className="p-4 bg-slate-950 border-t border-slate-700 space-x-3 text-right">
           {paStatus.toLowerCase() === 'pending submission' && (
-            <button onClick={() => onUpdateStatus(paId, 'In Progress')} className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center float-left">
-              <Send size={14} className="mr-1.5"/> Simulate Submit
+            <button onClick={() => onUpdateStatus(paId, 'In Progress')} className="text-sm bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center float-left glow-sky-500 border border-sky-400">
+              <Send size={14} className="mr-1.5"/> submit
             </button>
           )}
           {paStatus.toLowerCase() === 'in progress' && (
-            <>
-              <button onClick={() => onUpdateStatus(paId, 'Approved')} className="text-sm bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center inline-flex">
-                <ThumbsUp size={14} className="mr-1.5"/> Simulate Approve
-              </button>
-              <button onClick={() => onUpdateStatus(paId, 'Denied')} className="text-sm bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center inline-flex">
-                <ThumbsDown size={14} className="mr-1.5"/> Simulate Deny
-              </button>
-            </>
+            <></>
           )}
           {(paStatus.toLowerCase() === 'approved' || paStatus.toLowerCase() === 'denied') && (
-              <button onClick={() => onUpdateStatus(paId, 'Pending Submission')} className="text-sm bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center float-left">
+              <button onClick={() => onUpdateStatus(paId, 'Pending Submission')} className="text-sm bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center float-left border border-slate-400">
               <Repeat size={14} className="mr-1.5"/> Reset Simulation
             </button>
           )}
@@ -665,44 +761,43 @@ const PriorAuthCard = ({ item, onUpdateStatus }: { item: PriorAuthItem; onUpdate
 };
 
 const SourceCard = ({ source }: { source: SourceData }) => {
-      const sourceId = source?.id || source?.source_n_id || 'N/A';
-      const sourceTitle = source?.title || source?.source_n_title || 'N/A';
-      const sourceType = source?.type || source?.source_n_type || 'Unknown';
-      const sourceUrl = source?.url || source?.source_n_url;
-      const sourceSnippet = source?.snippet || source?.source_n_snippet || 'N/A';
-      const sourceRetrievalDate = source?.retrieval_date || source?.source_n_retrieval_date || 'N/A';
-      const sourceAgent = source?.agent_source || source?.source_n_agent_source || 'N/A';
+      const sourceId = source?.source_n_id || 'N/A';
+      const sourceTitle = source?.source_n_title || 'N/A';
+      const sourceType = source?.source_n_type || 'Unknown';
+      const sourceUrl = source?.source_n_url;
+      const sourceSnippet = source?.source_n_snippet || 'N/A';
+      const sourceRetrievalDate = source?.source_n_retrieval_date || 'N/A';
+      const sourceAgent = source?.source_n_agent_source || 'N/A';
 
-      // Dark mode icon colors
       const getSourceIcon = (type: string) => {
           type = (type || '').toLowerCase();
-          if (type.includes('guideline')) return <BookOpen size={20} className="text-blue-400 mr-3 flex-shrink-0" />;
+          if (type.includes('guideline')) return <BookOpen size={20} className="text-sky-400 mr-3 flex-shrink-0" />;
           if (type.includes('article')) return <FileText size={20} className="text-purple-400 mr-3 flex-shrink-0" />;
-          if (type.includes('ehr') || type.includes('note')) return <Clipboard size={20} className="text-green-400 mr-3 flex-shrink-0" />;
+          if (type.includes('ehr') || type.includes('note')) return <Clipboard size={20} className="text-lime-400 mr-3 flex-shrink-0" />;
           if (type.includes('patient')) return <User size={20} className="text-pink-400 mr-3 flex-shrink-0" />;
           if (type.includes('insurance')) return <Shield size={20} className="text-indigo-400 mr-3 flex-shrink-0" />;
           if (type.includes('web source')) return <Link size={20} className="text-cyan-400 mr-3 flex-shrink-0" />;
-          return <Link size={20} className="text-slate-400 mr-3 flex-shrink-0" />;
+          return <Link size={20} className="text-slate-500 mr-3 flex-shrink-0" />;
       };
 
       return (
-          <div className="bg-slate-700 rounded-xl p-5 border border-slate-600 shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-0.5">
+          <div className="bg-slate-900 rounded-xl p-5 border border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 hover:border-slate-600">
               <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center min-w-0">
                       {getSourceIcon(sourceType)}
                       <h4 className="font-semibold text-slate-100 text-lg truncate" title={sourceTitle}>{sourceTitle}</h4>
                   </div>
-                  <span className="text-sm text-slate-300 bg-slate-600 px-3 py-1.5 rounded-md font-medium flex-shrink-0 ml-3">{sourceType}</span>
+                  <span className="text-xs text-slate-300 bg-slate-800 px-2.5 py-1 rounded-md font-medium flex-shrink-0 ml-3 border border-slate-700">{sourceType}</span>
               </div>
-              <p className="text-base text-slate-300 mb-4 italic leading-relaxed px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg">"{sourceSnippet}"</p>
-              <div className="flex flex-wrap justify-between items-center text-sm text-slate-400 border-t border-slate-600 pt-3 gap-3">
-                  <span>Retrieved: {sourceRetrievalDate}</span>
+              <p className="text-base text-slate-300 mb-4 italic leading-relaxed px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg">"{sourceSnippet}"</p>
+              <div className="flex flex-wrap justify-between items-center text-sm text-slate-400 border-t border-slate-700 pt-3 gap-3">
+                  <span className="text-xs">Retrieved: {sourceRetrievalDate}</span>
                   {sourceUrl && sourceUrl !== "#" && (
-                      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline font-medium flex items-center transition-colors">
-                          View Source <Link size={14} className="ml-2" />
+                      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 hover:underline font-medium flex items-center transition-colors text-xs">
+                          View Source <Link size={12} className="ml-1.5" />
                       </a>
                   )}
-                   <span className="font-medium">Cited by: {sourceAgent}</span>
+                   <span className="font-medium text-xs">Cited by: {sourceAgent}</span>
               </div>
           </div>
       );
@@ -712,25 +807,25 @@ const NotificationPopup = ({ title, message, detail1, detail2, isVisible, onClos
    if (!isVisible) return null;
 
    return (
-     <div className="fixed top-24 right-5 bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl border border-blue-500 p-5 w-96 z-50 animate-fade-in-down transition-all duration-300">
+     <div className="fixed top-24 right-5 bg-slate-900/80 backdrop-blur-lg rounded-xl shadow-2xl border border-sky-500 p-5 w-96 z-50 animate-fade-in-down transition-all duration-300 glow-sky-500">
        <div className="flex items-start">
-         <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-full p-2.5 mr-3.5 flex-shrink-0 border border-blue-500 shadow-lg">
-           <AlertTriangle size={24} className="text-blue-100" />
+         <div className="bg-sky-600 rounded-full p-2 mr-3.5 flex-shrink-0 border border-sky-400 shadow-lg glow-sky-500">
+           <AlertTriangle size={22} className="text-white" />
          </div>
          <div className="flex-grow">
            <h4 className="font-bold text-lg text-slate-100">{title}</h4>
-           <p className="text-sm text-slate-300 my-2 leading-relaxed">{message}</p>
-           <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-600">
-             {detail1 && <span className="text-xs text-red-200 font-semibold bg-red-900/60 backdrop-blur-sm px-2 py-1 rounded shadow-sm">{detail1}</span>}
+           <p className="text-sm text-slate-300 my-1.5 leading-relaxed">{message}</p>
+           <div className="flex justify-between items-center mt-2.5 pt-2.5 border-t border-slate-700">
+             {detail1 && <span className="text-xs text-red-300 font-semibold bg-slate-800 border border-red-700 px-2 py-1 rounded shadow-sm glow-red-500">{detail1}</span>}
              {detail2 && (
-                 <span className="text-xs text-green-200 font-semibold bg-green-900/60 backdrop-blur-sm px-2 py-1 rounded shadow-sm flex items-center">
-                   <CheckCircle size={14} className="mr-1.5 text-green-300" /> {detail2}
+                 <span className="text-xs text-lime-300 font-semibold bg-slate-800 border border-lime-700 px-2 py-1 rounded shadow-sm flex items-center glow-lime-500">
+                   <CheckCircle size={14} className="mr-1.5 text-lime-400" /> {detail2}
                  </span>
              )}
            </div>
          </div>
          <button onClick={onClose} className="ml-2 text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-full hover:bg-slate-700" title="Close">
-           <X size={20} />
+           <X size={18} />
          </button>
        </div>
      </div>
@@ -738,37 +833,37 @@ const NotificationPopup = ({ title, message, detail1, detail2, isVisible, onClos
 }
 
 const SkeletonLoader = () => (
-  <div className="min-h-screen bg-gradient-to-br from-slate-900 to-gray-800 py-8 flex items-center justify-center animate-pulse">
+  <div className="min-h-screen bg-slate-950 py-8 flex items-center justify-center animate-pulse">
     <div className="max-w-7xl mx-auto px-4 w-full">
-      <div className="bg-slate-800 p-8 rounded-xl shadow-2xl border border-slate-700">
+      <div className="bg-slate-900 p-8 rounded-xl shadow-2xl border border-slate-700">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center">
-            <div className="h-12 w-12 bg-slate-700 rounded-xl mr-4"></div>
+            <div className="h-12 w-12 bg-slate-800 rounded-xl mr-4"></div>
             <div>
-              <div className="h-8 w-48 bg-slate-700 rounded mb-2"></div>
-              <div className="h-4 w-64 bg-slate-600 rounded"></div>
+              <div className="h-8 w-48 bg-slate-800 rounded mb-2"></div>
+              <div className="h-4 w-64 bg-slate-700 rounded"></div>
             </div>
           </div>
           <div className="flex space-x-3">
-            <div className="h-10 w-24 bg-slate-700 rounded-lg"></div>
-            <div className="h-10 w-28 bg-slate-700 rounded-lg"></div>
+            <div className="h-10 w-24 bg-slate-800 rounded-lg"></div>
+            <div className="h-10 w-28 bg-slate-800 rounded-lg"></div>
           </div>
         </div>
-        <div className="bg-slate-700 p-6 rounded-xl mb-6">
-          <div className="h-8 w-1/3 bg-slate-600 rounded mb-2"></div>
-          <div className="h-4 w-1/2 bg-slate-600 rounded"></div>
+        <div className="bg-slate-800 p-6 rounded-xl mb-6">
+          <div className="h-8 w-1/3 bg-slate-700 rounded mb-2"></div>
+          <div className="h-4 w-1/2 bg-slate-700 rounded"></div>
         </div>
         <div className="flex space-x-2 p-4 border-b border-slate-700 mb-6">
-          {[...Array(5)].map((_, i) => <div key={i} className="h-10 w-32 bg-slate-700 rounded-lg"></div>)}
+          {[...Array(5)].map((_, i) => <div key={i} className="h-10 w-32 bg-slate-800 rounded-lg"></div>)}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-slate-700 rounded-xl"></div>)}
+          {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-slate-800 rounded-xl"></div>)}
         </div>
         <div className="mt-8">
-          <div className="h-6 w-40 bg-slate-600 rounded mb-4"></div>
+          <div className="h-6 w-40 bg-slate-700 rounded mb-4"></div>
           <div className="space-y-3">
-            <div className="h-12 bg-slate-700 rounded-lg"></div>
-            <div className="h-12 bg-slate-700 rounded-lg"></div>
+            <div className="h-12 bg-slate-800 rounded-lg"></div>
+            <div className="h-12 bg-slate-800 rounded-lg"></div>
           </div>
         </div>
       </div>
@@ -777,23 +872,26 @@ const SkeletonLoader = () => (
 );
 
 // --- Main Component Render ---
-const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLevelCitations = [] }: CarePlanTemplateProps) => {
+const CarePlanTemplate = ({
+  data: initialData,
+  enableSimulations = true,
+  sectionReasoning,
+  sectionUiStates,
+  onSectionToggle,
+  expandedSectionsFromParent
+}: CarePlanTemplateProps) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<ActiveTabType>('chat'); // Changed default to 'chat'
+  const [activeTab, setActiveTab] = useState<ActiveTabType>('chat'); // Default to 'chat'
   const [currentData, setCurrentData] = useState<CarePlanJsonData | null>(null);
-  
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]); // Added chat messages state
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [simulatedPatientInfo, setSimulatedPatientInfo] = useState<PatientData | undefined>(undefined);
   const [simulatedClinicalInfo, setSimulatedClinicalInfo] = useState<ClinicalData | undefined>(undefined);
   const [simulatedPaItems, setSimulatedPaItems] = useState<PriorAuthItem[]>([]);
   const [simulatedAdpieData, setSimulatedAdpieData] = useState<Partial<CarePlanJsonData>>({});
 
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    assessment: true, diagnosis_0: true,
-    evaluation: true, sources: true, interdisciplinaryPlan: true,
-    kanban: true
-  });
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>({});
   const [showPriorAuth, setShowPriorAuth] = useState(false);
@@ -807,27 +905,55 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
   const [showNotification, setShowNotification] = useState(false);
   const [notificationContent, setNotificationContent] = useState({ title: "", message: "", detail1: "", detail2: "" });
   
-  const [activeTabKey, setActiveTabKey] = useState(Date.now());
+  const [activeTabKey, setActiveTabKey] = useState(`${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+
+  // Initialize expandedSections
+  useEffect(() => {
+    if (expandedSectionsFromParent) {
+      setExpandedSections(expandedSectionsFromParent);
+    } else if (sectionUiStates) {
+      const newExpanded: Record<string, boolean> = {};
+      const currentNursingDiagnoses = currentData?.nursingDiagnoses || [];
+      Object.entries(sectionUiStates).forEach(([sectionId, state]: [string, { isReady: boolean; displayName: string; }]) => {
+        if (state.isReady) {
+          if (sectionId === "assessment") newExpanded["assessment"] = true;
+          else if (sectionId === "diagnosis_goals" && currentNursingDiagnoses.length > 0) {
+            currentNursingDiagnoses.forEach((_, dxIdx) => newExpanded[`diagnosis_${dxIdx}`] = true);
+          } else if (sectionId === "interventions" && currentNursingDiagnoses.length > 0) {
+            currentNursingDiagnoses.forEach((_, dxIdx) => newExpanded[`impl_dx_${dxIdx}`] = true);
+          } else if (sectionId === "evaluation" && currentNursingDiagnoses.length > 0) {
+            currentNursingDiagnoses.forEach((_, dxIdx) => newExpanded[`evaluation_dx_${dxIdx}`] = true);
+          } else if (sectionId === "summary_coordination_sources") {
+            newExpanded["summary_admin_main"] = true;
+            newExpanded["interdisciplinaryPlan"] = true;
+            newExpanded["overall_summary_next_steps"] = true;
+            newExpanded["notifications_display"] = true;
+            newExpanded["sources"] = true; 
+          }
+          // Prior Authorizations panel is controlled by `showPriorAuth`, not this effect.
+        }
+      });
+      setExpandedSections(prev => ({ ...prev, ...newExpanded }));
+    }
+  }, [sectionUiStates, expandedSectionsFromParent, currentData?.nursingDiagnoses]);
 
   // Handler for sending chat messages
   const handleSendChatMessage = (messageContent: string) => {
     const newUserMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
       content: messageContent,
       timestamp: new Date().toISOString(),
     };
     setChatMessages(prevMessages => [...prevMessages, newUserMessage]);
 
-    // Simulate an assistant response for demonstration
-    // In a real app, you'd call an API here
     setTimeout(() => {
       const assistantResponse: ChatMessage = {
-        id: `assistant-${Date.now()}`,
+        id: `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         role: 'assistant',
         content: `Ron AI received: "${messageContent}". This is a simulated response. I can help you navigate the care plan or answer questions about the patient.`,
         timestamp: new Date().toISOString(),
-        context: { // Example context
+        context: {
           sources: [
             { title: "Patient Chart Summary", content: "Relevant summary from patient chart...", url: "#" },
             { title: "CHF Guidelines", content: "Latest CHF management guidelines...", url: "#" }
@@ -855,11 +981,11 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
       setSimulatedPaItems(JSON.parse(JSON.stringify(mockData.priorAuthItems || [])));
       setSimulatedAdpieData(JSON.parse(JSON.stringify(mockData || {})));
       setIsLoading(false);
-      triggerNotification("Demo Mode Active", "Displaying mock patient data for demonstration purposes.", "Explore freely!", "All features simulated");
+      triggerNotification("Demo Mode Active", "Displaying mock patient data.", "Explore freely!", "All features simulated");
     } else {
       setIsLoading(false);
     }
-  }, [enableSimulations]);
+  }, [enableSimulations]); // Removed triggerNotification from dependencies as it's stable
 
   useEffect(() => {
     initializeData(initialData);
@@ -867,21 +993,88 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
     return () => clearTimeout(timer);
   }, [initialData, initializeData]);
 
-  // Generate Kanban tasks and epics from care plan data
+  // Map CarePlanJsonData to CarePlanDataForKanban format
+  const mapToKanbanFormat = useCallback((data: CarePlanJsonData) => {
+    if (!data.nursingDiagnoses) return data as unknown as CarePlanDataForKanban;
+
+    // Create a new object that matches CarePlanDataForKanban structure
+    const mappedData: CarePlanDataForKanban = {
+      assessment_subjective_chief_complaint: data.assessment_subjective_chief_complaint,
+      assessment_subjective_hpi: data.assessment_subjective_hpi,
+      assessment_objective_vitals_summary: data.assessment_objective_vitals_summary,
+      assessment_objective_physical_exam: data.assessment_objective_physical_exam,
+      assessment_objective_diagnostics: data.assessment_objective_diagnostics,
+    };
+    
+    // Process evaluations from goals
+    const evaluations: CarePlanEvaluation[] = [];
+    data.nursingDiagnoses?.forEach(diagnosis => {
+      diagnosis.goals.forEach(goal => {
+        // Extract evaluation data if available
+        if (goal.evaluation) {
+          evaluations.push({
+            evaluation_goal_description_ref: goal.goal_description,
+            evaluation_date: goal.evaluation.evaluationTargetDate,
+            evaluation_status: goal.evaluation.evaluationStatus as any,
+            evaluation_evidence: goal.evaluation.evaluationText,
+            evaluation_revision: '', // Default empty if not available
+            evaluation_rationale: goal.evaluation.evaluationMethod
+          });
+        }
+      });
+    });
+    mappedData.evaluations = evaluations;
+    
+    // Transform nursing diagnoses
+    mappedData.nursingDiagnoses = data.nursingDiagnoses.map(diagnosis => {
+      // Extract all interventions from goals
+      const allInterventions: CarePlanIntervention[] = diagnosis.goals.flatMap(goal => 
+        (goal.interventions || []).map(intervention => ({
+          intervention_action: intervention.interventionText,
+          intervention_rationale: intervention.rationale,
+          intervention_is_pending: intervention.interventionType === 'general' ? false : true
+        }))
+      );
+
+      // Map goals to match CarePlanGoal structure (without interventions)
+      const mappedGoals: CarePlanGoal[] = diagnosis.goals.map(goal => ({
+        goal_description: goal.goal_description,
+        goal_target_date: goal.goal_target_date,
+        goal_outcomes: goal.goal_outcomes,
+        goal_rationale: goal.goal_rationale
+      }));
+
+      // Return transformed diagnosis with interventions at the diagnosis level
+      return {
+        diagnosis_nanda: diagnosis.diagnosis_nanda,
+        diagnosis_related_to: diagnosis.diagnosis_related_to,
+        diagnosis_evidence: diagnosis.diagnosis_evidence,
+        diagnosis_is_risk: diagnosis.diagnosis_is_risk,
+        diagnosis_risk_factors: diagnosis.diagnosis_risk_factors,
+        goals: mappedGoals,
+        interventions: allInterventions
+      } as NursingDiagnosis;
+    });
+
+    return mappedData;
+  }, []);
+
+
+  // Generate Kanban tasks and epics
   useEffect(() => {
     if (currentData) {
-      // @ts-ignore TODO: Update kanban-helpers.ts for new CarePlanJsonData structure
-      const { epics, tasks } = generateKanbanData(currentData);
+      // Transform data to match expected format
+      const kanbanData = mapToKanbanFormat(currentData);
+      
+      const { epics, tasks } = generateKanbanData(kanbanData);
       setKanbanEpics(epics);
       setKanbanTasks(tasks);
       setFilteredTasks(tasks);
-
-      // Set first epic as expanded by default
       if (epics.length > 0) {
         setExpandedEpics({ [epics[0].id]: true });
       }
     }
-  }, [currentData]);
+  }, [currentData, mapToKanbanFormat]);
 
   // Filter Kanban tasks
   const filterKanbanTasks = (filterType: 'all' | 'intervention' | 'assessment' | 'evaluation') => {
@@ -896,22 +1089,17 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
   // Handle task status updates
   const updateTaskStatus = (taskId: string, newStatus: TaskStatus) => {
     if (!enableSimulations) return;
-
     setKanbanTasks(prevTasks => {
       const updatedTasks = updateTask(prevTasks, taskId, newStatus);
-      setFilteredTasks(updatedTasks.filter(task =>
-        taskFilter === 'all' ? true : task.type === taskFilter
-      ));
+      setFilteredTasks(updatedTasks.filter(task => taskFilter === 'all' ? true : task.type === taskFilter));
       return updatedTasks;
     });
-
     const task = kanbanTasks.find(t => t.id === taskId);
     if (task) {
       triggerNotification(
         `Task ${newStatus === 'completed' ? 'Completed' : 'Updated'} (Simulated)`,
-        `Task "${task.title}" is now in ${newStatus} status.`,
-        `Type: ${task.type.charAt(0).toUpperCase() + task.type.slice(1)}`,
-        `Priority: ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}`
+        `Task "${task.title}" is now ${newStatus}.`,
+        `Type: ${task.type}`, `Priority: ${task.priority}`
       );
     }
   };
@@ -919,22 +1107,17 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
   // Assign task to an agent/provider
   const assignTaskToAgent = (taskId: string, assignee: string) => {
     if (!enableSimulations) return;
-
     setKanbanTasks(prevTasks => {
       const updatedTasks = assignTask(prevTasks, taskId, assignee);
-      setFilteredTasks(updatedTasks.filter(task =>
-        taskFilter === 'all' ? true : task.type === taskFilter
-      ));
+      setFilteredTasks(updatedTasks.filter(task => taskFilter === 'all' ? true : task.type === taskFilter));
       return updatedTasks;
     });
-
     const task = kanbanTasks.find(t => t.id === taskId);
     if (task) {
       triggerNotification(
         "Task Assigned (Simulated)",
         `Task "${task.title}" assigned to ${assignee}.`,
-        "Status: In Progress",
-        `${task.type.charAt(0).toUpperCase() + task.type.slice(1)} task`
+        "Status: In Progress", `${task.type} task`
       );
     }
   };
@@ -942,23 +1125,23 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
   const handleUpdatePAStatus = (id: string, newStatus: string) => {
     if (!enableSimulations) return;
     setSimulatedPaItems(prevItems => prevItems.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, status: newStatus };
+      if (item.pa_n_id === id) { // Use pa_n_id for matching
+        const updatedItem = { ...item, pa_n_status: newStatus }; // Use pa_n_status
         const today = new Date().toISOString().split('T')[0];
         if (newStatus === 'In Progress') {
-          updatedItem.submittedDate = today;
-          triggerNotification("PA Submitted (Simulated)", `Prior auth for ${item.item} has been marked as submitted.`, "Status: In Progress", `ID: ${item.id}`);
+          updatedItem.pa_n_submitted_date = today; // Use pa_n_submitted_date
+          triggerNotification("PA Submitted (Simulated)", `Prior auth for ${item.pa_n_item_name} submitted.`, "Status: In Progress", `ID: ${item.pa_n_id}`);
         } else if (newStatus === 'Approved') {
-          updatedItem.approvedDate = today;
-          updatedItem.expirationDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-          triggerNotification("PA Approved (Simulated)", `Prior auth for ${item.item} is now approved!`, "Status: Approved", `Expires: ${updatedItem.expirationDate}`);
+          updatedItem.pa_n_approved_date = today; // Use pa_n_approved_date
+          updatedItem.pa_n_expiration_date = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 1 year, use pa_n_expiration_date
+          triggerNotification("PA Approved (Simulated)", `Prior auth for ${item.pa_n_item_name} approved!`, "Status: Approved", `Expires: ${updatedItem.pa_n_expiration_date}`);
         } else if (newStatus === 'Denied') {
-          triggerNotification("PA Denied (Simulated)", `Prior auth for ${item.item} was denied.`, "Status: Denied", "Review criteria/appeal");
+          triggerNotification("PA Denied (Simulated)", `Prior auth for ${item.pa_n_item_name} denied.`, "Status: Denied", "Review criteria");
         } else if (newStatus === 'Pending Submission') {
-          updatedItem.submittedDate = undefined;
-          updatedItem.approvedDate = undefined;
-          updatedItem.expirationDate = undefined;
-          triggerNotification("PA Reset (Simulated)", `Prior auth for ${item.item} status reset.`, "Status: Pending Submission", `ID: ${item.id}`);
+          updatedItem.pa_n_submitted_date = undefined;
+          updatedItem.pa_n_approved_date = undefined;
+          updatedItem.pa_n_expiration_date = undefined;
+          triggerNotification("PA Reset (Simulated)", `Prior auth for ${item.pa_n_item_name} reset.`, "Status: Pending Submission", `ID: ${item.pa_n_id}`);
         }
         return updatedItem;
       }
@@ -974,12 +1157,11 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
         ...prevInfo,
         medications: prevInfo.medications.map(med => 
           med.med_n_name === medName && (med.med_n_status === 'New Order' || med.med_n_status === 'Pending Submission')
-            ? { ...med, med_n_status: 'Active' }
-            : med
+            ? { ...med, med_n_status: 'Active' } : med
         )
       };
     });
-    triggerNotification("Medication Status Update (Simulated)", `${medName} is now 'Active'.`, "Action: Administered", "Monitor patient response.");
+    triggerNotification("Medication Status Update (Simulated)", `${medName} is now 'Active'.`, "Action: Administered", "Monitor response");
   };
   
   const [isRefreshingVitals, setIsRefreshingVitals] = useState(false);
@@ -996,14 +1178,14 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
         return { ...prevInfo, vitalSigns: newVitals };
       });
       setIsRefreshingVitals(false);
-      triggerNotification("Vitals Updated (Simulated)", "New vital signs have been recorded.", "BP, Pulse, O2 Sat refreshed", "Check Overview tab");
+      triggerNotification("Vitals Updated (Simulated)", "New vital signs recorded.", "BP, Pulse, O2 Sat refreshed", "Check Overview");
     }, 1500);
   };
 
   const triggerNotification = (title: string, message: string, detail1: string, detail2: string) => {
     setNotificationContent({ title, message, detail1, detail2 });
     setShowNotification(true);
-     setTimeout(() => setShowNotification(false), 7000);
+    setTimeout(() => setShowNotification(false), 7000);
   };
 
   const toggleSection = (sectionKey: string) => setExpandedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
@@ -1023,7 +1205,6 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
   const adpieData = Object.keys(simulatedAdpieData).length > 1 ? simulatedAdpieData : currentData || { next_steps: [] };
   
   const nursingDiagnoses = adpieData?.nursingDiagnoses || [];
-  // const evaluations = adpieData?.evaluations || []; // Old top-level evaluations
   const recommendedAssessments = adpieData?.recommendedAssessmentsList || [];
   const interdisciplinaryPlan = adpieData?.interdisciplinaryPlan || [];
   const nextSteps = adpieData?.next_steps || [];
@@ -1038,9 +1219,9 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
 
   if (!currentData && !enableSimulations) {
       return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-800 py-12 flex items-center justify-center">
-          <div className="bg-slate-800 p-10 rounded-xl shadow-xl border border-slate-700 text-center">
-            <Archive size={48} className="mx-auto text-slate-500 mb-4" />
+        <div className="min-h-screen bg-slate-950 py-12 flex items-center justify-center">
+          <div className="bg-slate-900 p-10 rounded-xl shadow-2xl border border-slate-700 text-center">
+            <Archive size={48} className="mx-auto text-slate-600 mb-4" />
             <h2 className="text-2xl font-semibold text-slate-300 mb-2">No Care Plan Data</h2>
             <p className="text-slate-400">Please provide data to display the care plan.</p>
           </div>
@@ -1050,110 +1231,116 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
   
   const handleTabChange = (tabName: ActiveTabType, label: string) => {
     setActiveTab(tabName);
-    setActiveTabKey(Date.now());
+    setActiveTabKey(`${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
     if (process.env.NODE_ENV === 'development') console.log(`Switched to tab: ${label}`);
   };
 
   const pendingPaCount = paItems.filter(i => i.status?.toLowerCase() === 'in progress' || i.status?.toLowerCase() === 'pending submission').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-gray-800 py-6 antialiased text-slate-200">
+    <div className="min-h-screen bg-slate-950 py-6 antialiased text-slate-200">
       <NotificationPopup 
         {...notificationContent}
         isVisible={showNotification}
         onClose={() => setShowNotification(false)}
       />
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-blue-600 to-teal-500 p-6 rounded-xl shadow-xl text-white mb-8 flex justify-between items-center flex-wrap gap-y-4">
+        {/* Main Header */}
+        <div className="bg-black p-6 rounded-xl shadow-2xl text-white mb-8 flex justify-between items-center flex-wrap gap-y-4 border border-slate-700">
           <div className="flex items-center">
-            <div className="bg-white bg-opacity-10 p-3 rounded-lg text-white mr-4 shadow-md">
+            <div className="bg-slate-800 p-3 rounded-lg text-sky-400 mr-4 shadow-md border border-sky-700 glow-sky-500">
               <Shield size={30} />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-white">Ron AI</h1>
-              <p className="text-white text-opacity-90 text-md">AI-Powered Comprehensive Plan of Care</p>
+              <h1 className="text-4xl font-bold text-white text-shadow-electric-blue">Ron AI</h1>
+              <p className="text-slate-300 text-md">AI-Powered Comprehensive Plan of Care</p>
             </div>
           </div>
-          <div className="flex space-x-4 items-center">
+          <div className="flex space-x-3 items-center">
             {enableSimulations && (
                 <button
-                    onClick={() => triggerNotification("Sample System Alert", "This is a test notification to demonstrate the popup feature.", "Category: System", "Severity: Info")}
-                    className="bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium border border-slate-500 hover:bg-slate-600 flex items-center shadow-md hover:shadow-lg transition-all duration-200"
+                    onClick={() => triggerNotification("Sample System Alert", "This is a test notification.", "Category: System", "Severity: Info")}
+                    className="bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200"
                     title="Trigger Sample Notification"
                 >
-                    <Bell size={16} className="mr-2 text-blue-300" /> Test Notify
+                    <Bell size={16} className="mr-2 text-sky-400" /> Test Notify
                 </button>
             )}
             <button
-              className={`relative bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium border border-slate-500 hover:bg-slate-600 flex items-center shadow-md hover:shadow-lg transition-all duration-200 ${showPriorAuth ? 'ring-2 ring-blue-400 ring-opacity-70' : ''}`}
+              className={`relative bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200 ${showPriorAuth ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black' : ''}`}
               onClick={togglePriorAuth} title="Toggle Prior Authorizations Panel" >
-              <Shield size={16} className="mr-2 text-blue-300" /> Prior Auth
+              <Shield size={16} className="mr-2 text-sky-400" /> Prior Auth
               {pendingPaCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-md animate-bounce">{pendingPaCount}</span>
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-md animate-bounce border-2 border-black">{pendingPaCount}</span>
               )}
             </button>
-            <button onClick={() => console.log("Communicate action triggered")} className="bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium border border-slate-500 hover:bg-slate-600 flex items-center shadow-md hover:shadow-lg transition-all duration-200" title="Communicate with Team">
-              <MessageCircle size={16} className="mr-2 text-blue-300" /> Communicate
+            <button onClick={() => console.log("Communicate action triggered")} className="bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200" title="Communicate with Team">
+              <MessageCircle size={16} className="mr-2 text-sky-400" /> Communicate
             </button>
-            <button onClick={() => console.log("Export action triggered. Data:", currentData)} className="bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium border border-slate-500 hover:bg-slate-600 flex items-center shadow-md hover:shadow-lg transition-all duration-200" title="Export Care Plan">
-              <Download size={16} className="mr-2 text-blue-300" /> Export
+            <button onClick={() => console.log("Export action triggered. Data:", currentData)} className="bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200" title="Export Care Plan">
+              <Download size={16} className="mr-2 text-sky-400" /> Export
             </button>
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
+          {/* Main Content Area */}
           <div className={`w-full ${showPriorAuth ? 'lg:w-3/5 xl:w-2/3' : 'w-full'} transition-all duration-500 ease-in-out`}>
-            <div className="bg-slate-800 rounded-xl shadow-xl overflow-hidden border border-slate-700 mb-6">
-              <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-teal-500 px-6 py-5 text-white">
+            <div className="bg-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-700 mb-6">
+              {/* Patient Header */}
+              <div className="bg-slate-800 px-6 py-5 text-white border-b border-slate-700">
                 <div className="flex justify-between items-start flex-wrap gap-y-3">
                   <div>
-                    <h2 className="text-3xl font-bold">{patientInfo.patient_full_name || <span className="italic text-slate-300">N/A</span>}</h2>
-                    <p className="text-white text-opacity-90 text-sm mt-1">
+                    <h2 className="text-3xl font-bold text-slate-100">{patientInfo.patient_full_name || <span className="italic text-slate-400">N/A</span>}</h2>
+                    <p className="text-slate-300 text-sm mt-1">
                       {patientInfo.patient_age || 'N/A'} y.o. {patientInfo.patient_gender || 'N/A'} • MRN: {patientInfo.patient_mrn || 'N/A'} • Admitted: {patientInfo.patient_admission_date || 'N/A'}
                     </p>
                     {patientInfo.allergies && patientInfo.allergies.length > 0 && (
-                        <span className="text-xs text-red-200 mt-1.5 bg-red-700 bg-opacity-40 ring-1 ring-red-500 px-2.5 py-1 rounded-full font-medium inline-flex items-center">
+                        <span className="text-xs text-red-300 mt-2 bg-slate-900 border border-red-700 glow-red-500 px-2.5 py-1 rounded-full font-medium inline-flex items-center">
                             <AlertTriangle size={12} className="inline mr-1.5" /> Allergies: {patientInfo.allergies.join(', ')}
                         </span>
                     )}
                   </div>
-                  <div className="bg-slate-700 px-4 py-3 rounded-xl backdrop-blur-sm text-right max-w-sm shadow-md border border-slate-600">
-                    <div className="text-sm text-slate-300 mb-1.5">Primary Diagnosis</div>
-                    <div className="font-semibold text-xl text-white">{clinicalInfo.primary_diagnosis_text || <span className="italic text-slate-300">N/A</span>}</div>
+                  <div className="bg-slate-900 px-4 py-3 rounded-xl text-right max-w-sm shadow-lg border border-slate-700">
+                    <div className="text-sm text-slate-400 mb-1">Primary Diagnosis</div>
+                    <div className="font-semibold text-xl text-slate-100">{clinicalInfo.primary_diagnosis_text || <span className="italic text-slate-400">N/A</span>}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 border-b border-slate-700 bg-slate-700">
-                  <div className="flex space-x-7 overflow-x-auto pb-4 no-scrollbar">
-                    <TabButton active={activeTab === 'kanban'} icon={<BarChart2 size={22} />} label="Task Board" onClick={() => handleTabChange('kanban', 'Task Board')} />
-                    <TabButton active={activeTab === 'overview'} icon={<Clipboard size={22} />} label="Overview" onClick={() => handleTabChange('overview', 'Overview')} />
-                    <TabButton active={activeTab === 'assessment'} icon={<FileCheck size={22} />} label="Assessment" onClick={() => handleTabChange('assessment', 'Assessment')} />
-                    <TabButton active={activeTab === 'diagnosis'} icon={<AlertCircle size={22} />} label="Diagnosis & Goals" onClick={() => handleTabChange('diagnosis', 'Diagnosis & Goals')} />
-                    <TabButton active={activeTab === 'implementation'} icon={<ListChecks size={22} />} label="Interventions" onClick={() => handleTabChange('implementation', 'Interventions')} />
-                    <TabButton active={activeTab === 'evaluation'} icon={<Star size={22} />} label="Evaluation" onClick={() => handleTabChange('evaluation', 'Evaluation')} />
-                    <TabButton active={activeTab === 'sources'} icon={<Link size={22} />} label="Sources" onClick={() => handleTabChange('sources', 'Sources')} />
-                    <TabButton active={activeTab === 'chat'} icon={<MessageSquare size={22} />} label="Chat with Ron AI" onClick={() => handleTabChange('chat', 'Chat with Ron AI')} />
+              {/* Tab Bar */}
+              <div className="p-4 border-b border-slate-700 bg-slate-900">
+                  <div className="flex space-x-1 overflow-x-auto pb-1 no-scrollbar">
+                    <TabButton active={activeTab === 'chat'} icon={<MessageSquare size={20} />} label="Chat with Ron AI" onClick={() => handleTabChange('chat', 'Chat with Ron AI')} />
+                    <TabButton active={activeTab === 'kanban'} icon={<BarChart2 size={20} />} label="Task Board" onClick={() => handleTabChange('kanban', 'Task Board')} />
+                    <TabButton active={activeTab === 'overview'} icon={<Clipboard size={20} />} label="Overview" onClick={() => handleTabChange('overview', 'Overview')} />
+                    <TabButton active={activeTab === 'assessment'} icon={<FileCheck size={20} />} label="Assessment" onClick={() => handleTabChange('assessment', 'Assessment')} />
+                    <TabButton active={activeTab === 'diagnosis'} icon={<AlertCircle size={20} />} label="Diagnosis & Goals" onClick={() => handleTabChange('diagnosis', 'Diagnosis & Goals')} />
+                    <TabButton active={activeTab === 'implementation'} icon={<ListChecks size={20} />} label="Interventions" onClick={() => handleTabChange('implementation', 'Interventions')} />
+                    <TabButton active={activeTab === 'evaluation'} icon={<Star size={20} />} label="Evaluation" onClick={() => handleTabChange('evaluation', 'Evaluation')} />
+                    <TabButton active={activeTab === 'summary_coordination_sources'} icon={<FileText size={20} />} label="Summary & Admin" onClick={() => handleTabChange('summary_coordination_sources', 'Summary & Admin')} />
+                    <TabButton active={activeTab === 'sources'} icon={<Link size={20} />} label="Sources" onClick={() => handleTabChange('sources', 'Sources')} />
                   </div>
               </div>
 
-              <div className={`${activeTab === 'chat' ? '' : 'p-10'} bg-slate-800 min-h-[700px] tracking-wide leading-relaxed`} key={activeTabKey}>
+              {/* Tab Content */}
+              <div className={`${activeTab === 'chat' ? 'p-0' : 'p-6 md:p-8'} bg-slate-950 min-h-[700px] tracking-wide leading-relaxed`} key={activeTabKey}>
                 {activeTab === 'chat' && (
                   <div className={`${isMounted ? 'animate-fade-in-up' : 'opacity-0'} h-full`}>
                     <ChatInterface
                       messages={chatMessages}
                       onSendMessage={handleSendChatMessage}
-                      isGenerating={false} // Placeholder
+                      isGenerating={false} 
                       placeholderText="Ask Ron AI about this patient's care plan..."
                       userName="Provider"
-                      assistantName="Ron AI (Care Plan Assistant)"
+                      assistantName="Ron AI"
                       isCarePlanMode={true}
                       predefinedPrompts={[
-                        "What are the key risks for this patient?",
-                        "Summarize the patient's current medications.",
-                        "What are the priority nursing diagnoses?",
-                        "Explain the rationale for Entresto.",
-                        "What follow-up appointments are needed?"
+                        "Key risks for this patient?",
+                        "Summarize current medications.",
+                        "Priority nursing diagnoses?",
+                        "Rationale for Entresto?",
+                        "Needed follow-up appointments?"
                       ]}
                     />
                   </div>
@@ -1171,91 +1358,91 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
                 )}
                 
                 {activeTab === 'overview' && (
-                  <div className={`space-y-10 ${isMounted ? 'animate-fade-in-up' : 'opacity-0'}`}>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <InfoCard icon={<User size={22} />} label="Primary Provider" value={patientInfo.patient_primary_provider} color="blue" />
-                      <InfoCard icon={<Shield size={22} />} label="Insurance Plan" value={patientInfo.patient_insurance_plan} color="indigo" />
-                      <InfoCard icon={<Activity size={22} />} label="Severity / NYHA Class" value={patientInfo.nyha_class_description} color="purple" />
+                  <div className={`space-y-8 ${isMounted ? 'animate-fade-in-up' : 'opacity-0'}`}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      <InfoCard icon={<User size={22} />} label="Primary Provider" value={patientInfo.patient_primary_provider} color="sky" />
+                      <InfoCard icon={<Shield size={22} />} label="Insurance Plan" value={patientInfo.patient_insurance_plan} color="purple" />
+                      <InfoCard icon={<Activity size={22} />} label="Severity / NYHA Class" value={patientInfo.nyha_class_description} color="amber" />
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-2xl font-semibold text-slate-100 pl-4">Vital Signs (Latest)</h3>
+                        <h3 className="text-2xl font-semibold text-slate-100">Vital Signs (Latest)</h3>
                         {enableSimulations && (
                           <button 
                             onClick={handleRefreshVitals} 
                             disabled={isRefreshingVitals}
-                            className="text-sm bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center disabled:opacity-50"
+                            className="text-sm bg-teal-600 hover:bg-teal-500 text-white font-semibold py-2 px-3.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center disabled:opacity-60 glow-teal-500 border border-teal-400"
                           >
                             {isRefreshingVitals ? <Loader2 size={16} className="animate-spin mr-2" /> : <RefreshCw size={16} className="mr-2" />}
                             {isRefreshingVitals ? 'Refreshing...' : 'Refresh Vitals'}
                           </button>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-5">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                         {patientInfo.vitalSigns && Object.keys(patientInfo.vitalSigns).length > 0
                           ? Object.entries(patientInfo.vitalSigns).map(([key, value]) => (
-                          <div key={key} className="bg-gradient-to-br from-slate-700 to-slate-800 p-4 rounded-xl border border-slate-600 text-center shadow-md hover:shadow-lg transition-shadow duration-300 hover:border-blue-500">
-                            <div className="text-sm text-slate-400 mb-1.5 uppercase tracking-wider">{key.replace('vital_', '').replace('_', ' ') === 'o2sat' ? 'O₂ Sat' : key.replace('vital_', '').replace('_', ' ')}</div>
+                          <div key={key} className="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center shadow-lg hover:shadow-xl transition-shadow duration-300 hover:border-sky-600">
+                            <div className="text-xs text-slate-400 mb-1 uppercase tracking-wider">{key.replace('vital_', '').replace('_', ' ') === 'o2sat' ? 'O₂ Sat' : key.replace('vital_', '').replace('_', ' ')}</div>
                             <div className="font-semibold text-slate-100 text-xl">{value || <span className="italic text-slate-500">N/A</span>}</div>
                           </div> ))
-                          : <div className="col-span-full text-center text-slate-400 py-5 italic">No vital signs data available.</div>
+                          : <div className="col-span-full text-center text-slate-500 py-5 italic">No vital signs data available.</div>
                         }
                       </div>
                     </div>
-                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
-                            <h3 className="text-2xl font-semibold text-slate-100 mb-4 pl-4">Medications</h3>
-                            <div className="space-y-4 max-h-80 overflow-y-auto pr-3 styled-scrollbar">
+                            <h3 className="text-2xl font-semibold text-slate-100 mb-4">Medications</h3>
+                            <div className="space-y-3 max-h-96 overflow-y-auto pr-2 styled-scrollbar-dark">
                                 {clinicalInfo.medications && clinicalInfo.medications.length > 0 ? clinicalInfo.medications.map((med, idx) => (
-                                    <div key={`med-${idx}`} className="flex justify-between items-center bg-gradient-to-br from-slate-700 to-slate-800 p-4 rounded-xl border border-slate-600 shadow-md hover:shadow-lg transition-shadow duration-300 hover:border-purple-500">
+                                    <div key={`med-${idx}`} className="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-700 shadow-lg hover:shadow-xl transition-shadow duration-300 hover:border-purple-600">
                                         <div className="flex-grow min-w-0 mr-3">
-                                            <div className="font-semibold text-slate-100 mb-2 text-lg">{med.med_n_name || <span className="italic text-slate-400">N/A</span>} <span className="text-base text-slate-300 font-normal">{med.med_n_dosage || ''}</span></div>
-                                            <div className="text-sm text-slate-400">{med.med_n_route || 'N/A'} • {med.med_n_frequency || 'N/A'}</div>
+                                            <div className="font-semibold text-slate-100 mb-1 text-lg">{med.med_n_name || <span className="italic text-slate-400">N/A</span>} <span className="text-base text-slate-300 font-normal">{med.med_n_dosage || ''}</span></div>
+                                            <div className="text-xs text-slate-400">{med.med_n_route || 'N/A'} • {med.med_n_frequency || 'N/A'}</div>
                                         </div>
-                                        <div className="flex items-center flex-shrink-0 ml-4 space-x-3">
+                                        <div className="flex items-center flex-shrink-0 ml-3 space-x-2.5">
                                             {(typeof med.med_n_pa_required === 'string' ? med.med_n_pa_required.toLowerCase() === 'true' : !!med.med_n_pa_required) && (
-                                                <span className="bg-blue-700 text-blue-100 text-sm font-bold px-3 py-1 rounded-full ring-1 ring-blue-500" title="Prior Authorization Required">PA</span>
+                                                <span className="bg-slate-800 text-sky-400 text-xs font-bold px-2.5 py-1 rounded-full border border-sky-700 glow-sky-500" title="Prior Authorization Required">PA</span>
                                             )}
                                             <StatusBadge status={med.med_n_status || ''} />
                                             {enableSimulations && (med.med_n_status === 'New Order' || med.med_n_status === 'Pending Submission') && 
-                                                <button onClick={() => handleAdministerMedication(med.med_n_name)} className="p-2 bg-gradient-to-r from-green-700 to-green-600 hover:from-green-600 hover:to-green-500 rounded-full text-green-100 transition-colors shadow-md" title="Simulate Administer"><PlayCircle size={18}/></button>
+                                                <button onClick={() => handleAdministerMedication(med.med_n_name)} className="p-1.5 bg-lime-600 hover:bg-lime-500 rounded-full text-white transition-colors shadow-md glow-lime-500 border border-lime-400" title="Simulate Administer"><PlayCircle size={16}/></button>
                                             }
                                         </div>
                                     </div>
-                                )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center">No medications listed.</div>}
+                                )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center border border-slate-700">No medications listed.</div>}
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-2xl font-semibold text-slate-100 mb-4 pl-4">Treatments & Diagnostics</h3>
-                            <div className="space-y-4 max-h-80 overflow-y-auto pr-3 styled-scrollbar">
+                            <h3 className="text-2xl font-semibold text-slate-100 mb-4">Treatments & Diagnostics</h3>
+                            <div className="space-y-3 max-h-96 overflow-y-auto pr-2 styled-scrollbar-dark">
                                 {clinicalInfo.treatments && clinicalInfo.treatments.length > 0 ? clinicalInfo.treatments.map((treatment, idx) => (
-                                    <div key={`treat-${idx}`} className="flex justify-between items-center bg-gradient-to-br from-slate-700 to-slate-800 p-4 rounded-xl border border-slate-600 shadow-md hover:shadow-lg transition-shadow duration-300 hover:border-teal-500">
+                                    <div key={`treat-${idx}`} className="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-700 shadow-lg hover:shadow-xl transition-shadow duration-300 hover:border-teal-600">
                                         <div className="min-w-0 mr-3">
                                             <div className="font-semibold text-slate-100 truncate text-lg" title={treatment.treatment_n_name}>{treatment.treatment_n_name || 'N/A'}</div>
-                                            <div className="text-sm text-slate-400 truncate" title={treatment.treatment_n_details || treatment.treatment_n_date || ''}>
+                                            <div className="text-xs text-slate-400 truncate" title={treatment.treatment_n_details || treatment.treatment_n_date || ''}>
                                                 {treatment.treatment_n_details ? `${treatment.treatment_n_details} ` : ''}
                                                 {treatment.treatment_n_date ? `(${treatment.treatment_n_date})` : ''}
                                                 {(!treatment.treatment_n_details && !treatment.treatment_n_date) && 'N/A'}
                                             </div>
                                         </div>
-                                        <div className="flex items-center flex-shrink-0 ml-4 space-x-3">
+                                        <div className="flex items-center flex-shrink-0 ml-3 space-x-2.5">
                                             {(typeof treatment.treatment_n_pa_required === 'string' ? treatment.treatment_n_pa_required.toLowerCase() === 'true' : !!treatment.treatment_n_pa_required) && (
-                                                <span className="bg-blue-700 text-blue-100 text-sm font-bold px-3 py-1 rounded-full ring-1 ring-blue-500" title="Prior Authorization Required">PA</span>
+                                                <span className="bg-slate-800 text-sky-400 text-xs font-bold px-2.5 py-1 rounded-full border border-sky-700 glow-sky-500" title="Prior Authorization Required">PA</span>
                                             )}
                                             <StatusBadge status={treatment.treatment_n_status || ''} />
                                         </div>
                                     </div>
                                 ))
-                              : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center">No treatments listed.</div>}
+                              : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center border border-slate-700">No treatments listed.</div>}
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-2xl font-semibold text-slate-100 mb-5 pl-4">AI Agent Insights (Overview)</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <h3 className="text-2xl font-semibold text-slate-100 mb-5">AI Agent Insights (Overview)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                         {agents.length > 0 ? agents.map((agent, idx) => (
                             <AgentCard key={`agent-overview-${idx}`} agent={agent} isExpanded={!!expandedAgents[agent.name || `agent_${idx}`]} onToggle={() => toggleAgentExpansion(agent.name || `agent_${idx}`)} section="overview" />
-                          )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center md:col-span-2 xl:col-span-3">No AI agent contributions available.</div>
+                          )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center md:col-span-2 xl:col-span-3 border border-slate-700">No AI agent contributions available.</div>
                         }
                         </div>
                     </div>
@@ -1263,76 +1450,79 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
                 )}
                 
                 {activeTab === 'assessment' && (
-                  <div className={`animate-fade-in-up space-y-8`}>
-                    <div className="bg-slate-700 rounded-xl shadow-lg overflow-hidden border border-slate-600"> {/* Dark mode section base */}
+                  <div className={`animate-fade-in-up space-y-6`}>
+                    <div className="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-700">
                       <SectionHeader 
                         title="Assessment Details" 
-                        icon={<FileCheck size={22}/>}
+                        icon={<FileCheck size={20}/>}
                         expanded={!!expandedSections.assessment} 
                         onToggle={() => toggleSection('assessment')} 
                       />
                       {expandedSections.assessment && (
-                        <div className="p-10 space-y-10 bg-slate-700">
+                        <div className="p-6 md:p-8 space-y-8 bg-slate-950">
+                          {sectionReasoning?.assessment && (
+                            <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                              <ReasoningDisplay
+                                markdownContent={sectionReasoning.assessment.markdownContent}
+                                isSimulating={sectionReasoning.assessment.isLoading}
+                              />
+                            </div>
+                          )}
                            <div>
-                              <div className="pl-10 bg-slate-800 py-3 mb-6">
-                                <h3 className="text-xl font-semibold text-slate-100 flex items-center">
-                                  <User size={20} className="mr-2" />
-                                  <span className="ml-4">Subjective Data</span>
+                              <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-sky-500 glow-sky-500">
+                                <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                  <User size={18} className="mr-2.5 text-sky-400" /> Subjective Data
                                 </h3>
                               </div>
-                              <div className="bg-blue-900 bg-opacity-30 rounded-lg p-6 border border-blue-700 shadow-sm space-y-4 text-base text-slate-200 mx-2">
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Chief Complaint:</strong> {adpieData.assessment_subjective_chief_complaint || <span className="italic text-slate-400">N/A</span>}</p>
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">History of Present Illness:</strong> {adpieData.assessment_subjective_hpi || <span className="italic text-slate-400">N/A</span>}</p>
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Patient Goals/Concerns:</strong> {adpieData.assessment_subjective_goals || <span className="italic text-slate-400">N/A</span>}</p>
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Other Subjective Findings:</strong> {adpieData.assessment_subjective_other || <span className="italic text-slate-400">N/A</span>}</p>
+                              <div className="bg-slate-900 rounded-lg p-5 border border-slate-700 shadow-md space-y-3 text-base text-slate-300">
+                                <p><strong className="text-slate-100">Chief Complaint:</strong> {adpieData.assessment_subjective_chief_complaint || <span className="italic text-slate-500">N/A</span>}</p>
+                                <p><strong className="text-slate-100">History of Present Illness:</strong> {adpieData.assessment_subjective_hpi || <span className="italic text-slate-500">N/A</span>}</p>
+                                <p><strong className="text-slate-100">Patient Goals/Concerns:</strong> {adpieData.assessment_subjective_goals || <span className="italic text-slate-500">N/A</span>}</p>
+                                <p><strong className="text-slate-100">Other Subjective Findings:</strong> {adpieData.assessment_subjective_other || <span className="italic text-slate-500">N/A</span>}</p>
                               </div>
                            </div>
                            <div>
-                              <div className="pl-10 bg-slate-800 py-3 mb-6">
-                                <h3 className="text-xl font-semibold text-slate-100 flex items-center">
-                                  <Activity size={20} className="mr-2" />
-                                  <span className="ml-4">Objective Data</span>
+                              <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-lime-500 glow-lime-500">
+                                <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                  <Activity size={18} className="mr-2.5 text-lime-400" /> Objective Data
                                 </h3>
                               </div>
-                              <div className="bg-green-900 bg-opacity-30 rounded-lg p-6 border border-green-700 shadow-sm space-y-4 text-base text-slate-200 mx-2">
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Vital Signs Summary:</strong> {adpieData.assessment_objective_vitals_summary || <span className="italic text-slate-400">N/A</span>}</p>
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Physical Exam Findings:</strong> {adpieData.assessment_objective_physical_exam || <span className="italic text-slate-400">N/A</span>}</p>
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Diagnostic Test Results:</strong> {adpieData.assessment_objective_diagnostics || <span className="italic text-slate-400">N/A</span>}</p>
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Medications Reviewed:</strong> {adpieData.assessment_objective_meds_reviewed || <span className="italic text-slate-400">N/A</span>}</p>
-                                <p className="leading-relaxed tracking-wide"><strong className="text-slate-100">Other Objective Findings:</strong> {adpieData.assessment_objective_other || <span className="italic text-slate-400">N/A</span>}</p>
+                              <div className="bg-slate-900 rounded-lg p-5 border border-slate-700 shadow-md space-y-3 text-base text-slate-300">
+                                <p><strong className="text-slate-100">Vital Signs Summary:</strong> {adpieData.assessment_objective_vitals_summary || <span className="italic text-slate-500">N/A</span>}</p>
+                                <p><strong className="text-slate-100">Physical Exam Findings:</strong> {adpieData.assessment_objective_physical_exam || <span className="italic text-slate-500">N/A</span>}</p>
+                                <p><strong className="text-slate-100">Diagnostic Test Results:</strong> {adpieData.assessment_objective_diagnostics || <span className="italic text-slate-500">N/A</span>}</p>
+                                <p><strong className="text-slate-100">Medications Reviewed:</strong> {adpieData.assessment_objective_meds_reviewed || <span className="italic text-slate-500">N/A</span>}</p>
+                                <p><strong className="text-slate-100">Other Objective Findings:</strong> {adpieData.assessment_objective_other || <span className="italic text-slate-500">N/A</span>}</p>
                               </div>
                            </div>
-                           {/* Recommended Assessments Section */}
                            <div>
-                              <div className="pl-10 bg-slate-800 py-3 mb-6 mt-10">
-                                <h3 className="text-xl font-semibold text-slate-100 flex items-center">
-                                  <ListChecks size={20} className="mr-2 text-indigo-400" />
-                                  <span className="ml-4">Recommended Assessments</span>
+                              <div className="bg-slate-900 py-3 mb-4 mt-6 rounded-md border-l-4 border-purple-500 glow-purple-500">
+                                <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                  <ListChecks size={18} className="mr-2.5 text-purple-400" /> Recommended Assessments
                                 </h3>
                               </div>
-                              <div className="bg-indigo-900 bg-opacity-25 rounded-lg p-6 border border-indigo-700 shadow-sm space-y-4 text-base text-slate-200 mx-2">
+                              <div className="bg-slate-900 rounded-lg p-5 border border-slate-700 shadow-md space-y-3 text-base text-slate-300">
                                 {recommendedAssessments.length > 0 ? recommendedAssessments.map((recAssessment: RecommendedAssessmentItem, idx: number) => (
-                                  <div key={`rec-assess-${idx}`} className="border-b border-indigo-600 pb-3 last:border-b-0 last:pb-0">
+                                  <div key={`rec-assess-${idx}`} className="border-b border-slate-700 pb-2.5 last:border-b-0 last:pb-0">
                                     <div className="flex justify-between items-center mb-1">
                                       <strong className="text-slate-100">{recAssessment.item}</strong>
                                       <StatusBadge status={recAssessment.status} />
                                     </div>
-                                    <p className="text-sm text-slate-300 italic">Rationale: {recAssessment.rationale}</p>
+                                    <p className="text-sm text-slate-400 italic">Rationale: {recAssessment.rationale}</p>
                                   </div>
-                                )) : <p className="italic text-slate-400">No recommended assessments listed.</p>}
+                                )) : <p className="italic text-slate-500">No recommended assessments listed.</p>}
                               </div>
                            </div>
-                           <div className="pt-6 border-t border-slate-600 mt-10">
-                              <div className="pl-10 bg-slate-800 py-3 mb-6">
-                                <h3 className="text-xl font-semibold text-slate-100 flex items-center">
-                                  <Zap size={20} className="mr-2" />
-                    <span className="ml-4">AI Agent Contributions & Insights (Assessment)</span>
-                  </h3>
-                </div>
-                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mx-2">
+                           <div className="pt-6 border-t border-slate-700 mt-8">
+                              <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-amber-500 glow-amber-500">
+                                <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                  <Zap size={18} className="mr-2.5 text-amber-400" /> AI Agent Contributions (Assessment)
+                                </h3>
+                              </div>
+                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                                {agents.length > 0 ? agents.map((agent, idx) => (
                                  <AgentCard key={`agent-assess-${idx}`} agent={agent} isExpanded={!!expandedAgents[agent.name || `agent_${idx}`]} onToggle={() => toggleAgentExpansion(agent.name || `agent_${idx}`)} section="assessment" />
-                               )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center xl:col-span-2">No AI agent contributions available.</div>}
+                               )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center xl:col-span-2 border border-slate-700">No AI agent contributions available.</div>}
                              </div>
                            </div>
                         </div>
@@ -1342,214 +1532,307 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
                 )}
 
                 {activeTab === 'diagnosis' && (
-                  <div className={`animate-fade-in-up space-y-8`}>
+                  <div className={`animate-fade-in-up space-y-6`}>
                     {nursingDiagnoses.length > 0 ? nursingDiagnoses.map((dx, dxIndex) => (
-                      <div key={`dx-${dxIndex}`} className="bg-slate-700 rounded-xl shadow-lg overflow-hidden border border-purple-600"> {/* Dark mode section base */}
+                      <div key={`dx-${dxIndex}`} className="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-700">
                         <SectionHeader 
                           title={`Nursing Diagnosis ${dxIndex + 1}: ${dx.diagnosis_nanda || 'N/A'}`}
-                          icon={<AlertCircle size={22}/>} 
+                          icon={<AlertCircle size={20}/>} 
                           expanded={!!expandedSections[`diagnosis_${dxIndex}`]}
                           onToggle={() => toggleSection(`diagnosis_${dxIndex}`)} 
                         />
                         {expandedSections[`diagnosis_${dxIndex}`] && (
-                          <div className="p-10 space-y-10 bg-purple-900 bg-opacity-20"> {/* Dark mode content area */}
-                            <div className="bg-slate-700 p-6 rounded-lg border border-purple-500 shadow-sm text-base mx-2">
-                                <p className="text-slate-200 mb-3 leading-relaxed tracking-wide"><strong className="text-purple-300">Related To:</strong> {dx.diagnosis_related_to || <span className="italic text-slate-400">N/A</span>}</p>
+                          <div className="p-6 md:p-8 space-y-8 bg-slate-950">
+                            {dxIndex === 0 && sectionReasoning?.diagnosis_goals && (
+                              <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                <ReasoningDisplay
+                                  markdownContent={sectionReasoning.diagnosis_goals.markdownContent}
+                                  isSimulating={sectionReasoning.diagnosis_goals.isLoading}
+                                />
+                              </div>
+                            )}
+                            <div className="bg-slate-900 p-5 rounded-lg border border-slate-700 shadow-md text-base">
+                                <p className="text-slate-300 mb-2.5"><strong className="text-purple-400 glow-purple-500">Related To:</strong> {dx.diagnosis_related_to || <span className="italic text-slate-500">N/A</span>}</p>
                                 {dx.diagnosis_is_risk ? (
-                                    <div className="mt-3">
-                                        <strong className="text-sm text-red-300 block mb-1.5">Risk Factors:</strong>
+                                    <div className="mt-2">
+                                        <strong className="text-sm text-red-400 glow-red-500 block mb-1">Risk Factors:</strong>
                                         {dx.diagnosis_risk_factors && dx.diagnosis_risk_factors.length > 0 ? (
-                                          <ul className="list-disc list-inside space-y-1.5 text-slate-200 pl-2">
+                                          <ul className="list-disc list-inside space-y-1 text-slate-300 pl-2">
                                             {dx.diagnosis_risk_factors.map((factor, i) => <li key={`risk-${dxIndex}-${i}`}>{factor}</li>)}
                                           </ul>
-                                        ) : <p className="italic text-slate-400 pl-2">No risk factors listed.</p>}
+                                        ) : <p className="italic text-slate-500 pl-2">No risk factors listed.</p>}
                                     </div>
                                 ) : (
-                                    <div className="mt-3">
-                                        <strong className="text-sm text-green-300 block mb-1.5">As Evidenced By (Assessment Findings):</strong>
+                                    <div className="mt-2">
+                                        <strong className="text-sm text-lime-400 glow-lime-500 block mb-1">As Evidenced By:</strong>
                                         {dx.diagnosis_evidence && dx.diagnosis_evidence.length > 0 ? (
-                                          <ul className="list-disc list-inside space-y-1.5 text-slate-200 pl-2">
+                                          <ul className="list-disc list-inside space-y-1 text-slate-300 pl-2">
                                               {dx.diagnosis_evidence.map((ev, i) => <li key={`ev-${dxIndex}-${i}`}>{ev}</li>)}
-                                              {dx.diagnosis_evidence.length < 5 && <li className="italic text-amber-300"></li>}
                                           </ul>
-                                        ) : <p className="italic text-slate-400 pl-2">No evidence listed.</p>}
+                                        ) : <p className="italic text-slate-500 pl-2">No evidence listed.</p>}
                                     </div>
                                 )}
                             </div>
                             <div>
-                                <h4 className="font-semibold text-xl text-slate-100 mb-4 flex items-center"><Target size={20} className="mr-2.5 text-purple-400"/>Goals (SMART)</h4>
-                                <div className="space-y-5">
+                                <h4 className="font-semibold text-xl text-slate-100 mb-3 flex items-center"><Target size={18} className="mr-2 text-purple-400 glow-purple-500"/>Goals (SMART)</h4>
+                                <div className="space-y-4">
                                     {dx.goals && dx.goals.length > 0 ? dx.goals.map((goal, goalIndex) => (
-                                        <div key={`goal-${dxIndex}-${goalIndex}`} className="bg-slate-700 rounded-lg p-5 border border-purple-500 shadow-sm">
-                                            <div className="font-semibold text-slate-100 mb-2 text-lg">Goal {goalIndex + 1}: {goal.goal_description || <span className="italic text-slate-400">N/A</span>}</div>
-                                            {goal.goal_rationale && <p className="text-sm text-slate-300 mb-2 italic"><strong className="text-slate-200">Rationale:</strong> {goal.goal_rationale}</p>}
-                                            <p className="text-base text-slate-200"><strong>Target Date:</strong> {goal.goal_target_date || <span className="italic text-slate-400">N/A</span>}</p>
-                                            <div className="mt-2.5">
-                                                <strong className="text-base text-slate-200 block mb-1.5">Outcomes:</strong>
+                                        <div key={`goal-${dxIndex}-${goalIndex}`} className="bg-slate-900 rounded-lg p-4 border border-slate-700 shadow-md">
+                                            <div className="font-semibold text-slate-100 mb-1.5 text-lg">Goal {goalIndex + 1}: {goal.goal_description || <span className="italic text-slate-400">N/A</span>}</div>
+                                            {goal.goal_rationale && <p className="text-xs text-slate-400 mb-1.5 italic"><strong className="text-slate-300">Rationale:</strong> {goal.goal_rationale}</p>}
+                                            <p className="text-sm text-slate-300"><strong>Target Date:</strong> {goal.goal_target_date || <span className="italic text-slate-500">N/A</span>}</p>
+                                            <div className="mt-2">
+                                                <strong className="text-sm text-slate-200 block mb-1">Outcomes:</strong>
                                                 {goal.goal_outcomes && goal.goal_outcomes.length > 0 ? (
-                                                  <ul className="list-disc list-inside space-y-1.5 text-base text-slate-200 pl-2">
+                                                  <ul className="list-disc list-inside space-y-1 text-sm text-slate-300 pl-2">
                                                     {goal.goal_outcomes.map((outcome, oIdx) => <li key={`outcome-${dxIndex}-${goalIndex}-${oIdx}`}>{outcome}</li>)}
                                                   </ul>
-                                                ) : <p className="italic text-slate-400 pl-2 text-base">No outcomes listed.</p>}
+                                                ) : <p className="italic text-slate-500 pl-2 text-sm">No outcomes listed.</p>}
                                             </div>
                                         </div>
-                                    )) : <div className="text-base text-slate-400italic p-5 bg-slate-600 rounded-lg border border-purple-500 text-center"></div>}
-                                    {dx.goals && dx.goals.length > 0 && dx.goals.length < 5 && <div className="text-base text-amber-400 italic p-3 text-center"></div>}
+                                    )) : <div className="text-sm text-slate-500 italic p-4 bg-slate-900 rounded-lg border border-slate-700 text-center">No goals defined.</div>}
                                 </div>
                             </div>
-                             <div className="pt-6 border-t border-purple-500">
-                  <div className="pl-10 bg-slate-800 py-3 mb-6">
-                    <h3 className="text-xl font-semibold text-slate-100 flex items-center">
-                      <Zap size={20} className="mr-2" />
-                      <span className="ml-4">AI Agent Contributions & Insights (Diagnosis/Goals)</span>
-                    </h3>
-                  </div>
-                               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mx-2">
+                             <div className="pt-6 border-t border-slate-700">
+                                <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-amber-500 glow-amber-500">
+                                  <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                    <Zap size={18} className="mr-2.5 text-amber-400" /> AI Agent Contributions (Diagnosis/Goals)
+                                  </h3>
+                                </div>
+                               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                                  {agents.length > 0 ? agents.map((agent, idx) => (
                                    <AgentCard key={`agent-diag-${dxIndex}-${idx}`} agent={agent} isExpanded={!!expandedAgents[agent.name || `agent_${idx}`]} onToggle={() => toggleAgentExpansion(agent.name || `agent_${idx}`)} section="diagnosis" />
-                                 )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center xl:col-span-2">No AI agent contributions available.</div>}
+                                 )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center xl:col-span-2 border border-slate-700">No AI agent contributions.</div>}
                                </div>
                              </div>
                           </div>
                         )}
                       </div>
-                    )) : <div className="text-center p-10 text-slate-400 italic text-lg">No nursing diagnoses identified in the care plan.</div>}
+                    )) : <div className="text-center p-10 text-slate-500 italic text-lg">No nursing diagnoses identified.</div>}
                   </div>
                 )}
 
                 {activeTab === 'implementation' && (
-                  <div className={`animate-fade-in-up space-y-8`}>
+                  <div className={`animate-fade-in-up space-y-6`}>
                     {nursingDiagnoses.length > 0 ? nursingDiagnoses.map((dx, dxIndex) => (
-                      <div key={`impl-dx-${dxIndex}`} className="bg-slate-700 rounded-xl shadow-lg overflow-hidden border border-teal-600">
+                      <div key={`impl-dx-${dxIndex}`} className="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-700">
                         <SectionHeader 
                           title={`Interventions for Diagnosis: ${dx.diagnosis_nanda || `Diagnosis ${dxIndex + 1}`}`}
-                          icon={<ListChecks size={22}/>} 
+                          icon={<ListChecks size={20}/>} 
                           expanded={!!expandedSections[`impl_dx_${dxIndex}`]}
                           onToggle={() => toggleSection(`impl_dx_${dxIndex}`)} 
                         />
                         {expandedSections[`impl_dx_${dxIndex}`] && (
-                          <div className="p-10 space-y-8 bg-teal-900 bg-opacity-20">
+                          <div className="p-6 md:p-8 space-y-6 bg-slate-950">
+                            {dxIndex === 0 && sectionReasoning?.interventions && (
+                              <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                <ReasoningDisplay
+                                  markdownContent={sectionReasoning.interventions.markdownContent}
+                                  isSimulating={sectionReasoning.interventions.isLoading}
+                                />
+                              </div>
+                            )}
                             {(dx.goals && dx.goals.length > 0) ? dx.goals.map((goal, goalIndex) => (
-                              <div key={`impl-goal-${dxIndex}-${goalIndex}`} className="mb-6">
-                                <h4 className="font-semibold text-xl text-slate-100 mb-3 pl-2 border-b border-teal-700 pb-2">
+                              <div key={`impl-goal-${dxIndex}-${goalIndex}`} className="mb-5">
+                                <h4 className="font-semibold text-xl text-slate-100 mb-2.5 pl-1 border-b border-slate-700 pb-1.5">
                                   Goal {goalIndex + 1}: {goal.goal_description || 'N/A'}
                                 </h4>
-                                <div className="space-y-4 mx-2">
+                                <div className="space-y-3">
                                   {goal.interventions && goal.interventions.length > 0 ? goal.interventions.map((int: InterventionType, intIndex: number) => (
-                                    <div key={`int-${dxIndex}-${goalIndex}-${intIndex}`} className="bg-slate-700 rounded-lg p-5 border border-teal-500 shadow-sm">
-                                      <div className="flex justify-between items-start mb-2">
+                                    <div key={`int-${dxIndex}-${goalIndex}-${intIndex}`} className="bg-slate-900 rounded-lg p-4 border border-slate-700 shadow-md">
+                                      <div className="flex justify-between items-start mb-1.5">
                                         <span className="font-semibold text-slate-100 text-lg">
                                           Intervention {intIndex + 1}: {int.interventionText || <span className="italic text-slate-400">N/A</span>}
                                         </span>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${int.interventionType === 'health_teaching' ? 'bg-sky-700 text-sky-100' : 'bg-emerald-700 text-emerald-100'}`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${int.interventionType === 'health_teaching' ? 'bg-slate-800 text-sky-400 border-sky-700 glow-sky-500' : 'bg-slate-800 text-lime-400 border-lime-700 glow-lime-500'}`}>
                                           {int.interventionType ? int.interventionType.replace('_', ' ') : 'general'}
                                         </span>
                                       </div>
-                                      <p className="text-base text-slate-300 leading-relaxed tracking-wide"><strong className="text-slate-200">Rationale:</strong> {int.rationale || <span className="italic text-slate-400">N/A</span>}</p>
+                                      <p className="text-sm text-slate-300"><strong className="text-slate-200">Rationale:</strong> {int.rationale || <span className="italic text-slate-500">N/A</span>}</p>
                                     </div>
-                                  )) : <div className="text-base text-slate-400 italic p-5 bg-slate-600 rounded-lg border border-teal-500 text-center">No interventions defined for this goal.</div>}
-                                  {(goal.interventions?.length || 0) < 20 && <div className="text-base text-amber-400 italic p-3 text-center">Expected up to 20 interventions for this goal.</div>}
+                                  )) : <div className="text-sm text-slate-500 italic p-4 bg-slate-900 rounded-lg border border-slate-700 text-center">No interventions for this goal.</div>}
                                 </div>
                               </div>
-                            )) : <div className="text-base text-slate-400 italic p-5 bg-slate-600 rounded-lg border border-teal-500 text-center">No goals defined for this diagnosis.</div>}
+                            )) : <div className="text-sm text-slate-500 italic p-4 bg-slate-900 rounded-lg border border-slate-700 text-center">No goals for this diagnosis.</div>}
                             
-                            <div className="pt-6 border-t border-teal-500">
-                              <div className="bg-slate-800 pl-3 mb-6">
-                                <h3 className="text-xl font-semibold text-slate-100 py-3 pl-2 flex items-center"><Zap size={20} className="mr-2 text-blue-400 flex-shrink-0"/>AI Agent Contributions & Insights (Interventions for this Diagnosis)</h3>
-                              </div>
-                               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mx-2">
+                            <div className="pt-6 border-t border-slate-700">
+                                <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-amber-500 glow-amber-500">
+                                  <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                    <Zap size={18} className="mr-2.5 text-amber-400" /> AI Agent Contributions (Interventions)
+                                  </h3>
+                                </div>
+                               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                                  {agents.length > 0 ? agents.map((agent, agentIdx) => (
                                    <AgentCard key={`agent-impl-${dxIndex}-${agentIdx}`} agent={agent} isExpanded={!!expandedAgents[agent.name || `agent_${agentIdx}`]} onToggle={() => toggleAgentExpansion(agent.name || `agent_${agentIdx}`)} section="implementation" />
-                                 )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center xl:col-span-2">No AI agent contributions available.</div>}
+                                 )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center xl:col-span-2 border border-slate-700">No AI agent contributions.</div>}
                                </div>
                             </div>
                           </div>
                         )}
                       </div>
-                    )) : <div className="text-center p-10 text-slate-400 italic text-lg">No nursing diagnoses identified to display interventions for.</div>}
+                    )) : <div className="text-center p-10 text-slate-500 italic text-lg">No nursing diagnoses to display interventions for.</div>}
                   </div>
                 )}
                 
                 {activeTab === 'evaluation' && (
-                  <div className={`animate-fade-in-up space-y-8`}>
+                  <div className={`animate-fade-in-up space-y-6`}>
                     {nursingDiagnoses.length > 0 ? nursingDiagnoses.map((dx, dxIndex) => (
-                      <div key={`eval-dx-${dxIndex}`} className="bg-slate-700 rounded-xl shadow-lg overflow-hidden border border-amber-600">
+                      <div key={`eval-dx-${dxIndex}`} className="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-700">
                         <SectionHeader 
                           title={`Evaluation for Diagnosis: ${dx.diagnosis_nanda || `Diagnosis ${dxIndex + 1}`}`}
-                          icon={<Star size={22}/>}
+                          icon={<Star size={20}/>}
                           expanded={!!expandedSections[`evaluation_dx_${dxIndex}`]}
                           onToggle={() => toggleSection(`evaluation_dx_${dxIndex}`)} 
                         />
                         {expandedSections[`evaluation_dx_${dxIndex}`] && (
-                          <div className="p-10 space-y-8 bg-amber-900 bg-opacity-20">
+                          <div className="p-6 md:p-8 space-y-6 bg-slate-950">
+                             {dxIndex === 0 && sectionReasoning?.evaluation && (
+                              <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                <ReasoningDisplay
+                                  markdownContent={sectionReasoning.evaluation.markdownContent}
+                                  isSimulating={sectionReasoning.evaluation.isLoading}
+                                />
+                              </div>
+                            )}
                             {dx.goals && dx.goals.length > 0 ? dx.goals.map((goal, goalIndex) => (
                               goal.evaluation ? (
-                                <div key={`eval-goal-${dxIndex}-${goalIndex}`} className="bg-slate-700 rounded-lg p-5 border border-amber-500 shadow-sm">
-                                  <div className="flex justify-between items-start mb-3">
+                                <div key={`eval-goal-${dxIndex}-${goalIndex}`} className="bg-slate-900 rounded-lg p-4 border border-slate-700 shadow-md">
+                                  <div className="flex justify-between items-start mb-2">
                                     <h5 className="font-semibold text-slate-100 text-lg">Goal: {goal.goal_description || `Goal ${goalIndex + 1}`}</h5>
                                     <StatusBadge status={goal.evaluation.evaluationStatus || 'Unknown'} />
                                   </div>
-                                  <div className="space-y-3 text-slate-300">
-                                    <p><strong className="text-slate-100">Evaluation Method:</strong> {goal.evaluation.evaluationMethod || <span className="italic text-slate-400">N/A</span>}</p>
-                                    <p><strong className="text-slate-100">Evaluation Text/Evidence:</strong> {goal.evaluation.evaluationText || <span className="italic text-slate-400">N/A</span>}</p>
-                                    {goal.evaluation.evaluationTargetDate && <p className="text-sm text-slate-400 mt-2">Target Date: {goal.evaluation.evaluationTargetDate}</p>}
+                                  <div className="space-y-2 text-sm text-slate-300">
+                                    <p><strong className="text-slate-100">Evaluation Method:</strong> {goal.evaluation.evaluationMethod || <span className="italic text-slate-500">N/A</span>}</p>
+                                    <p><strong className="text-slate-100">Evaluation Text/Evidence:</strong> {goal.evaluation.evaluationText || <span className="italic text-slate-500">N/A</span>}</p>
+                                    {goal.evaluation.evaluationTargetDate && <p className="text-xs text-slate-400 mt-1.5">Target Date: {goal.evaluation.evaluationTargetDate}</p>}
                                   </div>
                                 </div>
                               ) : (
-                                <div key={`eval-goal-no-data-${dxIndex}-${goalIndex}`} className="text-base text-slate-400 italic p-5 bg-slate-600 rounded-lg border border-amber-500 text-center">
+                                <div key={`eval-goal-no-data-${dxIndex}-${goalIndex}`} className="text-sm text-slate-500 italic p-4 bg-slate-900 rounded-lg border border-slate-700 text-center">
                                   No evaluation data for: Goal {goalIndex + 1} - {goal.goal_description || 'N/A'}
                                 </div>
                               )
-                            )) : <div className="text-base text-slate-400 italic p-5 bg-slate-600 rounded-lg border border-amber-500 text-center">No goals to evaluate for this diagnosis.</div>}
+                            )) : <div className="text-sm text-slate-500 italic p-4 bg-slate-900 rounded-lg border border-slate-700 text-center">No goals to evaluate.</div>}
                             
                             {dx.goals && dx.goals.length > 0 && (
-                              <div className="pt-6 border-t border-amber-500">
-                                <div className="bg-slate-800 pl-3 mb-6">
-                                  <h3 className="text-xl font-semibold text-slate-100 py-3 pl-2 flex items-center"><Zap size={20} className="mr-2 text-blue-400 flex-shrink-0"/>AI Agent Contributions & Insights (Evaluation for this Diagnosis)</h3>
+                              <div className="pt-6 border-t border-slate-700">
+                                <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-amber-500 glow-amber-500">
+                                  <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                    <Zap size={18} className="mr-2.5 text-amber-400" /> AI Agent Contributions (Evaluation)
+                                  </h3>
                                 </div>
-                               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mx-2">
+                               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                                  {agents.length > 0 ? agents.map((agent, agentIdx) => (
                                    <AgentCard key={`agent-evaluation-${dxIndex}-${agentIdx}`} agent={agent} isExpanded={!!expandedAgents[agent.name || `agent_${agentIdx}`]} onToggle={() => toggleAgentExpansion(agent.name || `agent_${agentIdx}`)} section="evaluation" />
-                                 )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center xl:col-span-2">No AI agent contributions available.</div>}
+                                 )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center xl:col-span-2 border border-slate-700">No AI agent contributions.</div>}
                                </div>
                               </div>
                             )}
                           </div>
                         )}
                       </div>
-                    )) : <div className="text-center p-10 text-slate-400 italic text-lg">No nursing diagnoses identified to display evaluations for.</div>}
+                    )) : <div className="text-center p-10 text-slate-500 italic text-lg">No nursing diagnoses to display evaluations for.</div>}
+                  </div>
+                )}
+
+                {activeTab === 'summary_coordination_sources' && (
+                  <div className={`animate-fade-in-up space-y-6`}>
+                    <div className="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-700">
+                      <SectionHeader 
+                        title="Plan Summary, Coordination & Admin" 
+                        icon={<FileText size={20}/>}
+                        expanded={!!expandedSections.summary_admin_main} 
+                        onToggle={() => toggleSection('summary_admin_main')} 
+                      />
+                      {expandedSections.summary_admin_main && (
+                        <div className="p-6 md:p-8 space-y-6 bg-slate-950">
+                          {sectionReasoning?.summary_coordination_sources && (
+                            <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                              <ReasoningDisplay
+                                markdownContent={sectionReasoning.summary_coordination_sources.markdownContent}
+                                isSimulating={sectionReasoning.summary_coordination_sources.isLoading}
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <h4 className="text-xl font-semibold text-slate-100 mb-2.5">Overall Plan Summary</h4>
+                            <p className="text-slate-300 bg-slate-900 p-4 rounded-md border border-slate-700 shadow-md">{adpieData.overall_plan_summary || <span className="italic text-slate-500">N/A</span>}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-semibold text-slate-100 mb-2.5">Interdisciplinary Plan</h4>
+                            <div className="space-y-2">
+                            {interdisciplinaryPlan.length > 0 ? interdisciplinaryPlan.map((item, idx) => (
+                              <div key={`interdisciplinary-${idx}`} className="p-3 bg-slate-900 rounded-md border border-slate-700 shadow-md">
+                                <strong className="text-purple-400 glow-purple-500">{item.discipline}:</strong> <span className="text-slate-200">{item.plan_item}</span>
+                              </div>
+                            )) : <p className="italic text-slate-500 bg-slate-900 p-3 rounded-md border border-slate-700">N/A</p>}
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-semibold text-slate-100 mb-2.5">Next Steps</h4>
+                            {nextSteps.length > 0 ? (
+                              <ul className="list-disc list-inside space-y-1.5 text-slate-300 bg-slate-900 p-4 rounded-md border border-slate-700 shadow-md">
+                                {nextSteps.map((step, idx) => <li key={`nextstep-${idx}`}>{step}</li>)}
+                              </ul>
+                            ) : <p className="italic text-slate-500 bg-slate-900 p-3 rounded-md border border-slate-700">N/A</p>}
+                          </div>
+                          {(adpieData.notification_title || adpieData.notification_message) && (
+                            <div>
+                              <h4 className="text-xl font-semibold text-slate-100 mb-2.5">Notifications</h4>
+                              <div className="bg-slate-900 p-4 rounded-md border border-slate-700 shadow-md space-y-1 text-sm">
+                                {adpieData.notification_title && <p><strong className="text-purple-400">Title:</strong> {adpieData.notification_title}</p>}
+                                {adpieData.notification_message && <p><strong className="text-purple-400">Message:</strong> {adpieData.notification_message}</p>}
+                                {adpieData.notification_detail_1 && <p><strong className="text-purple-400">Detail 1:</strong> {adpieData.notification_detail_1}</p>}
+                                {adpieData.notification_detail_2 && <p><strong className="text-purple-400">Detail 2:</strong> {adpieData.notification_detail_2}</p>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'sources' && (
-                   <div className={`animate-fade-in-up space-y-8`}>
-                     <div className="bg-slate-700 rounded-xl shadow-lg overflow-hidden border border-cyan-600">
+                   <div className={`animate-fade-in-up space-y-6`}>
+                     <div className="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-700">
                        <SectionHeader 
                          title="References & Source Material" 
-                         icon={<Link size={22}/>}
+                         icon={<Link size={20}/>}
                          expanded={!!expandedSections.sources}
                          onToggle={() => toggleSection('sources')} 
                        />
                        {expandedSections.sources && (
-                         <div className="p-10 space-y-8 bg-cyan-900 bg-opacity-20">
+                         <div className="p-6 md:p-8 space-y-6 bg-slate-950">
+                           {sectionReasoning?.summary_coordination_sources && (
+                            <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                <p className="text-xs text-slate-500 italic mb-2">Note: Source reasoning is part of "Summary & Admin".</p>
+                                <ReasoningDisplay
+                                  markdownContent={sectionReasoning.summary_coordination_sources.markdownContent}
+                                  isSimulating={sectionReasoning.summary_coordination_sources.isLoading}
+                                />
+                            </div>
+                           )}
                            <div>
-                  <div className="bg-slate-800 pl-3 mb-6">
-                    <h3 className="text-xl font-semibold text-slate-100 py-3 pl-2 flex items-center"><Link size={20} className="mr-2 text-cyan-400 flex-shrink-0"/>Sources</h3>
-                  </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mx-2">
+                            <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-cyan-500 glow-cyan-500">
+                              <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4"><Link size={18} className="mr-2.5 text-cyan-400"/>Sources</h3>
+                            </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                {sources && sources.length > 0 ? sources.map((source, idx) => (
                                  <SourceCard key={`source-${idx}`} source={source} />
-                               )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center md:col-span-2 xl:col-span-3">No sources have been cited in this care plan.</div>}
+                               )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center md:col-span-2 xl:col-span-3 border border-slate-700">No sources cited.</div>}
                              </div>
                            </div>
-                           <div className="pt-6 border-t border-cyan-500">
-                  <div className="bg-slate-800 pl-3 mb-6">
-                    <h3 className="text-xl font-semibold text-slate-100 py-3 pl-2 flex items-center"><Zap size={20} className="mr-2 text-blue-400 flex-shrink-0"/>AI Agent Contributions & Insights (Sources)</h3>
-                  </div>
-                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mx-2">
+                           <div className="pt-6 border-t border-slate-700">
+                            <div className="bg-slate-900 py-3 mb-4 rounded-md border-l-4 border-amber-500 glow-amber-500">
+                              <h3 className="text-xl font-semibold text-slate-100 flex items-center pl-4">
+                                <Zap size={18} className="mr-2.5 text-amber-400"/>AI Agent Contributions (Sources)
+                              </h3>
+                            </div>
+                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                                {agents.length > 0 ? agents.map((agent, idx) => (
                                  <AgentCard key={`agent-source-${idx}`} agent={agent} isExpanded={!!expandedAgents[agent.name || `agent_${idx}`]} onToggle={() => toggleAgentExpansion(agent.name || `agent_${idx}`)} section="sources" />
-                               )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center xl:col-span-2">No AI agent contributions available.</div>}
+                               )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center xl:col-span-2 border border-slate-700">No AI agent contributions.</div>}
                              </div>
                            </div>
                          </div>
@@ -1561,45 +1844,54 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
             </div>
           </div>
 
+          {/* Prior Auth Panel */}
           {showPriorAuth && (
-            <div className="lg:w-2/5 xl:w-1/3 transition-all duration-500 ease-in-out">
-              <div className="bg-slate-800 rounded-xl shadow-xl border border-slate-700 p-6">
-                <div className="flex justify-between items-center mb-6">
+            <div className="lg:w-2/5 xl:w-1/3 transition-all duration-500 ease-in-out animate-fade-in-up">
+              <div className="bg-slate-900 rounded-xl shadow-2xl border border-slate-700 p-6 sticky top-6">
+                <div className="flex justify-between items-center mb-5">
                   <h2 className="text-2xl font-bold text-slate-100 flex items-center">
-                    <Shield size={22} className="text-blue-500 mr-2.5" /> Prior Authorizations
+                    <Shield size={20} className="text-sky-400 mr-2.5 glow-sky-500" /> Prior Authorizations
                   </h2>
-                  <button onClick={togglePriorAuth} className="text-sm text-slate-400 hover:text-slate-300 p-1 hover:bg-slate-700 rounded" title="Close">
-                    <X size={20} />
+                  <button onClick={togglePriorAuth} className="text-sm text-slate-500 hover:text-slate-300 p-1 hover:bg-slate-800 rounded-full" title="Close">
+                    <X size={18} />
                   </button>
                 </div>
-                <div className="space-y-2 mb-5">
-                  <div className="flex justify-between items-center text-sm text-slate-300 mb-3">
-                    <span className="font-semibold">Status</span>
-                    <span className="font-semibold">Summary</span>
+                {sectionReasoning?.prior_authorizations && (
+                  <div className="mb-5 p-4 bg-slate-950 rounded-lg border border-slate-700">
+                    <ReasoningDisplay
+                      markdownContent={sectionReasoning.prior_authorizations.markdownContent}
+                      isSimulating={sectionReasoning.prior_authorizations.isLoading}
+                    />
                   </div>
-                  <div className="bg-slate-700 px-4 py-3 rounded-md flex justify-between items-center">
+                )}
+                <div className="space-y-1.5 mb-4">
+                  <div className="flex justify-between items-center text-xs text-slate-400 mb-2">
+                    <span className="font-semibold">Status</span>
+                    <span className="font-semibold">Count</span>
+                  </div>
+                  <div className="bg-slate-800 px-3 py-2 rounded-md flex justify-between items-center border border-slate-700">
                     <StatusBadge status="Pending Submission" />
                     <span className="text-amber-400 font-semibold">{paItems.filter(i => i.status?.toLowerCase() === 'pending submission').length}</span>
                   </div>
-                  <div className="bg-slate-700 px-4 py-3 rounded-md flex justify-between items-center">
+                  <div className="bg-slate-800 px-3 py-2 rounded-md flex justify-between items-center border border-slate-700">
                     <StatusBadge status="In Progress" />
                     <span className="text-amber-400 font-semibold">{paItems.filter(i => i.status?.toLowerCase() === 'in progress').length}</span>
                   </div>
-                  <div className="bg-slate-700 px-4 py-3 rounded-md flex justify-between items-center">
+                  <div className="bg-slate-800 px-3 py-2 rounded-md flex justify-between items-center border border-slate-700">
                     <StatusBadge status="Approved" />
-                    <span className="text-green-400 font-semibold">{paItems.filter(i => i.status?.toLowerCase() === 'approved').length}</span>
+                    <span className="text-lime-400 font-semibold">{paItems.filter(i => i.status?.toLowerCase() === 'approved').length}</span>
                   </div>
-                  <div className="bg-slate-700 px-4 py-3 rounded-md flex justify-between items-center">
+                  <div className="bg-slate-800 px-3 py-2 rounded-md flex justify-between items-center border border-slate-700">
                     <StatusBadge status="Denied" />
-                    <span className="text-red-400 font-semibold">{paItems.filter(i => i.status?.toLowerCase() === 'denied').length}</span>
+                    <span className="text-red-500 font-semibold">{paItems.filter(i => i.status?.toLowerCase() === 'denied').length}</span>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="text-lg font-semibold text-slate-200 mb-3">Prior Auth Items</div>
-                  <div className="max-h-[600px] overflow-y-auto styled-scrollbar pr-2">
+                <div className="space-y-1.5">
+                  <div className="text-lg font-semibold text-slate-200 mb-2.5">Prior Auth Items</div>
+                  <div className="max-h-[calc(100vh-300px)] overflow-y-auto styled-scrollbar-dark pr-1.5">
                     {paItems.length > 0 ? paItems.map((item, idx) => (
                       <PriorAuthCard key={`pa-${idx}`} item={item} onUpdateStatus={handleUpdatePAStatus} />
-                    )) : <div className="text-base text-slate-400 italic p-5 bg-slate-700 rounded-lg text-center">No prior authorization items found.</div>}
+                    )) : <div className="text-sm text-slate-500 italic p-5 bg-slate-800 rounded-lg text-center border border-slate-700">No prior authorization items.</div>}
                   </div>
                 </div>
               </div>
@@ -1609,51 +1901,62 @@ const CarePlanTemplate = ({ data: initialData, enableSimulations = true, topLeve
       </div>
       
       <style jsx global>{`
-        .styled-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-        .styled-scrollbar::-webkit-scrollbar-track { background: #1e293b; border-radius: 10px; }
-        .styled-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-        .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .styled-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .styled-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .styled-scrollbar::-webkit-scrollbar-thumb { background: #334155; /* slate-700 */ border-radius: 10px; }
+        .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; /* slate-600 */ }
+
+        .styled-scrollbar-dark::-webkit-scrollbar { width: 6px; height: 6px; }
+        .styled-scrollbar-dark::-webkit-scrollbar-track { background: #020617; /* slate-950 */ }
+        .styled-scrollbar-dark::-webkit-scrollbar-thumb { background: #1e293b; /* slate-800 */ border-radius: 10px; }
+        .styled-scrollbar-dark::-webkit-scrollbar-thumb:hover { background: #334155; /* slate-700 */ }
         
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Typography enhancements */
-        .letter-spacing-0.03em {
-          letter-spacing: 0.03em;
-        }
-        
-        .letter-spacing-0.02em {
-          letter-spacing: 0.02em;
-        }
-        
-        .leading-relaxed {
-          line-height: 1.6;
-        }
-        
-        .tracking-wide {
-          letter-spacing: 0.015em;
-        }
+        .tracking-wide { letter-spacing: 0.01em; }
+        .tracking-wider { letter-spacing: 0.025em; }
         
         @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-15px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in-down {
-          animation: fadeInDown 0.5s ease-out forwards;
+        .animate-fade-in-down { animation: fadeInDown 0.4s ease-out forwards; }
+
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
         }
+        .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+
+        /* Electric Glows */
+        .glow-sky-500 { box-shadow: 0 0 10px 1px rgba(14, 165, 233, 0.35); }
+        .glow-lime-400 { box-shadow: 0 0 10px 1px rgba(163, 230, 53, 0.35); }
+        .glow-amber-400 { box-shadow: 0 0 10px 1px rgba(251, 191, 36, 0.35); }
+        .glow-fuchsia-400 { box-shadow: 0 0 10px 1px rgba(236, 72, 153, 0.35); } /* fuchsia-500 is too dark for glow */
+        .glow-red-500 { box-shadow: 0 0 10px 1px rgba(239, 68, 68, 0.35); }
+        .glow-green-500 { box-shadow: 0 0 10px 1px rgba(34, 197, 94, 0.35); }
+        .glow-purple-500 { box-shadow: 0 0 10px 1px rgba(168, 85, 247, 0.35); }
+        .glow-teal-500 { box-shadow: 0 0 10px 1px rgba(20, 184, 166, 0.35); }
+        .glow-cyan-500 { box-shadow: 0 0 10px 1px rgba(6, 182, 212, 0.35); }
+        .glow-indigo-500 { box-shadow: 0 0 10px 1px rgba(99, 102, 241, 0.35); }
+
+
+        .text-shadow-electric-blue { text-shadow: 0 0 10px rgba(14, 165, 233, 0.6); }
+        /* Add more text-shadows if needed */
+
+        /* Specific styles for Assessment section cards */
+        .assessment-subjective-card { background-color: rgba(14, 165, 233, 0.05); border-left-color: #0ea5e9; /* sky-500 */ }
+        .assessment-objective-card { background-color: rgba(163, 230, 53, 0.05); border-left-color: #a3e635; /* lime-500 */ }
+        .assessment-recommended-card { background-color: rgba(168, 85, 247, 0.05); border-left-color: #a855f7; /* purple-500 */ }
+        
+        /* Styles for section content areas for specific tabs */
+        .diagnosis-content-bg { background-color: rgba(168, 85, 247, 0.03); /* Subtle purple tint */ }
+        .implementation-content-bg { background-color: rgba(20, 184, 166, 0.03); /* Subtle teal tint */ }
+        .evaluation-content-bg { background-color: rgba(251, 191, 36, 0.03); /* Subtle amber tint */ }
+        .summary-admin-content-bg { background-color: rgba(99, 102, 241, 0.03); /* Subtle indigo tint */ }
+        .sources-content-bg { background-color: rgba(6, 182, 212, 0.03); /* Subtle cyan tint */ }
+
       `}</style>
     </div>
   );

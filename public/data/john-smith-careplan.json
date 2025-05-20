@@ -1,0 +1,779 @@
+{
+  "title": "CarePlanJsonData",
+  "patientData": {
+    "patient_full_name": "John Doe",
+    "patient_age": "68",
+    "patient_gender": "Male",
+    "patient_mrn": "MRN0012345",
+    "patient_dob": "1956-03-15",
+    "patient_insurance_plan": "Medicare Advantage Plan XYZ",
+    "patient_policy_number": "XYZ123456789",
+    "patient_primary_provider": "Dr. Mary Krebs, MD",
+    "patient_admission_date": "2024-07-28",
+    "allergies": [
+      "Penicillin (rash)"
+    ],
+    "vitalSigns": {
+      "vital_bp": "160/95 mmHg",
+      "vital_pulse": "88 bpm",
+      "vital_resp_rate": "18 breaths/min",
+      "vital_temp": "37.0°C",
+      "vital_o2sat": "97% on room air",
+      "vital_pain_score": "2/10 (headache)"
+    },
+    "nyha_class_description": "Not Applicable; Stroke assessment (e.g., NIHSS) would be relevant. CHA2DS2-VASc score for AFib-related stroke risk considered."
+  },
+  "clinicalData": {
+    "primary_diagnosis_text": "Stroke or Transient Ischemic Attack (TIA) within 6 months. Defined as a neurological deficit due to an acute focal injury of the central nervous system (CNS) by a vascular cause, including cerebral infarction, intracerebral hemorrhage (ICH), and subarachnoid hemorrhage (SAH). This diagnosis is associated with numerous specific ICD-10 codes as detailed in Ron Health Clinical Guideline V3.0 (e.g., I60-I69 series, G45 series).",
+    "secondaryDiagnoses": [
+      "Hypertension",
+      "Hyperlipidemia",
+      "Possible Atrial Fibrillation (under investigation)",
+      "Type 2 Diabetes Mellitus (controlled)"
+    ],
+    "labs": [
+      {
+        "lab_n_name": "Complete Blood Count (CBC)",
+        "lab_n_value": "Within normal limits",
+        "lab_n_flag": "Normal",
+        "lab_n_trend": "Stable"
+      },
+      {
+        "lab_n_name": "Electrolytes Panel",
+        "lab_n_value": "Within normal limits",
+        "lab_n_flag": "Normal",
+        "lab_n_trend": "Stable"
+      },
+      {
+        "lab_n_name": "Renal Function Panel (Creatinine, BUN)",
+        "lab_n_value": "eGFR 65 mL/min/1.73m²",
+        "lab_n_flag": "Mildly Reduced",
+        "lab_n_trend": "Stable"
+      },
+      {
+        "lab_n_name": "Glucose",
+        "lab_n_value": "140 mg/dL",
+        "lab_n_flag": "Elevated",
+        "lab_n_trend": "Stable"
+      },
+      {
+        "lab_n_name": "Lipid Panel",
+        "lab_n_value": "LDL 130 mg/dL",
+        "lab_n_flag": "Elevated",
+        "lab_n_trend": "Stable"
+      },
+      {
+        "lab_n_name": "INR/Prothrombin Time",
+        "lab_n_value": "1.1",
+        "lab_n_flag": "Normal",
+        "lab_n_trend": "N/A"
+      },
+      {
+        "lab_n_name": "Cardiac Enzymes (Troponin)",
+        "lab_n_value": "Negative",
+        "lab_n_flag": "Normal",
+        "lab_n_trend": "N/A"
+      }
+    ],
+    "medications": [
+      {
+        "med_n_name": "Aspirin (Antiplatelet Therapy)",
+        "med_n_dosage": "81 mg",
+        "med_n_route": "PO",
+        "med_n_frequency": "Once Daily",
+        "med_n_status": "Active",
+        "med_n_pa_required": false
+      },
+      {
+        "med_n_name": "Atorvastatin (Statin Therapy)",
+        "med_n_dosage": "40 mg",
+        "med_n_route": "PO",
+        "med_n_frequency": "Once Daily",
+        "med_n_status": "Active",
+        "med_n_pa_required": false
+      },
+      {
+        "med_n_name": "Lisinopril",
+        "med_n_dosage": "20 mg",
+        "med_n_route": "PO",
+        "med_n_frequency": "Once Daily",
+        "med_n_status": "Active",
+        "med_n_pa_required": false
+      },
+      {
+        "med_n_name": "Metformin",
+        "med_n_dosage": "1000 mg",
+        "med_n_route": "PO",
+        "med_n_frequency": "Twice Daily",
+        "med_n_status": "Active",
+        "med_n_pa_required": false
+      }
+    ],
+    "treatments": [
+      {
+        "treatment_n_name": "Internal Loop Recorder (ILR) Implantation",
+        "treatment_n_status": "Recommended if indicated",
+        "treatment_n_details": "For patients with stroke and concern for atrial fibrillation where non-invasive monitoring has poor diagnostic yield. Implant duration up to 4 years. Requires cardiac electrophysiologist or trained cardiologist. CPT: 33285.",
+        "treatment_n_date": "2024-08-10",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "External Wearable Cardiac Monitoring Device",
+        "treatment_n_status": "Recommended if indicated",
+        "treatment_n_details": "For cryptogenic stroke or TIA within past 6 months of unknown etiology. Duration 24 hours to 30 days. CPTs: 93228, 93229, 93745.",
+        "treatment_n_date": "2024-08-01",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Carotid Duplex Ultrasound",
+        "treatment_n_status": "Recommended if indicated",
+        "treatment_n_details": "For patients with clinical signs/symptoms of extracranial cerebrovascular disease or history of prior carotid revascularization. CPTs: 93880, 93882.",
+        "treatment_n_date": "2024-07-29",
+        "treatment_n_pa_required": false
+      },
+      {
+        "treatment_n_name": "Computed Tomography (CT), Head (Non-contrast)",
+        "treatment_n_status": "Recommended",
+        "treatment_n_details": "Primary imaging for initial evaluation of suspected stroke to identify early signs and exclude tumor/hemorrhage. CPT: 70450.",
+        "treatment_n_date": "2024-07-28",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Magnetic Resonance Imaging (MRI), Brain",
+        "treatment_n_status": "Recommended if indicated",
+        "treatment_n_details": "Higher sensitivity/specificity for acute ischemic infarction, especially in first few hours. Can help identify severity and diagnose other conditions. CPTs: 70551, 70552, 70553.",
+        "treatment_n_date": "2024-07-29",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Computed Tomography Angiography (CTA), Head and Neck",
+        "treatment_n_status": "Recommended if indicated",
+        "treatment_n_details": "To evaluate and image vessels in the head and neck, for symptomatic extracranial cerebrovascular disease. To be used if Carotid Duplex is inadequate or unavailable. Specific CPTs apply.",
+        "treatment_n_date": "2024-08-02",
+        "treatment_n_pa_required": false
+      },
+      {
+        "treatment_n_name": "Magnetic Resonance Angiography (MRA), Head",
+        "treatment_n_status": "Recommended if indicated",
+        "treatment_n_details": "Noninvasive imaging for head and neck vessels, can be done with/without gadolinium. For stroke/TIA, focal neurological deficits suggesting vascular disease, or intracranial hemorrhage. CPTs: 70544, 70545, 70546.",
+        "treatment_n_date": "2024-08-03",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Transesophageal Echocardiogram (TEE)",
+        "treatment_n_status": "Recommended if indicated",
+        "treatment_n_details": "To identify potential intrathoracic sources of embolism, more sensitive than TTE for PFO/left atrial appendage. For known/suspected cardiovascular source of embolus. CPTs: 93312, 93315.",
+        "treatment_n_date": "2024-08-05",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Transthoracic Echocardiogram (TTE)",
+        "treatment_n_status": "Recommended",
+        "treatment_n_details": "Initial test for suspected embolic stroke or symptoms potentially related to cardiac etiology. CPTs: 93306.",
+        "treatment_n_date": "2024-07-30",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Occupational Therapy (OT)",
+        "treatment_n_status": "Recommended",
+        "treatment_n_details": "To improve ADLs and IADLs for patients with pain, weakness, limited motion post-stroke. CPTs: e.g., 97110, 97530.",
+        "treatment_n_date": "2024-08-01",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Speech Therapy (ST)",
+        "treatment_n_status": "Recommended",
+        "treatment_n_details": "To improve speech and swallowing for patients with related problems post-stroke. CPTs: e.g., 92507, 92526.",
+        "treatment_n_date": "2024-08-01",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Physical Therapy (PT)",
+        "treatment_n_status": "Recommended",
+        "treatment_n_details": "To address pain, weakness, limited motion, vertigo, gait difficulty post-stroke. Focus on active/passive ROM, strengthening. CPTs: e.g., 97110, 97112.",
+        "treatment_n_date": "2024-08-01",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Patent Foramen Ovale (PFO) / Atrial Septal Defect (ASD) Closure",
+        "treatment_n_status": "Considered if indicated",
+        "treatment_n_details": "For PFO: patients 18-60yo with R-L shunt, non-lacunar embolic stroke, no other evident source. For ASD: hemodynamically significant L-R shunt causing impaired functional capacity. CPT: 93580.",
+        "treatment_n_date": "2024-09-01",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Carotid Endarterectomy (CEA)",
+        "treatment_n_status": "Considered if indicated",
+        "treatment_n_details": "For symptomatic patients with >50% stenosis of ipsilateral extracranial carotid circulation. Specific criteria apply. PA required.",
+        "treatment_n_date": "2024-09-15",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Carotid Artery Stenting (CAS) / Transcarotid Artery Revascularization (TCAR)",
+        "treatment_n_status": "Considered if indicated",
+        "treatment_n_details": "Alternative to CEA for symptomatic patients with significant carotid stenosis, based on specific criteria. PA required.",
+        "treatment_n_date": "2024-09-15",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Home Health Care",
+        "treatment_n_status": "Considered post-discharge",
+        "treatment_n_details": "For patients requiring skilled nursing or therapy services at home. PA required.",
+        "treatment_n_date": "2024-08-15",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Inpatient Rehabilitation",
+        "treatment_n_status": "Considered post-acute stay",
+        "treatment_n_details": "For patients requiring intensive rehabilitation services. PA required.",
+        "treatment_n_date": "2024-08-10",
+        "treatment_n_pa_required": true
+      },
+      {
+        "treatment_n_name": "Skilled Nursing Facility (SNF) Care",
+        "treatment_n_status": "Considered post-acute stay",
+        "treatment_n_details": "For patients requiring skilled nursing and therapy, not meeting inpatient rehab criteria. PA required.",
+        "treatment_n_date": "2024-08-10",
+        "treatment_n_pa_required": true
+      }
+    ],
+    "last_imaging_summary": "Initial non-contrast CT Head on 2024-07-28 showed subtle early ischemic changes in the left MCA territory. No hemorrhage.",
+    "last_ecg_summary": "ECG on 2024-07-28 showed normal sinus rhythm, no acute ST changes. Occasional PACs."
+  },
+  "aiAgents": [
+    {
+      "name": "Stroke Diagnostic Support Agent",
+      "specialty": "Neurology Decision Support",
+      "confidenceScore": 0.92,
+      "insights": [
+        "Patient's presentation and initial CT findings are consistent with acute ischemic stroke in left MCA territory.",
+        "Further investigation for embolic source (cardiac, carotid) is warranted based on guidelines."
+      ],
+      "assessmentContribution": "Synthesized initial findings and recommended guideline-based diagnostic pathway.",
+      "planningContribution": "Suggested appropriate imaging and cardiac workup based on suspected etiology.",
+      "implementationContribution": "Facilitated ordering of TTE and Carotid Duplex by pre-populating requests.",
+      "evaluationContribution": "Tracks completion of diagnostic tests and flags results for review."
+    },
+    {
+      "name": "Rehabilitation Planning Agent",
+      "specialty": "Physical Medicine & Rehabilitation",
+      "confidenceScore": 0.88,
+      "insights": [
+        "Patient exhibits right-sided weakness and mild aphasia, indicating need for PT, OT, and ST.",
+        "Early and intensive therapy improves outcomes post-stroke."
+      ],
+      "assessmentContribution": "Identified functional deficits based on nursing assessments and neurological exam.",
+      "planningContribution": "Recommended initiation of PT, OT, and ST evaluations and development of individualized therapy goals.",
+      "implementationContribution": "Generated referrals to therapy services.",
+      "evaluationContribution": "Monitors therapy progress notes and goal attainment."
+    },
+    {
+      "name": "Secondary Stroke Prevention Agent",
+      "specialty": "Cardiovascular Risk Management",
+      "confidenceScore": 0.95,
+      "insights": [
+        "Patient has multiple modifiable risk factors: HTN, HLD, DM.",
+        "Optimal medical therapy including antiplatelet, statin, and BP control is critical."
+      ],
+      "assessmentContribution": "Reviewed patient history, labs, and medications to identify secondary prevention needs.",
+      "planningContribution": "Recommended adherence to antiplatelet and statin therapy, BP targets, and diabetes management.",
+      "implementationContribution": "Provided patient education materials on lifestyle modifications (diet, exercise, smoking cessation).",
+      "evaluationContribution": "Tracks medication adherence and risk factor control (BP, lipids, HbA1c) at follow-up."
+    },
+    {
+      "name": "Prior Authorization Facilitator Agent",
+      "specialty": "Administrative Workflow Automation",
+      "confidenceScore": 0.90,
+      "insights": [
+        "Multiple recommended services (e.g., advanced imaging, inpatient rehab) will require prior authorization.",
+        "Proactive preparation of PA requests can expedite care."
+      ],
+      "assessmentContribution": "Identified PA-required services based on the proposed care plan.",
+      "planningContribution": "Flagged services needing PA and initiated data gathering.",
+      "implementationContribution": "Assembled relevant clinical documentation for PA submissions (details in priorAuthItems).",
+      "evaluationContribution": "Tracks PA status and submission deadlines."
+    }
+  ],
+  "priorAuthItems": [
+    {
+      "pa_n_id": "PA001",
+      "pa_n_item_name": "Internal Loop Recorder (ILR) Implantation",
+      "pa_n_type": "Outpatient Procedure",
+      "pa_n_status": "Pending Submission",
+      "pa_n_cpt_code": "33285",
+      "pa_n_description": "Subcutaneous cardiac rhythm monitor implantation for long-term AFib detection post-stroke.",
+      "pa_n_pos_code": "22",
+      "pa_n_units": "1",
+      "pa_n_dates_of_service": "2024-08-10",
+      "pa_n_criteria_met_details": "Patient has cryptogenic stroke, non-invasive monitoring inconclusive. Meets criteria per Ron Health Guideline V3.0, page 43.",
+      "pa_n_estimated_response": "5-7 business days",
+      "pa_n_approval_confidence": "High",
+      "pa_n_estimated_submission": "2024-08-01"
+    },
+    {
+      "pa_n_id": "PA002",
+      "pa_n_item_name": "External Wearable Cardiac Monitor",
+      "pa_n_type": "Outpatient Service",
+      "pa_n_status": "Pending Submission",
+      "pa_n_cpt_code": "93228",
+      "pa_n_description": "External mobile cardiovascular telemetry for up to 30 days for AFib detection.",
+      "pa_n_pos_code": "11",
+      "pa_n_units": "1",
+      "pa_n_dates_of_service": "2024-08-01 to 2024-08-30",
+      "pa_n_criteria_met_details": "Acute ischemic stroke within past 6 months, unknown etiology. Meets criteria per Ron Health Guideline V3.0, page 44.",
+      "pa_n_estimated_response": "2-3 business days",
+      "pa_n_approval_confidence": "Very High",
+      "pa_n_estimated_submission": "2024-07-29"
+    },
+    {
+      "pa_n_id": "PA003",
+      "pa_n_item_name": "Magnetic Resonance Imaging (MRI), Brain",
+      "pa_n_type": "Outpatient Service",
+      "pa_n_status": "Submitted",
+      "pa_n_cpt_code": "70553",
+      "pa_n_description": "MRI brain with and without contrast, followed by contrast and further sequences for detailed stroke evaluation.",
+      "pa_n_pos_code": "22",
+      "pa_n_units": "1",
+      "pa_n_dates_of_service": "2024-07-29",
+      "pa_n_criteria_met_details": "Acute ischemia and infarction. Meets criteria per Ron Health Guideline V3.0, page 50.",
+      "pa_n_estimated_response": "1-2 business days",
+      "pa_n_approval_confidence": "High",
+      "pa_n_submitted_date": "2024-07-28",
+      "pa_n_estimated_submission": "2024-07-28"
+    },
+    {
+      "pa_n_id": "PA004",
+      "pa_n_item_name": "Inpatient Rehabilitation",
+      "pa_n_type": "Inpatient Admission Potential",
+      "pa_n_status": "Pending Submission",
+      "pa_n_cpt_code": "N/A (Per Diem)",
+      "pa_n_description": "Intensive inpatient rehabilitation program post-stroke.",
+      "pa_n_pos_code": "31",
+      "pa_n_units": "14 days (estimated)",
+      "pa_n_dates_of_service": "2024-08-10 to 2024-08-24",
+      "pa_n_criteria_met_details": "Significant functional deficits (hemiparesis, aphasia) requiring intensive therapy. Meets criteria per Ron Health Guideline V3.0, page 87.",
+      "pa_n_estimated_response": "3-5 business days",
+      "pa_n_approval_confidence": "High",
+      "pa_n_estimated_submission": "2024-08-05"
+    },
+    {
+      "pa_n_id": "PA005",
+      "pa_n_item_name": "Physical Therapy (Outpatient)",
+      "pa_n_type": "Outpatient Service",
+      "pa_n_status": "Pending Submission",
+      "pa_n_cpt_code": "97161, 97110",
+      "pa_n_description": "Outpatient physical therapy services post-stroke for mobility and strength.",
+      "pa_n_pos_code": "11",
+      "pa_n_units": "12 sessions",
+      "pa_n_dates_of_service": "2024-08-25 to 2024-10-20",
+      "pa_n_criteria_met_details": "Experiencing pain, weakness, limited motion post-stroke. Meets criteria per Ron Health Guideline V3.0, page 70.",
+      "pa_n_estimated_response": "2-3 business days",
+      "pa_n_approval_confidence": "Very High",
+      "pa_n_estimated_submission": "2024-08-20"
+    }
+  ],
+  "sourcesData": [
+    {
+      "source_n_id": "CP-Stroke-TIA-v3.0",
+      "source_n_title": "Stroke or TIA (within 6 months) - Clinical Guidelines for Medical Necessity Review",
+      "source_n_type": "Clinical Practice Guideline",
+      "source_n_url": "ron_health_guidelines/stroke_tia_v3.0.pdf",
+      "source_n_snippet": "Version V3.0, Effective Date: January 20, 2022. Clinical guidelines by Ron Health for medical necessity review of services for patients with stroke or TIA within 6 months. Literature review current through October 11, 2022. Document last updated: October 11, 2022.",
+      "source_n_retrieval_date": "2024-07-28",
+      "source_n_agent_source": "Ron AI Knowledge Base Ingestion"
+    }
+  ],
+  "assessment_subjective_chief_complaint": "Patient reports sudden onset of right-sided weakness, difficulty speaking, and facial droop, consistent with Stroke or TIA.",
+  "assessment_subjective_hpi": "Patient is a 68-year-old male with a history of hypertension, hyperlipidemia, and type 2 diabetes who experienced sudden onset of neurologic symptoms (right hemiparesis, aphasia) approximately 4 hours prior to presentation. Symptoms progressed over 30 minutes. Associated symptoms include mild headache. Denies history of similar episodes, recent trauma, or illicit drug use. Strong family history of stroke. Lives with spouse who provides caregiver support. Reports occasional falls.",
+  "assessment_subjective_goals": "Patient and family goal is to maximize functional recovery, understand the cause of the stroke, and prevent future cerebrovascular events. Specific goals include regaining ability to perform ADLs independently and improve communication.",
+  "assessment_subjective_other": "Patient is a retired accountant, smokes 0.5 PPD for 40 years (tobacco cessation advised), consumes 2-3 alcoholic beverages per week. Expresses anxiety about long-term disability.",
+  "assessment_objective_vitals_summary": "Elevated blood pressure (160/95 mmHg). Other vitals stable. (Details in patientData.vitalSigns)",
+  "assessment_objective_physical_exam": "Alert but drowsy. Right facial droop. Dysarthria and expressive aphasia. Right hemiparesis (UE strength 2/5, LE 3/5). Decreased sensation on right side. Positive Babinski on right. Carotid exam reveals no bruits. Irregular pulse noted on palpation, though ECG shows sinus rhythm with PACs. Fundoscopic exam unremarkable. Neck supple.",
+  "assessment_objective_diagnostics": "Initial non-contrast CT Head showed early ischemic changes in left MCA territory, no hemorrhage. ECG: Sinus rhythm, PACs. Labs pending for CBC, CMP, lipids, HbA1c, coagulation profile. Oxygen saturation 97% RA. Further diagnostics planned: MRI Brain, TTE, Carotid Duplex, extended cardiac monitoring.",
+  "assessment_objective_meds_reviewed": "Current medications include Lisinopril and Metformin. No current antiplatelet or anticoagulant therapy. Medication reconciliation in progress for home medications.",
+  "assessment_objective_other": "Social determinants of health assessment indicates stable housing and social support from spouse. Financial concerns related to potential long-term care needs expressed.",
+  "recommendedAssessmentsList": [
+    {
+      "item": "Comprehensive Neurological Assessment (e.g., NIHSS)",
+      "rationale": "To quantify stroke severity and establish baseline for monitoring.",
+      "status": "completed"
+    },
+    {
+      "item": "Swallowing Evaluation (Bedside and/or formal with ST)",
+      "rationale": "To assess for dysphagia and risk of aspiration.",
+      "status": "pending"
+    },
+    {
+      "item": "Cardiac Rhythm Monitoring (Extended)",
+      "rationale": "To detect paroxysmal atrial fibrillation as a potential embolic source.",
+      "status": "pending"
+    },
+    {
+      "item": "Physical Therapy Evaluation",
+      "rationale": "To assess mobility, strength, balance and develop rehab plan.",
+      "status": "pending"
+    },
+    {
+      "item": "Occupational Therapy Evaluation",
+      "rationale": "To assess ADL/IADL capabilities and develop rehab plan.",
+      "status": "pending"
+    },
+    {
+      "item": "Speech Therapy Evaluation",
+      "rationale": "To assess communication (aphasia, dysarthria) and cognitive-linguistic function.",
+      "status": "pending"
+    },
+    {
+      "item": "Nutritional Assessment",
+      "rationale": "To ensure adequate nutrition, especially if dysphagia is present.",
+      "status": "pending"
+    },
+    {
+      "item": "Depression and Anxiety Screening",
+      "rationale": "Common post-stroke, should be screened and treated if present.",
+      "status": "pending"
+    }
+  ],
+  "nursingDiagnoses": [
+    {
+      "diagnosis_nanda": "Ineffective Cerebral Tissue Perfusion",
+      "diagnosis_related_to": "Interruption of blood flow to the brain, Thrombus formation, Artery occlusion, Cerebral edema, Hemorrhage",
+      "diagnosis_evidence": [
+        "Altered mental status (drowsy)",
+        "Blurred vision (reported by patient contextually)",
+        "Slurred speech (dysarthria observed)",
+        "Extremity weakness (right hemiparesis 2-3/5 strength)",
+        "CT evidence of early ischemic changes"
+      ],
+      "diagnosis_is_risk": false,
+      "goals": [
+        {
+          "goal_description": "Patient will demonstrate improved cerebral perfusion and neurological status by end of shift/within 24 hours.",
+          "goal_target_date": "2024-07-29",
+          "goal_outcomes": [
+            "Patient will maintain vital signs within ordered parameters (specifically BP).",
+            "Patient will show no deterioration in neurological status (LOC, NIHSS score).",
+            "Patient will report no worsening of headache or new neurological deficits."
+          ],
+          "goal_rationale": "Prompt restoration and maintenance of cerebral perfusion are critical to limit ischemic brain injury and improve outcomes.",
+          "interventions": [
+            {
+              "interventionText": "Determine baseline presentation and last known well time.",
+              "interventionType": "general",
+              "rationale": "Essential for guiding acute interventions like thrombolysis and monitoring changes."
+            },
+            {
+              "interventionText": "Perform neurological assessments (e.g., NIHSS, GCS, pupils) every 1-2 hours or as ordered.",
+              "interventionType": "monitoring",
+              "rationale": "To detect early signs of neurological deterioration or improvement."
+            },
+            {
+              "interventionText": "Ensure timely completion of CT scan or MRI of the brain as ordered.",
+              "interventionType": "general",
+              "rationale": "Crucial for differentiating ischemic vs. hemorrhagic stroke and guiding treatment."
+            },
+            {
+              "interventionText": "Maintain blood pressure within provider-ordered parameters (e.g., permissive hypertension in ischemic stroke if not receiving thrombolytics; controlled BP in hemorrhagic stroke).",
+              "interventionType": "general",
+              "rationale": "Optimal BP management is key to maintaining cerebral perfusion without exacerbating edema or hemorrhage."
+            },
+            {
+              "interventionText": "Administer thrombolytics (e.g., alteplase) if indicated for ischemic stroke and patient meets criteria (within 4-hour window, no contraindications).",
+              "interventionType": "general",
+              "rationale": "To dissolve clots and restore blood flow in ischemic stroke."
+            },
+            {
+              "interventionText": "Educate patient and family on risk factors for stroke (hypertension, heart disease, diabetes, smoking, stress) and strategies for modification.",
+              "interventionType": "health_teaching",
+              "rationale": "To empower patient in secondary stroke prevention."
+            },
+            {
+              "interventionText": "Instruct patient and family on symptoms of a stroke using the FAST acronym (Facial drooping, Arm weakness, Speech difficulty, Time to call 911).",
+              "interventionType": "health_teaching",
+              "rationale": "To ensure prompt action if future stroke symptoms occur."
+            },
+            {
+              "interventionText": "Position patient with Head of Bed elevated 15-30 degrees, maintaining neutral head alignment, unless contraindicated.",
+              "interventionType": "general",
+              "rationale": "Promotes venous drainage from the brain and may reduce intracranial pressure (ICP)."
+            },
+            {
+              "interventionText": "Maintain a patent airway and administer supplemental oxygen as prescribed to maintain O2 saturation >94%.",
+              "interventionType": "general",
+              "rationale": "Ensures adequate oxygen delivery to cerebral tissues."
+            },
+            {
+              "interventionText": "Monitor for and manage signs of increased intracranial pressure (ICP) such as worsening headache, vomiting, pupillary changes, Cushing's triad.",
+              "interventionType": "monitoring",
+              "rationale": "Early detection and management of increased ICP can prevent further brain injury."
+            },
+            {
+              "interventionText": "Administer prescribed medications to manage comorbidities (e.g., antihypertensives, antiplatelets, statins, anticoagulants if indicated post-ischemic stroke after ruling out hemorrhage).",
+              "interventionType": "general",
+              "rationale": "Secondary prevention and management of underlying conditions are crucial."
+            },
+            {
+              "interventionText": "Implement seizure precautions if patient is at risk or experiences seizure activity.",
+              "interventionType": "general",
+              "rationale": "Seizures can increase metabolic demand and worsen cerebral injury."
+            },
+            {
+              "interventionText": "Monitor fluid and electrolyte balance; administer IV fluids cautiously as prescribed to maintain euvolemia.",
+              "interventionType": "monitoring",
+              "rationale": "Both dehydration and fluid overload can negatively impact cerebral perfusion."
+            },
+            {
+              "interventionText": "Monitor blood glucose levels regularly and manage hyperglycemia or hypoglycemia as per protocol.",
+              "interventionType": "monitoring",
+              "rationale": "Abnormal glucose levels can exacerbate brain injury during stroke."
+            },
+            {
+              "interventionText": "Provide a quiet, calm, and low-stimulus environment.",
+              "interventionType": "psychosocial",
+              "rationale": "Reduces metabolic demands on the brain and can help manage agitation."
+            },
+            {
+              "interventionText": "Avoid activities that could increase ICP, such as Valsalva maneuver (straining), excessive coughing, or clustering too many nursing activities at once.",
+              "interventionType": "general",
+              "rationale": "To prevent spikes in intracranial pressure."
+            },
+            {
+              "interventionText": "Maintain normothermia; assess temperature regularly and treat fever aggressively with antipyretics and cooling measures as ordered.",
+              "interventionType": "monitoring",
+              "rationale": "Fever can increase metabolic demand and worsen neurological outcomes."
+            },
+            {
+              "interventionText": "Prepare patient for potential endovascular procedures (e.g., mechanical thrombectomy) if indicated for large vessel occlusion in ischemic stroke.",
+              "interventionType": "general",
+              "rationale": "Timely intervention can significantly improve outcomes in eligible patients."
+            },
+            {
+              "interventionText": "Monitor for complications of thrombolytic therapy, such as signs of bleeding (e.g., hematuria, melena, epistaxis, neurological decline).",
+              "interventionType": "monitoring",
+              "rationale": "Bleeding is a significant risk associated with thrombolytics."
+            },
+            {
+              "interventionText": "Collaborate with the interdisciplinary team (neurology, neurosurgery, critical care) to optimize management and monitor response to treatment.",
+              "interventionType": "general",
+              "rationale": "Ensures a coordinated approach to complex care."
+            }
+          ],
+          "evaluation": {
+            "evaluationText": "Patient's neurological status, vital signs, and response to interventions will be monitored continuously. Expected outcomes regarding improved perfusion and stabilized deficits will be assessed by discharge.",
+            "evaluationMethod": "Frequent neurological checks (NIHSS/GCS), vital sign monitoring, review of diagnostic imaging, patient report of symptoms.",
+            "evaluationTargetDate": "2024-08-05",
+            "evaluationStatus": "ongoing"
+          }
+        }
+      ]
+    },
+    {
+      "diagnosis_nanda": "Impaired Physical Mobility",
+      "diagnosis_related_to": "Neuromuscular impairment secondary to stroke, right-sided hemiparesis",
+      "diagnosis_evidence": [
+        "Observed right upper extremity strength 2/5",
+        "Observed right lower extremity strength 3/5",
+        "Patient report of inability to move right side effectively",
+        "Requires assistance for transfers and ambulation"
+      ],
+      "diagnosis_is_risk": false,
+      "goals": [
+        {
+          "goal_description": "Patient will demonstrate improved ability to move and transfer safely within 2 weeks.",
+          "goal_target_date": "2024-08-11",
+          "goal_outcomes": [
+            "Patient will transfer from bed to chair with minimal assistance using assistive device.",
+            "Patient will ambulate 25 feet with moderate assistance and assistive device.",
+            "Patient will report increased confidence in mobility."
+          ],
+          "goal_rationale": "Early mobilization and targeted exercises can improve motor recovery and prevent complications of immobility.",
+          "interventions": [
+            {
+              "interventionText": "Perform passive and active-assistive range of motion exercises to affected limbs every 4 hours.",
+              "interventionType": "general",
+              "rationale": "To maintain joint flexibility and prevent contractures."
+            },
+            {
+              "interventionText": "Collaborate with Physical Therapy for individualized exercise program and mobility training.",
+              "interventionType": "monitoring",
+              "rationale": "Specialized therapy is essential for maximizing motor recovery."
+            },
+            {
+              "interventionText": "Teach patient and family safe transfer techniques and use of assistive devices.",
+              "interventionType": "health_teaching",
+              "rationale": "To ensure safety and promote independence."
+            },
+            {
+              "interventionText": "Monitor for signs of DVT and skin breakdown due to immobility.",
+              "interventionType": "monitoring",
+              "rationale": "Immobility increases risk of these complications."
+            }
+          ],
+          "evaluation": {
+            "evaluationText": "Patient's mobility status will be reassessed daily by nursing and weekly by PT. Progress towards ambulation and transfer goals will be documented.",
+            "evaluationMethod": "Observation of transfers and ambulation, muscle strength testing, patient report.",
+            "evaluationTargetDate": "2024-08-11",
+            "evaluationStatus": "ongoing"
+          }
+        }
+      ]
+    },
+    {
+      "diagnosis_nanda": "Impaired Verbal Communication",
+      "diagnosis_related_to": "Cerebral injury affecting speech centers (expressive aphasia, dysarthria)",
+      "diagnosis_evidence": [
+        "Observed difficulty forming words",
+        "Slurred speech noted",
+        "Patient expresses frustration with inability to communicate needs clearly"
+      ],
+      "diagnosis_is_risk": false,
+      "goals": [
+        {
+          "goal_description": "Patient will utilize effective communication strategies to make needs known within 1 week.",
+          "goal_target_date": "2024-08-04",
+          "goal_outcomes": [
+            "Patient will use communication board or gestures effectively if verbal speech remains impaired.",
+            "Patient will demonstrate reduced frustration during communication attempts.",
+            "Family will report understanding patient's communication attempts."
+          ],
+          "goal_rationale": "Alternative communication methods can improve patient's ability to express needs and reduce frustration.",
+          "interventions": [
+            {
+              "interventionText": "Provide a calm, unhurried environment for communication. Allow ample time for patient to respond.",
+              "interventionType": "psychosocial",
+              "rationale": "Reduces pressure and anxiety, facilitating communication."
+            },
+            {
+              "interventionText": "Collaborate with Speech Therapist for assessment and individualized communication strategies.",
+              "interventionType": "monitoring",
+              "rationale": "ST can provide expert techniques and tools."
+            },
+            {
+              "interventionText": "Utilize yes/no questions, communication boards, picture charts, or writing materials as appropriate.",
+              "interventionType": "general",
+              "rationale": "Offers alternative means of expression."
+            },
+            {
+              "interventionText": "Educate family on effective communication techniques and strategies to support the patient.",
+              "interventionType": "health_teaching",
+              "rationale": "Enhances family's ability to interact and support patient."
+            }
+          ],
+          "evaluation": {
+            "evaluationText": "Patient's communication effectiveness and use of strategies will be evaluated daily. Frustration levels will be monitored.",
+            "evaluationMethod": "Observation of communication attempts, patient/family report.",
+            "evaluationTargetDate": "2024-08-04",
+            "evaluationStatus": "ongoing"
+          }
+        }
+      ]
+    },
+    {
+      "diagnosis_nanda": "Risk for Aspiration",
+      "diagnosis_related_to": "Impaired swallowing mechanism secondary to stroke, potential facial weakness",
+      "diagnosis_is_risk": true,
+      "diagnosis_risk_factors": [
+        "Observed facial droop",
+        "Dysarthria suggesting potential oropharyngeal muscle weakness",
+        "Stroke affecting neurological control of swallowing"
+      ],
+      "goals": [
+        {
+          "goal_description": "Patient will maintain a patent airway and demonstrate safe swallowing techniques without signs of aspiration throughout hospital stay.",
+          "goal_target_date": "2024-08-05",
+          "goal_outcomes": [
+            "No episodes of coughing or choking during meals.",
+            "Lungs clear on auscultation.",
+            "Adherence to recommended diet consistency and swallowing precautions."
+          ],
+          "goal_rationale": "Preventing aspiration is critical to avoid pneumonia and other respiratory complications.",
+          "interventions": [
+            {
+              "interventionText": "Maintain NPO status until swallowing evaluation is completed by Speech Therapy.",
+              "interventionType": "general",
+              "rationale": "To prevent aspiration before swallow function is assessed."
+            },
+            {
+              "interventionText": "Monitor for signs of aspiration (coughing, choking, gurgly voice, fever, O2 desaturation) during and after intake.",
+              "interventionType": "monitoring",
+              "rationale": "Early detection of aspiration is crucial."
+            },
+            {
+              "interventionText": "Implement dietary modifications (e.g., thickened liquids, pureed diet) as recommended by ST.",
+              "interventionType": "general",
+              "rationale": "To ensure safe oral intake."
+            },
+            {
+              "interventionText": "Position patient upright (90 degrees) during and for 30-60 minutes after meals/oral intake.",
+              "interventionType": "general",
+              "rationale": "Gravity assists in preventing reflux and aspiration."
+            },
+            {
+              "interventionText": "Provide oral care before and after meals.",
+              "interventionType": "general",
+              "rationale": "Reduces bacterial load in the oral cavity."
+            }
+          ],
+          "evaluation": {
+            "evaluationText": "Swallowing status and signs of aspiration will be monitored with each meal and as needed. Adherence to precautions assessed.",
+            "evaluationMethod": "Observation during PO intake, lung auscultation, vital signs monitoring.",
+            "evaluationTargetDate": "2024-08-05",
+            "evaluationStatus": "ongoing"
+          }
+        }
+      ]
+    }
+  ],
+  "interdisciplinaryPlan": [
+    {
+      "discipline": "Neurology",
+      "plan_item": "Confirm stroke etiology, manage acute phase, guide secondary prevention strategies. Order and interpret diagnostic imaging (MRI, MRA, CTA)."
+    },
+    {
+      "discipline": "Cardiology",
+      "plan_item": "Evaluate for cardioembolic source of stroke (TTE, TEE, ILR/EWD). Manage atrial fibrillation if detected. Advise on anticoagulation."
+    },
+    {
+      "discipline": "Nursing",
+      "plan_item": "Continuous neurological monitoring, vital signs, medication administration, implement aspiration precautions, facilitate ADLs, patient/family education, coordinate care among disciplines."
+    },
+    {
+      "discipline": "Physical Therapy",
+      "plan_item": "Assess and treat impaired mobility, balance, strength. Develop exercise program, train on assistive devices."
+    },
+    {
+      "discipline": "Occupational Therapy",
+      "plan_item": "Assess and treat deficits in ADLs/IADLs. Provide adaptive equipment recommendations and training. Address upper extremity function and cognitive-perceptual deficits."
+    },
+    {
+      "discipline": "Speech Therapy",
+      "plan_item": "Assess and treat aphasia, dysarthria, dysphagia. Develop communication strategies and safe swallowing plan."
+    },
+    {
+      "discipline": "Registered Dietitian",
+      "plan_item": "Assess nutritional status, recommend appropriate diet consistency (if dysphagia present), provide education on heart-healthy/diabetic diet for secondary prevention."
+    },
+    {
+      "discipline": "Social Work/Case Management",
+      "plan_item": "Assess psychosocial needs, facilitate discharge planning (rehab, SNF, home health), connect with community resources, address SDoH."
+    },
+    {
+      "discipline": "Pharmacy",
+      "plan_item": "Medication reconciliation, counsel on new medications, monitor for drug interactions and adverse effects."
+    }
+  ],
+  "overall_plan_summary": "The patient, presenting with acute ischemic stroke, will undergo comprehensive diagnostic workup to determine etiology, focusing on potential cardioembolic or carotid sources. Acute management involves optimizing medical therapy for secondary prevention (antiplatelet, statin, BP/glucose control). A multidisciplinary rehabilitation plan including PT, OT, and ST will be initiated to maximize functional recovery. Prior authorizations for necessary services will be pursued. Discharge planning will address ongoing care needs and support services.",
+  "next_steps": [
+    "Complete MRI Brain and vascular imaging (Carotid Duplex, MRA/CTA).",
+    "Initiate extended cardiac monitoring (EWD/ILR) to rule out paroxysmal AFib.",
+    "Obtain PT, OT, ST evaluations and begin therapy.",
+    "Optimize blood pressure and glycemic control.",
+    "Provide patient and family education on stroke, risk factors, and medications.",
+    "Submit prior authorization requests for recommended services.",
+    "Develop comprehensive discharge plan based on recovery trajectory and support needs."
+  ],
+  "notification_title": "New Stroke Care Plan Initiated",
+  "notification_message": "A comprehensive care plan has been developed for John Doe (MRN0012345) following acute stroke.",
+  "notification_detail_1": "Key focus: Etiology workup, secondary prevention, and intensive rehabilitation.",
+  "notification_detail_2": "Please review plan for discipline-specific responsibilities and pending actions. Prior authorizations for several services are in progress."
+}

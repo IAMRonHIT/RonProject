@@ -65,14 +65,14 @@ const LeadGenChatbot: React.FC<LeadGenChatbotProps> = ({
     if (!input.trim()) return;
     
     const userMessage: MessageType = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
       content: input.trim(),
       timestamp: new Date(),
     };
     
     const loadingMessage: MessageType = {
-      id: (Date.now() + 1).toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'assistant',
       content: '',
       timestamp: new Date(),
@@ -123,7 +123,7 @@ const LeadGenChatbot: React.FC<LeadGenChatbotProps> = ({
         // Add a system message prompting to collect info after a short delay
         setTimeout(() => {
           const systemMessage: MessageType = {
-            id: Date.now().toString(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             role: 'system',
             content: 'To help you better, would you mind sharing some contact information?',
             timestamp: new Date(),
@@ -293,12 +293,16 @@ const LeadGenChatbot: React.FC<LeadGenChatbotProps> = ({
                 <button
                   onClick={toggleChatState}
                   className="text-slate-200 hover:text-white p-1 rounded"
+                  title="Minimize chat"
+                  aria-label="Minimize chat"
                 >
                   <Minimize2 size={18} />
                 </button>
                 <button
                   onClick={() => setChatState('minimized')}
                   className="text-slate-200 hover:text-white p-1 rounded ml-1"
+                  title="Close chat"
+                  aria-label="Close chat"
                 >
                   <X size={18} />
                 </button>
@@ -474,6 +478,7 @@ const LeadGenChatbot: React.FC<LeadGenChatbotProps> = ({
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg flex items-center justify-center z-50 hover:shadow-purple-500/30 transition-shadow"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        aria-label={chatState === 'minimized' ? 'Open Chat' : 'Minimize Chat'}
       >
         {chatState === 'minimized' ? (
           <Bot size={24} className="text-white" />

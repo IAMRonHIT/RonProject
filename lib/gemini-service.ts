@@ -83,7 +83,7 @@ Format your response as a structured JSON object with these three sections.
 }
 
 /**
- * Simulates sending a prompt to Gemini 2.5 Pro API
+ *  sending a prompt to Gemini 2.5 Pro API
  * In a real implementation, this would use the actual API
  */
 export async function sendToGemini(

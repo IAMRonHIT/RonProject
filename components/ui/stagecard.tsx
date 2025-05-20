@@ -1,9 +1,9 @@
 "use client"
 
-import { ProcessStageCard as OriginalProcessStageCard } from '@/public/animations/stagecard';
+// import { ProcessStageCard as OriginalProcessStageCard } from '@/public/animations/stagecard';
 
 // Re-export the ProcessStageCard component from public/animations/stagecard.tsx
-export { ProcessStageCard } from '@/public/animations/stagecard';
+// export { ProcessStageCard } from '@/public/animations/stagecard'; // This seems to be a duplicate or erroneous re-export as ProcessStageCard is not defined here.
 import { useTheme } from 'next-themes';
 import { Card } from '@/components/ui/card'; // Assuming Shadcn UI Card
 import React from 'react';

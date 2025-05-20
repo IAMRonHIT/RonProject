@@ -116,12 +116,15 @@ export const generateKanbanData = (data: CarePlanDataForKanban): { epics: Kanban
         epics.push(epic);
         
         // Create tasks from interventions related to this goal
-        diagnosis.interventions.forEach((intervention, interventionIndex) => {
+        // Ensure 'data' is treated as having the structure of CarePlanJsonData for this part
+        const currentGoalInterventions = (goal as any).interventions as { interventionText: string; rationale: string; [key: string]: any; }[] || [];
+
+        currentGoalInterventions.forEach((intervention, interventionIndex) => {
           const interventionTask: KanbanTask = {
             id: `task-intervention-${diagnosisIndex}-${goalIndex}-${interventionIndex}`,
-            title: intervention.intervention_action,
-            description: intervention.intervention_rationale,
-            status: intervention.intervention_is_pending ? 'todo' : 'todo',
+            title: intervention.interventionText, // Mapped from InterventionType
+            description: intervention.rationale, // Mapped from InterventionType
+            status: 'todo', // Defaulting status, intervention_is_pending not in InterventionType
             priority: getRandomPriority(),
             type: 'intervention',
             epicId: epicId,

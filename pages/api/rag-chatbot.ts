@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js'; // Supabase not used
 
-// Initialize Supabase client for vector storage
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize Supabase client for vector storage - REMOVED
+// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+// const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+// const supabase = createClient(supabaseUrl, supabaseKey); // Supabase not used
 
 // Initialize Google Generative AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_KEY || '');
@@ -38,22 +38,19 @@ export default async function handler(
     
     const latestUserMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
     
-    // Perform RAG - retrieve relevant content based on user query
-    const { data: relevantDocs, error: retrievalError } = await supabase.rpc('match_documents', {
-      query_embedding: await generateEmbedding(latestUserMessage),
-      match_threshold: 0.75,
-      match_count: 5
-    });
+    // Perform RAG - retrieve relevant content based on user query - REMOVED as Supabase is not used
+    // const { data: relevantDocs, error: retrievalError } = await supabase.rpc('match_documents', {
+    //   query_embedding: await generateEmbedding(latestUserMessage),
+    //   match_threshold: 0.75,
+    //   match_count: 5
+    // });
     
-    if (retrievalError) {
-      console.error('Error retrieving documents:', retrievalError);
-    }
+    // if (retrievalError) {
+    //   console.error('Error retrieving documents:', retrievalError);
+    // }
     
-    // Construct context from relevant documents
-    const context = relevantDocs ?
-      "I'll provide some relevant information from our knowledge base:\n\n" +
-      relevantDocs.map((doc: any) => doc.content).join('\n\n') :
-      '';
+    // Construct context from relevant documents - REMOVED
+    const context = ''; // No context from Supabase
     
     // Enhance system prompt with retrieved context
     const enhancedSystemPrompt = `

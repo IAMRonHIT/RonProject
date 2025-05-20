@@ -1,14 +1,15 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
+import '../styles/framework-animation.css'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import { getThemeColors } from '@/lib/animation-utils'
-import { HealthcareDataProcessingAnimation } from '@/public/animations/data2'
-import { TokenizationAnimation } from '@/public/animations/tokens'
-import { ModelTrainingAnimation } from '@/public/animations/finetune'
-import { ContinuousLearningAnimation } from '@/public/animations/contlear'
-import { DeepResearchAnimation } from '@/public/animations/distill'
+// import HealthcareDataProcessingAnimation from '@/public/animations/data2.json'
+// import TokenizationAnimation from '@/public/animations/tokens.json'
+// import ModelTrainingAnimation from '@/public/animations/finetune.json' // This was unused
+// import ContinuousLearningAnimation from '@/public/animations/contlear.json'
+// import DeepResearchAnimation from '@/public/animations/distill.json'
 
 interface FrameworkDetailedAnimationProps {
   activeStage: number
@@ -98,25 +99,25 @@ export function FrameworkDetailedAnimation({ activeStage }: FrameworkDetailedAni
         
         {/* Floating particles effect */}
         <div 
-          className="absolute inset-0" 
-          style={{ 
-            opacity: particleOpacity,
-            transition: "opacity 1.5s ease-in-out" 
+          className="absolute inset-0 particle-container" 
+          ref={(el) => {
+            if (el) {
+              el.style.setProperty('--particle-opacity', particleOpacity.toString());
+            }
           }}
         >
           {[...Array(30)].map((_, i) => (
             <motion.div
               key={`particle-${i}`}
               className="absolute rounded-full pointer-events-none"
-              style={{
-                width: Math.random() * 4 + 1 + "px",
-                height: Math.random() * 4 + 1 + "px",
+              initial={{
+                width: `${Math.random() * 4 + 1}px`,
+                height: `${Math.random() * 4 + 1}px`,
                 backgroundColor: i % 3 === 0 ? color : i % 3 === 1 ? "#ffffff" : altColor,
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                opacity: Math.random() * 0.5 + 0.3,
                 filter: `blur(${Math.random() * 2}px)`,
-                boxShadow: i % 5 === 0 ? `0 0 6px ${color}` : 'none'
+                boxShadow: i % 5 === 0 ? `0 0 6px ${color}` : 'none',
               }}
               animate={{
                 y: [Math.random() * -20 - 10, Math.random() * 20 + 10],
@@ -173,7 +174,7 @@ export function FrameworkDetailedAnimation({ activeStage }: FrameworkDetailedAni
 
       {/* Main animation content with enhanced container */}
       <motion.div 
-        className="h-full w-full z-10 relative"
+        className="h-full w-full z-10 relative flex items-center justify-center" // Added flex centering for any remaining content
         variants={{
           hidden: { opacity: 0 },
           visible: { 
@@ -182,33 +183,14 @@ export function FrameworkDetailedAnimation({ activeStage }: FrameworkDetailedAni
           }
         }}
       >
-        {/* Stage 0: Data Processing */}
-        {activeStage === 0 && (
-          <div className="h-full">
-            <HealthcareDataProcessingAnimation />
-          </div>
-        )}
-
-        {/* Stage 1: Model Training */}
-        {activeStage === 1 && (
-          <div className="h-full">
-            <TokenizationAnimation />
-          </div>
-        )}
-
-        {/* Stage 2: Continuous Learning */}
-        {activeStage === 2 && (
-          <div className="h-full">
-            <ContinuousLearningAnimation />
-          </div>
-        )}
-
-        {/* Stage 3: Deep Research & Resources */}
-        {activeStage === 3 && (
-          <div className="h-full">
-            <DeepResearchAnimation />
-          </div>
-        )}
+        {/* Animation sections removed as files are missing and placeholders are not desired. */}
+        {/* Consider adding alternative content or sourcing new animations here. */}
+        <div className="text-center text-slate-400">
+          {activeStage === 0 && <p>Data Processing Stage</p>}
+          {activeStage === 1 && <p>Model Training Stage</p>}
+          {activeStage === 2 && <p>Continuous Learning Stage</p>}
+          {activeStage === 3 && <p>Deep Research Stage</p>}
+        </div>
       </motion.div>
 
       {/* Stage indicator dots with enhanced styling */}

@@ -8,6 +8,7 @@ import { ChatbotUI } from "@/components/chatbot-ui" // Import the Chatbot UI
 import { TooltipProvider } from "@/components/ui/tooltip" // Import TooltipProvider
 import { GlobalFlashlight } from "@/components/global-flashlight" // Import GlobalFlashlight
 import "./globals.css"
+import "@/styles/component-styles.css"
 
 // Configure the Inter font
 const inter = Inter({

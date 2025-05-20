@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import '../styles/carousel.css';
 import { motion, AnimatePresence } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { CheckCircle, Network, Cog, MapPin, PuzzleIcon as PuzzlePiece, LineChart } from "lucide-react"
@@ -168,13 +169,9 @@ export default function AutoFlipCarousel() {
       className="relative w-full py-20 md:py-28 bg-gradient-to-b from-[#050818] via-[#0a0f2c] to-[#050818] overflow-hidden" // Enhanced background
     >
       {/* Background Effects (Optional, like previous example) */}
-      <div className="absolute inset-0 z-0 opacity-[0.03] bg-[url('/images/subtle-grid.svg')] bg-repeat"></div>
+      {/* <div className="absolute inset-0 z-0 opacity-[0.03] bg-[url('/images/subtle-grid.svg')] bg-repeat"></div> */} {/* Removed missing SVG */}
       <div
-        className="absolute inset-0 z-0 opacity-20"
-        style={{
-          backgroundImage: `radial-gradient(circle at 20% 30%, rgba(45, 212, 191, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.2) 0%, transparent 50%)`,
-          filter: "blur(100px)",
-        }}
+        className="absolute inset-0 z-0 opacity-20 carousel-background"
       ></div>
 
       {/* Change the container structure to create a two-column layout */}
@@ -389,4 +386,3 @@ export default function AutoFlipCarousel() {
     </section>
   )
 }
-

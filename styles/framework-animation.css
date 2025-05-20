@@ -1,0 +1,4 @@
+.particle-container {
+  opacity: var(--particle-opacity, 0);
+  transition: opacity 1.5s ease-in-out;
+}

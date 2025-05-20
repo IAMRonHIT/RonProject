@@ -1,0 +1,14 @@
+.particle {
+  position: absolute;
+  border-radius: 9999px; /* equivalent to rounded-full */
+  pointer-events: none;
+
+  width: var(--particle-width);
+  height: var(--particle-height);
+  background-color: var(--particle-bg-color);
+  left: var(--particle-left);
+  top: var(--particle-top);
+  opacity: var(--particle-opacity);
+  filter: var(--particle-filter);
+  box-shadow: var(--particle-box-shadow);
+}

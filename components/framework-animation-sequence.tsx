@@ -1,8 +1,9 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence, useAnimation } from 'framer-motion'
-import { ProcessStageCard } from '@/components/ui/stagecard'
+import { AnimatePresence, useAnimation } from 'framer-motion'
+import motion from './motion-components'
+import { CustomProcessStageCard } from '@/components/ui/stagecard' // Changed to CustomProcessStageCard
 import { Database, Cpu, BarChart3, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 import { FrameworkDetailedAnimation } from '@/components/framework-detailed-animation'
 import { useInView } from 'react-intersection-observer'
@@ -12,6 +13,34 @@ export function FrameworkAnimationSequence() {
   const [isAutoplayPaused, setIsAutoplayPaused] = useState(false)
   const [progressPercentage, setProgressPercentage] = useState(0)
   const stageControls = useAnimation()
+  
+  // Helper function to determine background CSS class based on color
+  const getBackgroundClass = (color: string): string => {
+    switch (color) {
+      case '#38bdf8': // cyan
+        return 'bg-accent-cyan';
+      case '#a78bfa': // purple
+        return 'bg-accent-purple';
+      case '#fbbf24': // amber
+        return 'bg-accent-amber';
+      default:
+        return 'bg-accent-emerald';
+    }
+  };
+
+  // Helper function to determine glow line CSS class based on color
+  const getGlowLineClass = (color: string): string => {
+    switch (color) {
+      case '#38bdf8': // cyan
+        return 'glow-line-cyan';
+      case '#a78bfa': // purple
+        return 'glow-line-purple';
+      case '#fbbf24': // amber
+        return 'glow-line-amber';
+      default:
+        return 'glow-line-emerald';
+    }
+  };
   
   // Use inView to optimize animations when visible
   const [ref, inView] = useInView({
@@ -75,7 +104,7 @@ export function FrameworkAnimationSequence() {
   }
 
   // Handle direct stage selection - SIMPLIFIED to avoid animation issues
-  const selectStage = (stageId) => {
+  const selectStage = (stageId: number) => {
     if (stageId === activeStage) return
 
     // Change stage immediately
@@ -137,7 +166,7 @@ export function FrameworkAnimationSequence() {
                 }
               }}
             >
-              <ProcessStageCard
+              <CustomProcessStageCard // Changed to CustomProcessStageCard
                 title={stage.title}
                 description={stage.description}
                 isActive={activeStage === stage.id}
@@ -156,11 +185,11 @@ export function FrameworkAnimationSequence() {
                     }}
                   >
                     {React.cloneElement(stage.icon, {
-                      className: `w-6 h-6 ${activeStage === stage.id ? 'text-white' : `text-${stage.color}`}`
+                      className: `w-6 h-6 ${activeStage === stage.id ? 'text-white' : `text-${stage.color}`}` // Icon color logic remains, CustomProcessStageCard handles its own bg/border
                     })}
                   </motion.div>
                 }
-                color={stage.color}
+                // color={stage.color} // Removed color prop as CustomProcessStageCard does not accept it
               />
               
               {/* Progress indicator for active stage */}
@@ -274,20 +303,14 @@ export function FrameworkAnimationSequence() {
           animate={stageControls}
           className="mt-16 bg-slate-900/50 border border-blue-500/40 rounded-xl p-8 shadow-[0_0_35px_rgba(59,130,246,0.15)] relative overflow-hidden"
         >
-          {/* Dynamic background accent */}
+          {/* Background accent using predefined CSS classes */}
           <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              background: `radial-gradient(circle at 30% 50%, ${currentStage.color}50 0%, transparent 70%)`
-            }}
+            className={`absolute inset-0 opacity-20 ${getBackgroundClass(currentStage.color)}`}
           />
           
-          {/* Dynamic glow line at top */}
+          {/* Glow line at top using predefined CSS classes */}
           <div 
-            className="absolute top-0 left-0 right-0 h-[2px]"
-            style={{
-              background: `linear-gradient(to right, transparent, ${currentStage.color}, transparent)`
-            }}
+            className={`absolute top-0 left-0 right-0 h-[2px] ${getGlowLineClass(currentStage.color)}`}
           />
           
           <motion.h3 
@@ -369,7 +392,7 @@ export function FrameworkAnimationSequence() {
 }
 
 // Extracted component for stage details content with staggered animations
-function DetailsContent({ description, items }) {
+function DetailsContent({ description, items }: { description: string; items: string[] }) {
   return (
     <motion.div 
       className="space-y-6"
@@ -388,7 +411,7 @@ function DetailsContent({ description, items }) {
       </motion.p>
       
       <motion.ul className="space-y-3 text-gray-300 relative">
-        {items.map((item, index) => (
+        {items.map((item: string, index: number) => (
           <motion.li 
             key={index}
             className="pl-6 relative"

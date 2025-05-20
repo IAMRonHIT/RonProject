@@ -128,6 +128,66 @@ export class SonarService {
   getStreamingUrl(streamId: string): string {
     return `${this.apiUrl}/stream?streamId=${streamId}`;
   }
+
+  /**
+   * Extracts reasoning from <think> tags and the subsequent JSON object from content.
+   * @param content - The string content containing reasoning and JSON.
+   * @returns An object with 'reasoning' and 'jsonData'.
+   */
+  static extractReasoningAndJson(content: string): { reasoning: string; jsonData: any } {
+    // Extract reasoning between <think> and </think> tags
+    const thinkStartTag = '<think>';
+    const thinkEndTag = '</think>';
+    
+    const thinkStartIndex = content.indexOf(thinkStartTag);
+    const thinkEndIndex = content.indexOf(thinkEndTag);
+    
+    let reasoning = "";
+    let jsonString = "";
+    let jsonData = null;
+
+    if (thinkStartIndex !== -1 && thinkEndIndex !== -1 && thinkEndIndex > thinkStartIndex) {
+      reasoning = content.substring(thinkStartIndex + thinkStartTag.length, thinkEndIndex).trim();
+      // Find JSON after the </think> tag
+      const jsonStartIndex = content.indexOf('{', thinkEndIndex);
+      if (jsonStartIndex !== -1) {
+        jsonString = content.substring(jsonStartIndex);
+      } else {
+        // If no JSON after think tags, maybe the entire content after think is JSON or something else
+        // For now, we assume JSON follows, if not, jsonString remains empty.
+        console.warn('No JSON object found after </think> tag. Attempting to parse remaining content if any.');
+        jsonString = content.substring(thinkEndIndex + thinkEndTag.length).trim();
+        if (!jsonString.startsWith('{')) {
+            jsonString = ""; // Not a JSON object
+        }
+      }
+    } else {
+      // Fallback: No <think> tags found, or they are malformed. Try to find JSON anywhere.
+      const jsonStartIndex = content.indexOf('{');
+      if (jsonStartIndex !== -1) {
+        reasoning = content.substring(0, jsonStartIndex).trim(); // Content before JSON is considered reasoning
+        jsonString = content.substring(jsonStartIndex);
+      } else {
+        // No JSON and no think tags, assume all content is reasoning (or an error message)
+        reasoning = content.trim();
+        jsonString = ""; // No JSON part
+      }
+    }
+    
+    if (jsonString) {
+      try {
+        jsonData = JSON.parse(jsonString);
+      } catch (e) {
+        console.error(`Failed to parse JSON from response: ${e}. JSON string was:`, jsonString);
+        // Keep jsonData as null, reasoning might still be useful
+        jsonData = null; 
+        // Optionally, append JSON parsing error to reasoning or handle as an error state
+        reasoning += `\n[Error parsing JSON: ${e instanceof Error ? e.message : String(e)}]`;
+      }
+    }
+    
+    return { reasoning, jsonData };
+  }
   
   async testBackendConnection(): Promise<boolean> {
     try {

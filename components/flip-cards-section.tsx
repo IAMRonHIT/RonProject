@@ -150,7 +150,7 @@ export default function AutoFlipCarousel() {
       className="relative w-full py-20 md:py-28 bg-gradient-to-b from-[#050818] via-[#0a0f2c] to-[#050818] overflow-hidden"
     >
       {/* Background Effects */}
-      <div className="absolute inset-0 z-0 opacity-[0.03] bg-[url('/images/subtle-grid.svg')] bg-repeat"></div>
+      {/* <div className="absolute inset-0 z-0 opacity-[0.03] bg-[url('/images/subtle-grid.svg')] bg-repeat"></div> */} {/* Removed missing SVG */}
       <div
         className={`absolute inset-0 z-0 opacity-20 bg-blend-normal blur-[100px] [background-image:radial-gradient(circle_at_20%_30%,${GLOW_COLOR_1}_0%,transparent_50%),radial-gradient(circle_at_80%_70%,${GLOW_COLOR_2}_0%,transparent_50%)]`}
       ></div>

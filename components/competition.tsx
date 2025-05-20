@@ -144,8 +144,7 @@ const CompetitionMatrix: React.FC<CompetitionMatrixProps> = ({
       {/* Background with circuit pattern and gradient overlay */}
       <div className="absolute inset-0 z-0 opacity-20">
         <div 
-          className="w-full h-full bg-cover bg-center" 
-          style={{ backgroundImage: "url('/images/circuit-pattern.png')" }} 
+          className="w-full h-full bg-cover bg-center circuit-pattern" 
         />
       </div>
       
@@ -239,8 +238,7 @@ const CompetitionMatrix: React.FC<CompetitionMatrixProps> = ({
                     transition={{ duration: 0.4, delay: rowIndex * 0.1 }}
                   >
                     {/* Feature Name Cell with Tooltip */}
-                    <td className="p-4 font-medium text-gray-100 sticky left-0 z-10 backdrop-blur-sm bg-opacity-90"
-                        style={{ backgroundColor: rowIndex % 2 === 0 ? 'rgba(15, 23, 42, 0.95)' : 'rgba(30, 41, 59, 0.95)' }}
+                    <td className={`p-4 font-medium text-gray-100 sticky left-0 z-10 backdrop-blur-sm bg-opacity-90 ${rowIndex % 2 === 0 ? 'bg-slate-900-95' : 'bg-slate-800-95'}`}
                     >
                       <div className="flex items-center gap-2">
                         {featureRow.description ? (
