@@ -1342,24 +1342,60 @@ const CarePlanTemplate = ({
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content Area */}
           <div className={`w-full ${showPriorAuth ? 'lg:w-3/5 xl:w-2/3' : 'w-full'} transition-all duration-500 ease-in-out`}>
-            <div className="bg-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-700 mb-6">
+            <div className="relative bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-800 mb-8">
+              {/* Subtle pattern overlay */}
+              <div className="absolute inset-0 opacity-[0.02]">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-sky-400 via-transparent to-transparent"></div>
+              </div>
+              
               {/* Patient Header */}
-              <div className="bg-slate-800 px-6 py-5 text-white border-b border-slate-700">
-                <div className="flex justify-between items-start flex-wrap gap-y-3">
-                  <div>
-                    <h2 className="text-3xl font-bold text-slate-100">{patientInfo.patient_full_name || <span className="italic text-slate-400">N/A</span>}</h2>
-                    <p className="text-slate-300 text-sm mt-1">
-                      {patientInfo.patient_age || 'N/A'} y.o. {patientInfo.patient_gender || 'N/A'} • MRN: {patientInfo.patient_mrn || 'N/A'} • Admitted: {patientInfo.patient_admission_date || 'N/A'}
-                    </p>
+              <div className="relative bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-sm px-8 py-6 text-white border-b border-slate-700/50">
+                <div className="flex justify-between items-start flex-wrap gap-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                        {patientInfo.patient_full_name ? patientInfo.patient_full_name.charAt(0).toUpperCase() : '?'}
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+                          {patientInfo.patient_full_name || <span className="italic text-slate-400">Unknown Patient</span>}
+                        </h2>
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
+                          <span className="flex items-center gap-1.5 text-slate-300">
+                            <User size={14} className="text-slate-500" />
+                            {patientInfo.patient_age || 'N/A'} y.o. {patientInfo.patient_gender || 'N/A'}
+                          </span>
+                          <span className="text-slate-600">•</span>
+                          <span className="flex items-center gap-1.5 text-slate-300">
+                            <Shield size={14} className="text-slate-500" />
+                            MRN: {patientInfo.patient_mrn || 'N/A'}
+                          </span>
+                          <span className="text-slate-600">•</span>
+                          <span className="flex items-center gap-1.5 text-slate-300">
+                            <Calendar size={14} className="text-slate-500" />
+                            Admitted: {patientInfo.patient_admission_date || 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                     {patientInfo.allergies && patientInfo.allergies.length > 0 && (
-                        <span className="text-xs text-red-300 mt-2 bg-slate-900 border border-red-700 glow-red-500 px-2.5 py-1 rounded-full font-medium inline-flex items-center">
-                            <AlertTriangle size={12} className="inline mr-1.5" /> Allergies: {patientInfo.allergies.join(', ')}
+                      <div className="mt-3">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-900/30 to-rose-900/30 border border-red-500/30 text-red-300 text-xs font-medium">
+                          <AlertTriangle size={14} className="animate-pulse" />
+                          <span>Allergies: {patientInfo.allergies.join(', ')}</span>
                         </span>
+                      </div>
                     )}
                   </div>
-                  <div className="bg-slate-900 px-4 py-3 rounded-xl text-right max-w-sm shadow-lg border border-slate-700">
-                    <div className="text-sm text-slate-400 mb-1">Primary Diagnosis</div>
-                    <div className="font-semibold text-xl text-slate-100">{clinicalInfo.primary_diagnosis_text || <span className="italic text-slate-400">N/A</span>}</div>
+                  
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-6 py-4 rounded-xl border border-slate-700/50 shadow-xl min-w-[280px]">
+                    <div className="text-xs text-sky-400 font-medium uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <Activity size={12} />
+                      Primary Diagnosis
+                    </div>
+                    <div className="font-semibold text-xl text-slate-100">
+                      {clinicalInfo.primary_diagnosis_text || <span className="italic text-slate-400">Not specified</span>}
+                    </div>
                   </div>
                 </div>
               </div>
