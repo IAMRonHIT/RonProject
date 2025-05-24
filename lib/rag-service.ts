@@ -1,5 +1,5 @@
 import { HNSWLib } from "langchain/vectorstores/hnswlib";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import fs from 'fs';
@@ -9,9 +9,10 @@ import path from 'path';
 const KNOWLEDGE_DIR = path.join(process.cwd(), 'data', 'knowledge');
 const VECTOR_STORE_PATH = path.join(process.cwd(), 'data', 'vectorstore');
 
-// Initialize embeddings with OpenAI - could also use other providers
-const embeddings = new OpenAIEmbeddings({
-  openAIApiKey: process.env.OPENAI_API_KEY,
+// Initialize embeddings with Gemini
+const embeddings = new GoogleGenerativeAIEmbeddings({
+  apiKey: process.env.GEMINI_API_KEY,
+  modelName: "gemini-embedding-exp-03-07",
 });
 
 // Create necessary directories if they don't exist

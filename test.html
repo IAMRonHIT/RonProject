@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ron AI's revolutionary healthcare AI architecture featuring specialized clinical agents">
+  <title>Ron AI - Healthcare Intelligence Architecture</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4fd1c5;
+      --secondary: #63b3ed;
+      --dark-bg: #0d0d0d;
+      --light-text: #ffffff;
+      --muted-text: #9ca3af;
+    }
+    
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--dark-bg);
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--light-text);
+      overflow-x: hidden;
+    }
+    
+    .slide-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    .slide {
+      width: 100%;
+      max-width: 1280px;
+      min-height: 720px;
+      background: #000000;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      z-index: 0;
+    }
+    
+    .content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+    }
+    
+    .orchestrator {
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(79, 209, 197, 0.12) 0%, rgba(99, 179, 237, 0.12) 100%);
+      border: 1.5px solid rgba(79, 209, 197, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 60px rgba(79, 209, 197, 0.25);
+      z-index: 3;
+      transition: all 0.5s ease;
+    }
+    
+    .orchestrator:hover {
+      box-shadow: 0 0 80px rgba(79, 209, 197, 0.4);
+      transform: scale(1.03);
+    }
+    
+    .orchestrator:after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      border: 1px solid rgba(79, 209, 197, 0.15);
+      animation: pulse-ring 3s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    
+    .agent {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: rgba(13, 13, 13, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: absolute;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+    }
+    
+    .agent:hover {
+      transform: scale(1.15) translateY(-5px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 40px rgba(79, 209, 197, 0.4);
+      z-index: 10;
+      border-color: rgba(79, 209, 197, 0.3);
+    }
+    
+    .agent:hover .agent-details {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .agent-icon {
+      height: 56px;
+      width: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(79, 209, 197, 0.18) 0%, rgba(99, 179, 237, 0.18) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      transition: all 0.3s ease;
+    }
+    
+    .agent:hover .agent-icon {
+      background: linear-gradient(135deg, rgba(79, 209, 197, 0.3) 0%, rgba(99, 179, 237, 0.3) 100%);
+      transform: scale(1.1);
+    }
+    
+    .agent-details {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      padding: 0 12px;
+      text-align: center;
+    }
+    
+    .connection {
+      position: absolute;
+      height: 2.5px;
+      z-index: 2;
+      transform-origin: left center;
+      animation: pulse-opacity 4s infinite ease-in-out;
+    }
+    
+    .connection:after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--primary);
+      border-radius: 50%;
+      right: 0;
+      top: -4px;
+      opacity: 0.7;
+      box-shadow: 0 0 10px rgba(79, 209, 197, 0.5);
+      animation: data-pulse 3s infinite ease-in-out;
+    }
+    
+    .connection-teal {
+      background: linear-gradient(90deg, rgba(79, 209, 197, 0.9) 0%, rgba(79, 209, 197, 0.1) 100%);
+    }
+    
+    .connection-blue {
+      background: linear-gradient(90deg, rgba(99, 179, 237, 0.9) 0%, rgba(99, 179, 237, 0.1) 100%);
+    }
+    
+    @keyframes pulse-opacity {
+      0% { opacity: 0.5; }
+      50% { opacity: 0.9; }
+      100% { opacity: 0.5; }
+    }
+    
+    @keyframes data-pulse {
+      0% { transform: scale(0.7); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.7); opacity: 0.6; }
+    }
+    
+    @keyframes pulse-ring {
+      0% { transform: scale(.95); opacity: 0.3; }
+      50% { opacity: 0.1; }
+      100% { transform: scale(1.1); opacity: 0; }
+    }
+    
+    .tech-badge {
+      background: rgba(13, 13, 13, 0.75);
+      border: 1px solid rgba(79, 209, 197, 0.18);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(4px);
+    }
+    
+    .tech-badge:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2), 0 0 20px rgba(79, 209, 197, 0.15);
+      border-color: rgba(79, 209, 197, 0.5);
+      background: rgba(13, 13, 13, 0.9);
+    }
+    
+    .tech-badge i {
+      transition: transform 0.4s ease;
+    }
+    
+    .tech-badge:hover i {
+      transform: scale(1.2);
+    }
+    
+    .thin-accent {
+      height: 2px;
+      background: linear-gradient(90deg, rgba(79, 209, 197, 0.8), transparent 90%);
+      width: 140px;
+      margin-top: 1rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .orchestrator { 
+        width: 220px; 
+        height: 220px; 
+      }
+      .agent {
+        width: 130px;
+        height: 130px;
+      }
+      .orchestrator:after {
+        width: 260px;
+        height: 260px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .slide {
+        height: auto;
+        min-height: 100vh;
+      }
+      .architecture-container {
+        transform: scale(0.8);
+        margin-top: -40px;
+        margin-bottom: -40px;
+      }
+      .tech-stack {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .tech-badge {
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="slide">
+      <!-- Background elements -->
+      <div class="glow" style="width: 700px; height: 700px; background: radial-gradient(circle, rgba(79, 209, 197, 0.18) 0%, transparent 70%); top: -200px; right: -100px;"></div>
+      <div class="glow" style="width: 800px; height: 800px; background: radial-gradient(circle, rgba(99, 179, 237, 0.12) 0%, transparent 70%); bottom: -200px; left: -150px;"></div>
+      
+      <!-- Content -->
+      <div class="content w-full h-full flex flex-col p-12">
+        <!-- Header -->
+        <div class="mb-12">
+          <h1 class="text-5xl font-light tracking-tight">Intelligent <span class="gradient-text font-medium">Architecture</span></h1>
+          <p class="text-gray-400 mt-3 text-lg">Multi-agent orchestration for clinical workflow automation</p>
+          <div class="thin-accent"></div>
+        </div>
+        
+        <!-- Architecture Diagram - Expanded and Enhanced -->
+        <div class="relative flex justify-center items-center h-96 mb-16 architecture-container">
+          <!-- Core Orchestrator -->
+          <div class="orchestrator" aria-label="LLM Orchestrator - Core Intelligence Layer">
+            <div class="w-28 h-28 rounded-full bg-gradient-to-r from-teal-400/30 to-blue-400/30 flex items-center justify-center mb-4">
+              <i class="fas fa-brain text-5xl text-teal-400" aria-hidden="true"></i>
+            </div>
+            <div class="text-center">
+              <h3 class="text-white font-medium text-2xl">LLM</h3>
+              <h3 class="text-white font-medium text-2xl">Orchestrator</h3>
+              <p class="text-gray-400 text-sm mt-2">Advanced Clinical Intelligence</p>
+            </div>
+          </div>
+          
+          <!-- Agent connections (lines) - Enhanced & Dynamic -->
+          <div class="connection connection-teal" style="width: 145px; transform: rotate(0deg); left: 640px; top: 360px;"></div>
+          <div class="connection connection-blue" style="width: 170px; transform: rotate(60deg); left: 690px; top: 300px;"></div>
+          <div class="connection connection-teal" style="width: 170px; transform: rotate(120deg); left: 690px; top: 420px;"></div>
+          <div class="connection connection-blue" style="width: 170px; transform: rotate(240deg); left: 440px; top: 420px;"></div>
+          <div class="connection connection-teal" style="width: 170px; transform: rotate(300deg); left: 440px; top: 300px;"></div>
+          <div class="connection connection-blue" style="width: 145px; transform: rotate(180deg); left: 520px; top: 360px;"></div>
+          
+          <!-- Specialized Agents - Enhanced with more details -->
+          <div class="agent" style="left: 785px; top: 360px;" aria-label="Prior Authorization Agent">
+            <div class="agent-icon">
+              <i class="fas fa-file-medical text-2xl text-blue-400" aria-hidden="true"></i>
+            </div>
+            <h4 class="text-base font-medium text-white">Prior Auth</h4>
+            <h4 class="text-base font-medium text-white">Agent</h4>
+            <div class="agent-details">
+              <p class="text-gray-300 text-xs mt-2">Streamlines approval process with payers, reduces denial rates by 85%</p>
+            </div>
+          </div>
+          
+          <div class="agent" style="left: 680px; top: 180px;" aria-label="Social Determinants of Health Agent">
+            <div class="agent-icon">
+              <i class="fas fa-users text-2xl text-teal-400" aria-hidden="true"></i>
+            </div>
+            <h4 class="text-base font-medium text-white">SDOH</h4>
+            <h4 class="text-base font-medium text-white">Agent</h4>
+            <div class="agent-details">
+              <p class="text-gray-300 text-xs mt-2">Identifies social barriers to care, drives 40% improvement in intervention targeting</p>
+            </div>
+          </div>
+          
+          <div class="agent" style="left: 680px; top: 540px;" aria-label="Clinical Documentation Agent">
+            <div class="agent-icon">
+              <i class="fas fa-clipboard-list text-2xl text-blue-400" aria-hidden="true"></i>
+            </div>
+            <h4 class="text-base font-medium text-white">Clinical Note</h4>
+            <h4 class="text-base font-medium text-white">Agent</h4>
+            <div class="agent-details">
+              <p class="text-gray-300 text-xs mt-2">Comprehensive documentation assistant, saves clinicians 2+ hours daily</p>
+            </div>
+          </div>
+          
+          <div class="agent" style="left: 460px; top: 540px;" aria-label="Medication Management Agent">
+            <div class="agent-icon">
+              <i class="fas fa-pills text-2xl text-teal-400" aria-hidden="true"></i>
+            </div>
+            <h4 class="text-base font-medium text-white">Medication</h4>
+            <h4 class="text-base font-medium text-white">Agent</h4>
+            <div class="agent-details">
+              <p class="text-gray-300 text-xs mt-2">Advanced reconciliation that reduces adverse events by 62% in clinical trials</p>
+            </div>
+          </div>
+          
+          <div class="agent" style="left: 460px; top: 180px;" aria-label="Clinical Guidelines Agent">
+            <div class="agent-icon">
+              <i class="fas fa-book-medical text-2xl text-blue-400" aria-hidden="true"></i>
+            </div>
+            <h4 class="text-base font-medium text-white">Guideline</h4>
+            <h4 class="text-base font-medium text-white">Agent</h4>
+            <div class="agent-details">
+              <p class="text-gray-300 text-xs mt-2">Real-time clinical pathway adherence, raises compliance rates to 94%</p>
+            </div>
+          </div>
+          
+          <div class="agent" style="left: 355px; top: 360px;" aria-label="Care Planning Agent">
+            <div class="agent-icon">
+              <i class="fas fa-clipboard-check text-2xl text-teal-400" aria-hidden="true"></i>
+            </div>
+            <h4 class="text-base font-medium text-white">Care Plan</h4>
+            <h4 class="text-base font-medium text-white">Agent</h4>
+            <div class="agent-details">
+              <p class="text-gray-300 text-xs mt-2">Personalized treatment strategy generation with 78% higher adherence rates</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Enhanced Tech Stack with more strategic positioning -->
+        <div class="flex justify-center mt-auto tech-stack">
+          <div class="flex flex-wrap justify-center gap-5">
+            <div class="tech-badge flex items-center">
+              <i class="fas fa-cloud mr-3 text-teal-400" aria-hidden="true"></i>
+              <span>Google Cloud ADK</span>
+            </div>
+            <div class="tech-badge flex items-center">
+              <i class="fas fa-brain mr-3 text-blue-400" aria-hidden="true"></i>
+              <span>Vertex AI</span>
+            </div>
+            <div class="tech-badge flex items-center">
+              <i class="fas fa-hospital-user mr-3 text-teal-400" aria-hidden="true"></i>
+              <span>Healthcare API</span>
+            </div>
+            <div class="tech-badge flex items-center">
+              <i class="fas fa-project-diagram mr-3 text-blue-400" aria-hidden="true"></i>
+              <span>FHIR Integration</span>
+            </div>
+            <div class="tech-badge flex items-center">
+              <i class="fas fa-shield-alt mr-3 text-teal-400" aria-hidden="true"></i>
+              <span>HIPAA Compliant</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Add interactive animation enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+      const agents = document.querySelectorAll('.agent');
+      const orchestrator = document.querySelector('.orchestrator');
+      
+      // Subtle hover effect correlation between agents and orchestrator
+      agents.forEach(agent => {
+        agent.addEventListener('mouseenter', () => {
+          orchestrator.style.boxShadow = '0 0 70px rgba(79, 209, 197, 0.5)';
+        });
+        
+        agent.addEventListener('mouseleave', () => {
+          orchestrator.style.boxShadow = '0 0 60px rgba(79, 209, 197, 0.25)';
+        });
+      });
+      
+      // Random data pulse effect on connections to simulate data flow
+      const connections = document.querySelectorAll('.connection');
+      connections.forEach(connection => {
+        setInterval(() => {
+          const randomDelay = Math.random() * 500;
+          setTimeout(() => {
+            const dataPoint = connection.querySelector(':after');
+            if (dataPoint) {
+              dataPoint.style.animation = 'none';
+              setTimeout(() => {
+                dataPoint.style.animation = 'data-pulse 3s infinite ease-in-out';
+              }, 10);
+            }
+          }, randomDelay);
+        }, 3000);
+      });
+    });
+  </script>
+</body>
+</html>

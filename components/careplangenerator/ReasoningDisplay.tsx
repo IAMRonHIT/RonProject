@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, Loader2 } from 'lucide-react';
 
+// Interface for CodeRendererProps (used by ReactMarkdown in TypedReasoningContent)
 interface CodeRendererProps {
   node?: any;
   inline?: boolean;
@@ -13,173 +14,159 @@ interface CodeRendererProps {
   [key: string]: any;
 }
 
-const TypedReasoningContent: React.FC<{
+// Interface for TypedReasoningContent
+interface TypedReasoningContentProps {
   markdownContent: string | null;
-  isTypingActive: boolean; // Renamed from isLoading to be more specific
+  isTypingActive: boolean;
   onTypingComplete?: () => void;
-}> = ({ markdownContent, isTypingActive, onTypingComplete }) => {
-  const [displayedText, setDisplayedText] = useState("");
-  const [showCursor, setShowCursor] = useState(false);
-  const prevMarkdownContentRef = useRef<string | null>(null);
-  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  typingSpeed?: number;
+}
+
+// TypedReasoningContent component (for animated text display)
+const TypedReasoningContent: React.FC<TypedReasoningContentProps> = ({
+  markdownContent,
+  isTypingActive,
+  onTypingComplete,
+  typingSpeed = 20, // Default typing speed
+}) => {
+  const [displayedContent, setDisplayedContent] = useState('');
+  const charIndexRef = useRef(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Clear any existing interval when props change
-    if (typingIntervalRef.current) {
-      clearInterval(typingIntervalRef.current);
-      typingIntervalRef.current = null;
-    }
+    if (isTypingActive && markdownContent) {
+      charIndexRef.current = 0;
+      setDisplayedContent(''); 
 
-    if (isTypingActive && markdownContent && markdownContent !== prevMarkdownContentRef.current) {
-      setDisplayedText(""); 
-      setShowCursor(true);
-      prevMarkdownContentRef.current = markdownContent;
-      let i = 0;
-      typingIntervalRef.current = setInterval(() => {
-        if (i < markdownContent.length) {
-          setDisplayedText(markdownContent.substring(0, i + 1));
-          i++;
+      const interval = 1000 / typingSpeed;
+
+      timerRef.current = setInterval(() => {
+        if (charIndexRef.current < markdownContent.length) {
+          setDisplayedContent(prev => prev + markdownContent[charIndexRef.current]);
+          charIndexRef.current++;
         } else {
-          if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
-          typingIntervalRef.current = null;
-          setShowCursor(false);
-          if (onTypingComplete) {
-            onTypingComplete();
-          }
+          if (timerRef.current) clearInterval(timerRef.current);
+          if (onTypingComplete) onTypingComplete();
         }
-      }, 20); // Typing speed
+      }, interval);
     } else if (!isTypingActive && markdownContent) {
-      // If not typing active, but content exists, show it all at once
-      setDisplayedText(markdownContent);
-      setShowCursor(false);
-      prevMarkdownContentRef.current = markdownContent;
-    } else if (!markdownContent) {
-      setDisplayedText("");
-      setShowCursor(false);
-      prevMarkdownContentRef.current = null;
+      setDisplayedContent(markdownContent);
+      if (onTypingComplete) onTypingComplete();
     }
 
     return () => {
-      if (typingIntervalRef.current) {
-        clearInterval(typingIntervalRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [markdownContent, isTypingActive, onTypingComplete]);
+  }, [markdownContent, isTypingActive, onTypingComplete, typingSpeed]);
 
-  if (isTypingActive && displayedText === "" && markdownContent) {
-    return (
-      <div className="flex items-center text-slate-400">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        <span>Simulating AI thought process...</span>
-      </div>
-    );
+  if (!markdownContent && isTypingActive) {
+    return <p className="italic text-slate-500">Preparing reasoning...</p>;
   }
-
   if (!markdownContent && !isTypingActive) {
-     return <p className="italic text-slate-500">Reasoning will appear here once simulation starts.</p>;
+    return <p className="italic text-slate-500">No reasoning content available.</p>;
   }
 
   return (
-    <>
-      <ReactMarkdown
-        components={{
-          p: ({node, ...props}) => <p className="text-slate-300 mb-2" {...props} />,
-          strong: ({node, ...props}) => <strong className="text-slate-100 font-semibold" {...props} />,
-          h1: ({node, ...props}) => <h1 className="text-slate-100 text-2xl font-semibold my-3" {...props} />,
-          h2: ({node, ...props}) => <h2 className="text-slate-100 text-xl font-semibold my-2" {...props} />,
-          h3: ({node, ...props}) => <h3 className="text-slate-100 text-lg font-semibold my-2" {...props} />,
-          ul: ({node, ...props}) => <ul className="text-slate-300 list-disc pl-5 mb-2 space-y-1" {...props} />,
-          ol: ({node, ...props}) => <ol className="text-slate-300 list-decimal pl-5 mb-2 space-y-1" {...props} />,
-          li: ({node, ...props}) => <li className="text-slate-300" {...props} />,
-          code: ({ node, inline, className, children, ...props }: CodeRendererProps) => {
-            const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <pre className="bg-slate-900 rounded-md p-3 my-2 overflow-x-auto"><code className={`language-${match[1]}`} {...props}>{children}</code></pre>
-            ) : (
-              <code className="bg-slate-600 text-pink-400 px-1 py-0.5 rounded-sm text-sm" {...props}>{children}</code>
-            );
-          },
-          blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-slate-500 pl-3 italic text-slate-400 my-2" {...props} />,
-          a: ({node, ...props}) => <a className="text-sky-400 hover:text-sky-300 hover:underline" {...props} />,
-        }}
-      >
-        {displayedText}
-      </ReactMarkdown>
-      {showCursor && <span className="animate-ping ml-1">|</span>}
-    </>
+    <ReactMarkdown
+      components={{
+        p: ({node, ...props}) => <p className="text-slate-300 mb-2" {...props} />,
+        strong: ({node, ...props}) => <strong className="text-slate-100 font-semibold" {...props} />,
+        h1: ({node, ...props}) => <h1 className="text-slate-100 text-2xl font-semibold my-3" {...props} />,
+        h2: ({node, ...props}) => <h2 className="text-slate-100 text-xl font-semibold my-2" {...props} />,
+        h3: ({node, ...props}) => <h3 className="text-slate-100 text-lg font-semibold my-2" {...props} />,
+        ul: ({node, ...props}) => <ul className="text-slate-300 list-disc pl-5 mb-2 space-y-1" {...props} />,
+        ol: ({node, ...props}) => <ol className="text-slate-300 list-decimal pl-5 mb-2 space-y-1" {...props} />,
+        li: ({node, ...props}) => <li className="text-slate-300" {...props} />,
+        code: ({ node, inline, className, children, ...props }: CodeRendererProps) => {
+          const match = /language-(\w+)/.exec(className || '');
+          return !inline && match ? (
+            <pre className="bg-slate-950 rounded-md p-3 my-2 overflow-x-auto"><code className={`language-${match[1]}`} {...props}>{children}</code></pre>
+          ) : (
+            <code className="bg-slate-700 text-pink-400 px-1 py-0.5 rounded-sm text-sm" {...props}>{children}</code>
+          );
+        },
+        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-slate-600 pl-3 italic text-slate-400 my-2" {...props} />,
+        a: ({node, ...props}) => <a className="text-sky-400 hover:text-sky-300 hover:underline" {...props} />,
+      }}
+    >
+      {displayedContent}
+    </ReactMarkdown>
   );
 };
 
+// Interface for ReasoningDisplay: Relies on initialMarkdownContent
 interface ReasoningDisplayProps {
-  markdownContent: string | null;
-  isSimulating: boolean; 
-  onSimulationComplete?: () => void;
+  initialMarkdownContent: string | null; // Content is passed directly
+  onComplete?: () => void;
+  title?: string;
 }
 
+// Main ReasoningDisplay component: Displays content from initialMarkdownContent prop
 const ReasoningDisplay: React.FC<ReasoningDisplayProps> = ({
-  markdownContent,
-  isSimulating,
-  onSimulationComplete,
+  initialMarkdownContent,
+  onComplete,
+  title = "AI Clinical Reasoning Process",
 }) => {
-  // This state helps manage the "typing active" phase internally
-  const [isTyping, setIsTyping] = useState(false);
+  // State for the content to be displayed by TypedReasoningContent
+  const [currentContent, setCurrentContent] = useState<string | null>(null);
+  // isLoading is true initially or if content is explicitly being processed (not just passed)
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // For any errors in processing content
 
   useEffect(() => {
-    if (isSimulating && markdownContent) {
-      setIsTyping(true);
-    } else if (!isSimulating) {
-      setIsTyping(false);
+    setIsLoading(true);
+    setError(null);
+    if (initialMarkdownContent !== undefined && initialMarkdownContent !== null) {
+      setCurrentContent(initialMarkdownContent);
+      setIsLoading(false); // Content is ready
+    } else {
+      // If initialMarkdownContent is null or undefined, treat as no content or an error
+      setCurrentContent(null);
+      // Optionally set an error if content is strictly expected but null
+      // setError("No reasoning content provided."); 
+      setIsLoading(false); // No fetching, so loading is done
     }
-  }, [isSimulating, markdownContent]);
-
-  const handleInternalTypingComplete = () => {
-    setIsTyping(false); // Typing is done
-    if (onSimulationComplete) {
-      onSimulationComplete(); // Notify parent that the simulation step (typing) is complete
-    }
-  };
-  
-  // Do not render the card if not simulating and no content yet (e.g. initial state of page)
-  if (!isSimulating && !markdownContent) {
-      return null;
-  }
+  }, [initialMarkdownContent]); // Re-run when initialMarkdownContent changes
 
   return (
-    <Card className="shadow-xl border border-slate-700 bg-slate-800 text-slate-100 my-6">
-      <CardHeader className="border-b border-slate-700">
-        <CardTitle className="text-xl font-semibold text-slate-100 flex items-center">
-          <Brain size={22} className="mr-2 text-sky-400" />
-          Clinical Reasoning Process
+    <Card className="w-full max-w-3xl mx-auto bg-slate-900 border-slate-700 shadow-xl shadow-sky-900/20 my-6">
+      <CardHeader className="border-b border-slate-700/70 pb-4">
+        <CardTitle className="flex items-center text-sky-300 text-xl">
+          <Brain size={24} className="mr-3 text-sky-400" />
+          {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-4">
-        <div className="prose prose-sm max-w-none text-slate-300 bg-slate-700/70 p-4 rounded-md border border-slate-600 min-h-[10em] max-h-[60vh] overflow-y-auto styled-scrollbar">
-          {/* Show loader only if isSimulating is true but markdownContent hasn't arrived yet for TypedReasoningContent to start */}
-          {isSimulating && !markdownContent && (
-            <div className="flex items-center text-slate-400">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span>Loading reasoning text...</span>
-            </div>
-          )}
-          {/* TypedReasoningContent will handle its own "Simulating AI thought process..." if markdownContent is present and isTyping is true */}
-          {(markdownContent || isTyping) && ( // Render TypedReasoningContent if there's content or if it's supposed to be typing
-            <TypedReasoningContent
-              markdownContent={markdownContent}
-              isTypingActive={isTyping} 
-              onTypingComplete={handleInternalTypingComplete}
-            />
-          )}
-          {/* Fallback if not simulating, no content, but somehow card is rendered (should be caught by earlier null return) */}
-          {!isSimulating && !markdownContent && (
-             <p className="italic text-slate-500">Reasoning will appear here.</p>
-          )}
-        </div>
+      <CardContent className="pt-6 min-h-[300px] max-h-[60vh] overflow-y-auto styled-scrollbar-dark">
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400">
+            <Loader2 size={40} className="animate-spin mb-4 text-sky-500" />
+            <p className="text-lg">Processing Content...</p>
+          </div>
+        )}
+        {error && (
+          <div className="flex flex-col items-center justify-center h-full text-red-400">
+            <p className="text-lg font-semibold">Error Displaying Reasoning</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+        {!isLoading && !error && currentContent !== null && (
+          <TypedReasoningContent
+            markdownContent={currentContent}
+            isTypingActive={true} 
+            onTypingComplete={onComplete} 
+            typingSpeed={20} 
+          />
+        )}
+        {/* Case where content is explicitly null after loading/processing, or was null initially */}
+        {!isLoading && !error && currentContent === null && (
+           <p className="italic text-slate-500 text-center py-10">No reasoning content to display.</p>
+        )}
       </CardContent>
-       <style jsx global>{`
-        .styled-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-        .styled-scrollbar::-webkit-scrollbar-track { background: #1e293b; /* slate-800 */ border-radius: 4px; }
-        .styled-scrollbar::-webkit-scrollbar-thumb { background: #475569; /* slate-600 */ border-radius: 4px; }
-        .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; /* slate-500 */ }
+      {/* Global styles for custom scrollbar, if needed elsewhere, move to a global CSS file */}
+      <style jsx global>{`
+        .styled-scrollbar-dark::-webkit-scrollbar { width: 8px; height: 8px; }
+        .styled-scrollbar-dark::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 4px; }
+        .styled-scrollbar-dark::-webkit-scrollbar-track { background-color: #1f2937; }
       `}</style>
     </Card>
   );

@@ -24,7 +24,7 @@
     "nyha_class_description": "Not Applicable; Stroke assessment (e.g., NIHSS) would be relevant. CHA2DS2-VASc score for AFib-related stroke risk considered."
   },
   "clinicalData": {
-    "primary_diagnosis_text": "Stroke or Transient Ischemic Attack (TIA) within 6 months. Defined as a neurological deficit due to an acute focal injury of the central nervous system (CNS) by a vascular cause, including cerebral infarction, intracerebral hemorrhage (ICH), and subarachnoid hemorrhage (SAH). This diagnosis is associated with numerous specific ICD-10 codes as detailed in Ron Health Clinical Guideline V3.0 (e.g., I60-I69 series, G45 series).",
+    "primary_diagnosis_text": "Cerebral Vascular Accident (Stroke)",
     "secondaryDiagnoses": [
       "Hypertension",
       "Hyperlipidemia",

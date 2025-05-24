@@ -2,11 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  MessageSquare, SendHorizontal, X, ChevronLeft, ChevronRight, ChevronDown,
+  MessageSquare, SendHorizontal, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   ThumbsUp, ThumbsDown, Copy, FileText, RotateCw, Sparkles, PlusCircle,
-  User, BookOpen, Bot, Brain, Stethoscope, Shield, Settings, CheckCircle
+  User, BookOpen, Bot, Brain, Stethoscope, Shield, Settings, CheckCircle,
+  Zap, Clock, ArrowRight
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { Options } from 'react-markdown';
 
 // Types
 export interface ChatMessage {
@@ -78,13 +79,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 }) => {
   const [inputText, setInputText] = useState('');
   const [showContextPanel, setShowContextPanel] = useState(false);
-  const [showReasoning, setShowReasoning] = useState(true);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [expandedReasoning, setExpandedReasoning] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const reasoningRef = useRef<HTMLDivElement>(null);
   
   const selectedMessage = messages.find(msg => msg.id === selectedMessageId);
   
@@ -94,26 +94,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [messages, autoScrollEnabled]);
   
-  // Listen for chat-update events
-  useEffect(() => {
-    const handleChatUpdate = (event: CustomEvent) => {
-      if (reasoningRef.current && event.detail.reasoning) {
-        reasoningRef.current.innerHTML = event.detail.reasoning;
-        reasoningRef.current.scrollTop = reasoningRef.current.scrollHeight;
-      }
-    };
-    
-    document.addEventListener('chat-update', handleChatUpdate as EventListener);
-    return () => {
-      document.removeEventListener('chat-update', handleChatUpdate as EventListener);
-    };
-  }, []);
   
   const handleSendMessage = () => {
     if (inputText.trim() && !isGenerating) {
       onSendMessage(inputText.trim());
       setInputText('');
       if (inputRef.current) {
+        inputRef.current.style.height = 'auto';
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     }
@@ -128,8 +115,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   
   const adjustTextareaHeight = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const target = e.target;
-    target.style.height = 'auto'; // Reset height
-    target.style.height = `${Math.min(target.scrollHeight, 120)}px`; // Set to scroll height or max
+    target.style.height = 'auto';
+    target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
   };
   
   const handleScroll = () => {
@@ -143,359 +130,514 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInputText(prompt);
     if (inputRef.current) {
       inputRef.current.focus();
-      // Manually trigger height adjustment for predefined prompts
       inputRef.current.style.height = 'auto';
       inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
     }
   };
+
+  const handleMessageClick = (messageId: string) => {
+    setSelectedMessageId(messageId);
+    const msg = messages.find(m => m.id === messageId);
+    if (msg?.context) {
+      setShowContextPanel(true);
+    }
+  };
   
   return (
-    <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
-      {/* Chat header */}
-      <div className="bg-slate-900 p-4 border-b border-slate-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="bg-slate-800 border border-teal-700 glow-teal-500 p-2 rounded-lg mr-3 shadow-md">
-              <Bot size={22} className="text-teal-400" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-100 text-lg">{assistantName}</h3>
-              <p className="text-slate-400 text-sm">Clinical Assistant</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowContextPanel(!showContextPanel)}
-              className="text-slate-400 bg-slate-800 hover:bg-slate-700 hover:text-sky-400 p-2 rounded-lg transition-all relative border border-slate-600 hover:border-sky-500"
-              aria-label={showContextPanel ? "Hide context panel" : "Show context panel"}
-              title={showContextPanel ? "Hide context panel" : "Show context panel"}
-            >
-              {showContextPanel ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main chat area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Reasoning panel - only shown when reasoning is happening */}
-        {showReasoningPanel && showReasoning && (
-          <div className="bg-slate-900 border-b border-slate-800 p-3">
-            <div className="flex items-center mb-2">
-              <Brain size={16} className="text-teal-400 mr-2" />
-              <span className="text-sm font-medium text-teal-400">AI Reasoning Process</span>
-              {isGenerating && (
-                <div className="ml-2 flex items-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse mr-1"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse animation-delay-150 mr-1"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse animation-delay-300"></div>
+    <div className="flex h-[700px] bg-slate-950 rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Chat Header */}
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700/70 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="relative mr-3">
+                <div className="absolute -inset-1 bg-gradient-to-r from-sky-500 to-teal-500 rounded-lg blur opacity-50 animate-pulse"></div>
+                <div className="relative p-2 bg-slate-800 border border-slate-700 rounded-lg shadow-md">
+                  <Bot size={24} className="text-teal-300" />
                 </div>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-50 text-lg leading-tight flex items-center">
+                  {assistantName}
+                  <Zap size={16} className="ml-2 text-teal-400 animate-pulse" />
+                </h3>
+                <p className="text-slate-400 text-xs leading-tight">
+                  Clinical Assistant {isCarePlanMode && (
+                    <span className="ml-1 px-2 py-0.5 bg-teal-900/40 text-teal-300 rounded-full text-[10px] font-medium border border-teal-700/50">
+                      Care Plan Mode
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {selectedMessage && selectedMessage.context && (
+                <button
+                  onClick={() => setShowContextPanel(!showContextPanel)}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    showContextPanel 
+                      ? 'bg-sky-600 text-white hover:bg-sky-500 shadow-md glow-sky-500' 
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-sky-300 border border-slate-700 hover:border-slate-600'
+                  }`}
+                  aria-label={showContextPanel ? "Hide Context Panel" : "Show Context Panel"}
+                  title={showContextPanel ? "Hide Context Panel" : "Show Context Panel"}
+                >
+                  {showContextPanel ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                </button>
               )}
             </div>
-            <div 
-              ref={reasoningRef}
-              className="text-xs text-teal-200 bg-slate-950 p-3 rounded border border-slate-800 max-h-40 overflow-y-auto styled-scrollbar-dark font-mono whitespace-pre-wrap"
-            >
-              {isGenerating ? "Thinking..." : "No active reasoning"}
-            </div>
           </div>
-        )}
-        
-        {/* Messages container */}
-        <div 
-          ref={messageContainerRef}
-          className="flex-1 overflow-y-auto styled-scrollbar-dark"
-          onScroll={handleScroll}
-        >
-          {predefinedPrompts.length > 0 && (
-            <div className="mb-5 px-1 pt-2">
-              <div className="flex flex-wrap gap-2">
-                {predefinedPrompts.map((prompt, index) => (
-                  <button
-                    key={index}
-                    className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700 hover:bg-slate-700 hover:border-sky-500 hover:text-sky-300 transition-all duration-200 inline-flex items-center shadow-sm hover:shadow-md"
-                    onClick={() => handlePredefinedPrompt(prompt)}
+        </div>
+
+        {/* Messages Area - Fixed height with scroll */}
+        <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-b from-slate-950 to-slate-900">
+          <div 
+            ref={messageContainerRef} 
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto styled-scrollbar-dark p-4 space-y-4"
+          >
+            {messages.length === 0 && (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="relative mx-auto mb-4">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-sky-500 to-teal-500 rounded-full blur opacity-30 animate-pulse"></div>
+                    <div className="relative p-4 bg-slate-800 border border-slate-700 rounded-full shadow-md">
+                      <MessageSquare size={32} className="text-teal-300" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-200 mb-2">Start a Conversation</h3>
+                  <p className="text-sm text-slate-400 max-w-sm mx-auto">
+                    Ask me anything about the patient's care plan. I'm here to help!
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {messages.map((msg) => (
+              <div 
+                key={msg.id} 
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+                onClick={() => handleMessageClick(msg.id)}
+              >
+                <div className={`flex items-start space-x-3 max-w-[80%] group cursor-pointer`}>
+                  {msg.role === 'assistant' && (
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="p-2 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full border border-slate-600 shadow-lg">
+                        <Bot size={20} className="text-teal-300" />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div
+                    className={`relative rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl ${
+                      msg.role === 'user'
+                        ? 'bg-gradient-to-br from-sky-600 to-sky-700 text-white border border-sky-500/50'
+                        : 'bg-gradient-to-br from-slate-800 to-slate-850 text-slate-100 border border-slate-700/80'
+                    }`}
                   >
-                    <PlusCircle size={12} className="mr-1.5 text-sky-500" />
+                    {/* Message header */}
+                    <div className={`flex items-center justify-between px-4 pt-3 pb-1 border-b ${
+                      msg.role === 'user' ? 'border-sky-500/30' : 'border-slate-700/50'
+                    }`}>
+                      <span className={`font-semibold text-sm ${
+                        msg.role === 'user' ? 'text-sky-100' : 'text-teal-300'
+                      }`}>
+                        {msg.role === 'user' ? userName : assistantName}
+                      </span>
+                      <span className={`text-xs ${
+                        msg.role === 'user' ? 'text-sky-200' : 'text-slate-400'
+                      }`}>
+                        {formatTime(msg.timestamp)}
+                      </span>
+                    </div>
+
+                    {/* Message content */}
+                    <div className="px-4 py-3">
+                      {msg.isLoading ? (
+                        <div className="flex items-center space-x-2 py-2">
+                          <div className="w-2 h-2 bg-teal-400 rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-teal-400 rounded-full animate-pulse animation-delay-150"></div>
+                          <div className="w-2 h-2 bg-teal-400 rounded-full animate-pulse animation-delay-300"></div>
+                        </div>
+                      ) : (
+                        <div className="prose prose-sm prose-invert max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-blockquote:my-2">
+                          <ReactMarkdown
+                            components={{
+                              p: ({node, ...props}) => <p {...props} className="whitespace-pre-wrap leading-relaxed" />,
+                              code({ node, inline, className, children, ...props }: any) {
+                                const match = /language-(\w+)/.exec(className || '');
+                                return !inline && match ? (
+                                  <div className="my-2 bg-slate-950 rounded-lg border border-slate-700/80 overflow-hidden shadow-inner">
+                                    <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-r from-slate-800 to-slate-850 text-xs text-slate-400 border-b border-slate-700/50">
+                                      <span className="font-medium flex items-center">
+                                        <FileText size={12} className="mr-1.5" />
+                                        {match[1]}
+                                      </span>
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+                                        }}
+                                        className="p-1 hover:text-sky-300 rounded transition-colors"
+                                        title="Copy code"
+                                      >
+                                        <Copy size={12} />
+                                      </button>
+                                    </div>
+                                    <pre className="p-3 !bg-slate-950 !text-slate-200 styled-scrollbar-dark overflow-x-auto">
+                                      <code className={`!bg-transparent !text-inherit ${className}`} {...props}>
+                                        {children}
+                                      </code>
+                                    </pre>
+                                  </div>
+                                ) : (
+                                  <code className={`py-0.5 px-1.5 rounded-md bg-slate-800/70 border border-slate-700/50 text-sky-300 ${className}`} {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              }
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      )}
+
+                      {/* Context indicator */}
+                      {msg.context && msg.context.sources && msg.context.sources.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-700/50">
+                          <div className="flex items-center text-xs text-slate-400">
+                            <BookOpen size={13} className="mr-1.5 text-sky-400" />
+                            <span>{msg.context.sources.length} sources available</span>
+                            <ArrowRight size={12} className="ml-1 opacity-50" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Final Reasoning Display - Accordion */}
+                      {msg.role === 'assistant' && msg.reasoning && !msg.isLoading && (
+                        <div className="mt-3 pt-3 border-t border-slate-700/50">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedReasoning(prev => ({ ...prev, [msg.id]: !prev[msg.id] }));
+                            }}
+                            className="flex items-center justify-between w-full text-left hover:bg-slate-800/30 rounded-lg p-2 transition-colors"
+                          >
+                            <div className="flex items-center text-xs text-teal-400">
+                              <Brain size={14} className="mr-1.5" />
+                              <span className="font-medium">Clinical Reasoning Process</span>
+                            </div>
+                            {expandedReasoning[msg.id] ? <ChevronUp size={14} className="text-teal-400" /> : <ChevronDown size={14} className="text-teal-400" />}
+                          </button>
+                          {expandedReasoning[msg.id] && (
+                            <div className="mt-2 text-xs text-slate-300/90 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50 max-h-64 overflow-y-auto styled-scrollbar-dark whitespace-pre-wrap font-mono">
+                              <ReactMarkdown
+                                components={{
+                                  p: ({node, ...props}) => <p className="text-slate-300 mb-2" {...props} />,
+                                  strong: ({node, ...props}) => <strong className="text-slate-100 font-semibold" {...props} />,
+                                  ul: ({node, ...props}) => <ul className="text-slate-300 list-disc pl-5 mb-2 space-y-1" {...props} />,
+                                  ol: ({node, ...props}) => <ol className="text-slate-300 list-decimal pl-5 mb-2 space-y-1" {...props} />,
+                                  li: ({node, ...props}) => <li className="text-slate-300" {...props} />,
+                                  code: ({node, inline, ...props}: any) => 
+                                    inline ? (
+                                      <code className="bg-slate-800 text-pink-400 px-1 py-0.5 rounded-sm text-xs" {...props} />
+                                    ) : (
+                                      <pre className="bg-slate-900 rounded-md p-2 my-1 overflow-x-auto text-xs"><code {...props} /></pre>
+                                    ),
+                                }}
+                              >
+                                {msg.reasoning}
+                              </ReactMarkdown>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Message Actions */}
+                      {!msg.isLoading && (msg.role === 'assistant' || onCopyMessage) && (
+                        <div className="flex items-center space-x-2 mt-3 pt-3 border-t border-slate-700/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          {msg.role === 'assistant' && onFeedback && (
+                            <>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onFeedback(msg.id, true);
+                                }} 
+                                className="p-1.5 text-slate-500 hover:text-emerald-400 rounded-md hover:bg-slate-700/50 transition-all"
+                                title="Good response"
+                              >
+                                <ThumbsUp size={14} />
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onFeedback(msg.id, false);
+                                }} 
+                                className="p-1.5 text-slate-500 hover:text-red-400 rounded-md hover:bg-slate-700/50 transition-all"
+                                title="Bad response"
+                              >
+                                <ThumbsDown size={14} />
+                              </button>
+                            </>
+                          )}
+                          {onCopyMessage && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onCopyMessage(msg.id);
+                              }} 
+                              className="p-1.5 text-slate-500 hover:text-sky-400 rounded-md hover:bg-slate-700/50 transition-all"
+                              title="Copy message"
+                            >
+                              <Copy size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {msg.role === 'user' && (
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="p-2 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full border border-slate-600 shadow-lg">
+                        <User size={20} className="text-sky-300" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Predefined Prompts */}
+          {predefinedPrompts && predefinedPrompts.length > 0 && !inputText && messages.length === 0 && (
+            <div className="p-4 bg-gradient-to-t from-slate-900 to-slate-950/50 border-t border-slate-700/50">
+              <p className="text-xs text-slate-400 mb-3 font-medium">Quick prompts to get started:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {predefinedPrompts.slice(0, 6).map((prompt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePredefinedPrompt(prompt)}
+                    className="text-xs bg-gradient-to-br from-slate-800 to-slate-850 hover:from-slate-700 hover:to-slate-800 text-sky-300 hover:text-sky-200 px-3 py-2 rounded-lg border border-slate-700 hover:border-sky-600/50 transition-all duration-200 shadow-sm hover:shadow-md text-left"
+                  >
+                    <ArrowRight size={12} className="inline mr-1.5 opacity-60" />
                     {prompt}
                   </button>
                 ))}
               </div>
             </div>
           )}
-          
-          <div className="space-y-5 pb-3">
-            {messages.map((message) => (
-              <div 
-                key={message.id} 
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div 
-                  className={`flex items-start max-w-[85%] rounded-xl shadow-lg ${
-                    message.role === 'user' 
-                      ? 'bg-sky-600 text-white glow-sky-500 border border-sky-500' // User message with glow
-                      : 'bg-slate-800 text-slate-100 border border-slate-700' // Assistant message
-                  } px-4 py-3`}
+        </div>
+
+        {/* Input Area */}
+        <div className="bg-gradient-to-r from-slate-900 to-slate-850 p-4 border-t border-slate-700/70 shadow-top">
+          <div className="relative flex items-end bg-gradient-to-br from-slate-800 to-slate-850 rounded-xl border border-slate-600/80 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-500/20 transition-all duration-200">
+            <textarea
+              ref={inputRef}
+              value={inputText}
+              onChange={(e) => { 
+                setInputText(e.target.value); 
+                adjustTextareaHeight(e); 
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholderText}
+              rows={1}
+              className="flex-1 p-4 bg-transparent text-slate-100 placeholder-slate-500 resize-none focus:outline-none styled-scrollbar-dark text-sm max-h-[120px] leading-relaxed"
+              aria-label="Chat input"
+            />
+            <div className="p-2 flex items-center space-x-2">
+              {onRegenerate && messages.some(m => m.role === 'assistant' && !m.isLoading) && (
+                <button
+                  onClick={onRegenerate}
+                  disabled={isGenerating}
+                  className={`p-2 rounded-lg transition-all duration-150 ${
+                    isGenerating
+                      ? 'text-slate-600 cursor-not-allowed'
+                      : 'text-slate-400 hover:text-teal-300 hover:bg-slate-700/50'
+                  }`}
+                  title="Regenerate response"
                 >
-                  <div className="flex-shrink-0 mr-3 mt-0.5">
-                    {message.role === 'user' ? (
-                      <div className="w-7 h-7 bg-sky-700 rounded-full flex items-center justify-center text-white border border-sky-400">
-                        <User size={14} />
-                      </div>
-                    ) : (
-                      <div className="w-7 h-7 bg-teal-700 rounded-full flex items-center justify-center text-white border border-teal-500 glow-teal-500">
-                        <Bot size={14} />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span className="font-semibold text-sm">
-                        {message.role === 'user' ? userName : assistantName}
-                      </span>
-                      <span className={`text-xs ${message.role === 'user' ? 'text-sky-100' : 'text-slate-400'} opacity-70`}>
-                        {formatTime(message.timestamp)}
-                      </span>
-                    </div>
-                    
-                    <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'prose-invert text-white' : 'text-slate-200'} prose-p:my-1 prose-p:text-current prose-strong:text-current prose-headings:text-current`}>
-                      {message.isLoading ? (
-                        <div className="flex items-center space-x-1.5 py-1">
-                          <div className="animate-bounce w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
-                          <div className="animate-bounce w-1.5 h-1.5 bg-slate-400 rounded-full animation-delay-150"></div>
-                          <div className="animate-bounce w-1.5 h-1.5 bg-slate-400 rounded-full animation-delay-300"></div>
-                        </div>
-                      ) : (
-                        <div className="break-words">
-                          <ReactMarkdown
-                            components={{
-                              p: ({node, ...props}) => <p {...props} className="markdown-paragraph" />,
-                              code: ({ node, inline, className, children, ...props }: { node?: any; inline?: boolean; className?: string; children?: React.ReactNode; [key: string]: any }) => {
-                                const match = /language-(\w+)/.exec(className || '')
-                                return !inline && match ? (
-                                  <pre className={`bg-slate-900 p-2 rounded-md border border-slate-600 overflow-x-auto my-2 text-xs text-slate-300`}><code className={className} {...props}>{children}</code></pre>
-                                ) : (
-                                  <code className={`${className} bg-slate-700 text-sky-300 px-1 py-0.5 rounded text-xs border border-slate-600`} {...props}>{children}</code>
-                                )
-                              }
-                            }}
-                          >
-                            {message.content}
-                          </ReactMarkdown>
-                        </div>
+                  <RotateCw size={18} />
+                </button>
+              )}
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputText.trim() || isGenerating}
+                className={`p-2.5 rounded-lg transition-all duration-150 flex items-center justify-center ${
+                  !inputText.trim() || isGenerating
+                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white shadow-lg hover:shadow-xl glow-sky-500'
+                }`}
+                aria-label="Send message"
+                title="Send message"
+              >
+                <SendHorizontal size={20} />
+              </button>
+            </div>
+          </div>
+          
+          <div className="mt-2 flex justify-between items-center px-1">
+            <div className="text-xs text-slate-500 flex items-center">
+              {isCarePlanMode && (
+                <Shield size={12} className="mr-1.5 text-teal-500" />
+              )}
+              <span>
+                {isCarePlanMode ? "Clinical Assistant Mode" : "General Chat"}
+                {isGenerating && (
+                  <span className="ml-2 text-teal-400 animate-pulse">
+                    <Clock size={12} className="inline mr-1" />
+                    analyzing...
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Context Panel (Side Panel) */}
+      {showContextPanel && selectedMessage && selectedMessage.context && (
+        <div className="w-[320px] bg-gradient-to-b from-slate-900 to-slate-850 border-l border-slate-700/70 overflow-hidden flex flex-col animate-slide-in-right">
+          <div className="p-4 border-b border-slate-700/70 bg-slate-800/50">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-slate-100 flex items-center">
+                <BookOpen size={16} className="mr-2 text-sky-400" /> 
+                Context & Sources
+              </h4>
+              <button 
+                onClick={() => {
+                  setShowContextPanel(false); 
+                  setSelectedMessageId(null);
+                }} 
+                title="Close context panel" 
+                className="text-slate-500 hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto styled-scrollbar-dark p-4">
+            {selectedMessage.context.sources && selectedMessage.context.sources.length > 0 && (
+              <div className="mb-4">
+                <h5 className="text-xs font-medium text-sky-300 mb-2 tracking-wider uppercase flex items-center">
+                  <Zap size={12} className="mr-1.5" />
+                  Evidence Sources
+                </h5>
+                <div className="space-y-2">
+                  {selectedMessage.context.sources.map((source, i) => (
+                    <div key={i} className="bg-gradient-to-br from-slate-800 to-slate-850 p-3 rounded-lg border border-slate-700/70 hover:border-slate-600 transition-colors">
+                      <strong className="text-slate-200 block mb-1 font-medium text-sm">
+                        {source.title}
+                      </strong>
+                      <p className="text-slate-400 text-xs leading-relaxed">
+                        {source.content}
+                      </p>
+                      {source.url && (
+                        <a 
+                          href={source.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-sky-400 hover:text-sky-300 hover:underline text-xs mt-2 inline-flex items-center"
+                        >
+                          Learn more 
+                          <ArrowRight size={10} className="ml-1" />
+                        </a>
                       )}
                     </div>
-                    
-                    {message.context?.sources && message.context.sources.length > 0 && (
-                      <div className={`mt-2 pt-1.5 border-t ${message.role === 'user' ? 'border-sky-500/50' : 'border-slate-700'}`}>
-                        <div className={`text-xs ${message.role === 'user' ? 'text-sky-100' : 'text-slate-300'} font-medium mb-0.5 flex items-center`}>
-                          <BookOpen size={12} className="mr-1" /> Sources:
-                        </div>
-                        <div className="space-y-0.5">
-                          {message.context.sources.slice(0, 2).map((source, idx) => (
-                            <div key={idx} className={`text-xs ${message.role === 'user' ? 'text-sky-200' : 'text-slate-400'} opacity-80 truncate`}>
-                              {idx + 1}. {source.title || 'Referenced Source'}
-                            </div>
-                          ))}
-                          {message.context.sources.length > 2 && (
-                            <div className="text-xs text-sky-400 cursor-pointer hover:underline" onClick={() => {
-                              setSelectedMessageId(message.id);
-                              setShowContextPanel(true);
-                            }}>
-                              +{message.context.sources.length - 2} more sources
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {message.role === 'assistant' && !message.isLoading && (
-                      <div className="mt-1.5 flex items-center justify-end space-x-0.5 opacity-60 hover:opacity-100 transition-opacity">
-                        <button onClick={() => onFeedback && onFeedback(message.id, true)} className="text-slate-400 hover:text-lime-400 p-1 rounded-full hover:bg-slate-700 transition-colors" title="Helpful"><ThumbsUp size={13} /></button>
-                        <button onClick={() => onFeedback && onFeedback(message.id, false)} className="text-slate-400 hover:text-red-400 p-1 rounded-full hover:bg-slate-700 transition-colors" title="Not helpful"><ThumbsDown size={13} /></button>
-                        <button onClick={() => onCopyMessage && onCopyMessage(message.id)} className="text-slate-400 hover:text-sky-400 p-1 rounded-full hover:bg-slate-700 transition-colors" title="Copy message"><Copy size={13} /></button>
-                        <button onClick={() => { setSelectedMessageId(message.id); setShowContextPanel(true); }} className="text-slate-400 hover:text-teal-400 p-1 rounded-full hover:bg-slate-700 transition-colors" title="View details"><FileText size={13} /></button>
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-        
-        {showContextPanel && (
-          <div className="w-80 border-l border-slate-700 bg-slate-900 overflow-y-auto styled-scrollbar-dark animate-slide-in-right">
-            <div className="p-4 border-b border-slate-700 bg-slate-800 flex justify-between items-center sticky top-0 z-10">
-              <h3 className="font-semibold text-slate-100">Context & Details</h3>
-              <button onClick={() => setShowContextPanel(false)} className="text-slate-400 hover:text-slate-100 p-1 rounded-full hover:bg-slate-700 transition-colors" title="Close context panel"><X size={16} /></button>
-            </div>
-            
-            <div className="p-4">
-              {selectedMessage ? (
-                <div className="space-y-5">
-                  <div>
-                    <h4 className="text-sm font-medium text-slate-300 mb-1.5 flex items-center"><MessageSquare size={14} className="mr-1.5 text-sky-400 glow-sky-500" /> Message</h4>
-                    <div className="bg-slate-800 rounded-lg p-3 text-sm text-slate-200 border border-slate-700 shadow-md">{selectedMessage.content}</div>
-                  </div>
-                  
-                  {selectedMessage.context?.sources && selectedMessage.context.sources.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-300 mb-1.5 flex items-center"><BookOpen size={14} className="mr-1.5 text-sky-400 glow-sky-500" /> Source References</h4>
-                      <div className="space-y-2.5">
-                        {selectedMessage.context.sources.map((source, idx) => (
-                          <div key={idx} className="bg-slate-800 rounded-lg p-3 text-sm border border-slate-700 shadow-md">
-                            <div className="font-medium text-slate-200 mb-1">{source.title || `Source ${idx + 1}`}</div>
-                            <div className="text-xs text-slate-300 line-clamp-3">{source.content}</div>
-                            {source.url && (<a href={source.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline mt-1 inline-block">View Source</a>)}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {isCarePlanMode && (
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-300 mb-1.5 flex items-center"><Stethoscope size={14} className="mr-1.5 text-teal-400 glow-teal-500" /> Clinical Context</h4>
-                      <div className="space-y-2">
-                        <div className="bg-slate-800 rounded-lg p-3 text-sm border border-slate-700 shadow-md">
-                          <div className="text-xs text-slate-300 flex items-center mb-1"><Brain size={12} className="mr-1.5 text-teal-400" /> Care Plan Elements</div>
-                          <div className="flex flex-wrap gap-1.5 mt-1">
-                            <span className="bg-sky-800/70 text-sky-300 text-xs px-2 py-0.5 rounded-full border border-sky-700">Diagnosis</span>
-                            <span className="bg-lime-800/70 text-lime-300 text-xs px-2 py-0.5 rounded-full border border-lime-700">Interventions</span>
-                            <span className="bg-purple-800/70 text-purple-300 text-xs px-2 py-0.5 rounded-full border border-purple-700">Goals</span>
-                          </div>
-                        </div>
-                        <div className="bg-slate-800 rounded-lg p-3 text-sm border border-slate-700 shadow-md">
-                          <div className="text-xs text-slate-300 flex items-center mb-1"><Shield size={12} className="mr-1.5 text-teal-400" /> Safety Checks</div>
-                          <div className="text-xs text-lime-400 flex items-center"><CheckCircle size={12} className="mr-1.5" /> Verified</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-500 text-sm italic">Select a message to view details</div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-      
-      {/* Input area */}
-      <div className="border-t border-slate-700 bg-slate-900 p-3.5">
-        {isGenerating && onRegenerate && (
-          <div className="mb-2 px-3 py-1.5 bg-sky-900/50 rounded-lg flex items-center justify-between border border-sky-700">
-            <div className="text-sm text-sky-300 flex items-center">
-              <Sparkles size={15} className="mr-2 animate-pulse text-sky-400" />
-              AI is generating...
-            </div>
-            <button 
-              onClick={onRegenerate}
-              className="text-red-400 hover:text-red-300 text-xs border border-red-600 hover:border-red-500 px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-        
-        <div className="relative flex items-end">
-          <textarea
-            ref={inputRef}
-            value={inputText}
-            onChange={(e) => { setInputText(e.target.value); adjustTextareaHeight(e); }}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholderText}
-            className="flex-1 bg-slate-800 text-slate-100 rounded-xl border border-slate-600 shadow-sm p-3 pr-10 placeholder-slate-500 resize-none min-h-[44px] max-h-[120px] styled-scrollbar-dark focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-            disabled={isGenerating}
-            rows={1} // Start with 1 row, will auto-expand
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputText.trim() || isGenerating}
-            className={`absolute right-2.5 bottom-2 ${
-              !inputText.trim() || isGenerating 
-                ? 'text-slate-600 cursor-not-allowed'
-                : 'text-sky-400 hover:text-sky-300 glow-sky-500'
-            } p-1 rounded-md transition-colors`}
-            title="Send message"
-          >
-            <SendHorizontal size={20} />
-          </button>
-        </div>
-        
-        <div className="mt-1.5 flex justify-between items-center px-1">
-          <div className="text-xs text-slate-500">
-            {isCarePlanMode ? "RON AI Clinical Assistant" : "How can I help?"}
-          </div>
-          <div className="flex items-center">
-            {onRegenerate && (
-              <button
-                onClick={onRegenerate}
-                disabled={isGenerating || messages.length === 0 || messages[messages.length - 1].role === 'user'}
-                className={`mr-2 flex items-center text-xs rounded-md px-1.5 py-0.5 ${
-                  isGenerating || messages.length === 0 || messages[messages.length - 1].role === 'user'
-                    ? 'text-slate-600 cursor-not-allowed'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                } transition-colors`}
-              >
-                <RotateCw size={11} className="mr-1" /> Regenerate
-              </button>
             )}
-            <button className="text-slate-500 hover:text-slate-300 p-0.5 rounded hover:bg-slate-800" title="Chat settings">
-              <Settings size={13} />
-            </button>
+            
+            {selectedMessage.context.metadata && Object.keys(selectedMessage.context.metadata).length > 0 && (
+              <div>
+                <h5 className="text-xs font-medium text-sky-300 mb-2 tracking-wider uppercase">
+                  Metadata
+                </h5>
+                <pre className="text-[11px] text-slate-400 bg-gradient-to-br from-slate-800 to-slate-850 p-3 rounded-lg border border-slate-700/70 styled-scrollbar-dark overflow-auto">
+                  {JSON.stringify(selectedMessage.context.metadata, null, 2)}
+                </pre>
+              </div>
+            )}
+            
+            {(!selectedMessage.context.sources || selectedMessage.context.sources.length === 0) && 
+             (!selectedMessage.context.metadata || Object.keys(selectedMessage.context.metadata).length === 0) && (
+              <div className="text-center py-8">
+                <BookOpen size={32} className="mx-auto text-slate-700 mb-3" />
+                <p className="text-xs text-slate-500 italic">
+                  No additional context available for this message.
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-      
+      )}
+
       <style jsx global>{`
         .styled-scrollbar-dark::-webkit-scrollbar { width: 6px; height: 6px; }
-        .styled-scrollbar-dark::-webkit-scrollbar-track { background: #020617; /* slate-950 */ }
-        .styled-scrollbar-dark::-webkit-scrollbar-thumb { background: #1e293b; /* slate-800 */ border-radius: 10px; }
-        .styled-scrollbar-dark::-webkit-scrollbar-thumb:hover { background: #334155; /* slate-700 */ }
+        .styled-scrollbar-dark::-webkit-scrollbar-track { background: transparent; }
+        .styled-scrollbar-dark::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .styled-scrollbar-dark::-webkit-scrollbar-thumb:hover { background: #475569; }
         
         .animation-delay-150 { animation-delay: 150ms; }
         .animation-delay-300 { animation-delay: 300ms; }
         
-        .prose-slate code::before, .prose-slate code::after,
+        /* Tailwind Prose Overrides for Markdown */
         .prose-invert code::before, .prose-invert code::after { content: "" !important; }
-
-        .prose-slate code, .prose-invert code { /* Unified code styling */
-          background-color: #0f172a; /* slate-900 */
-          color: #94a3b8; /* slate-400 */
-          padding: 0.15em 0.3em;
+        .prose-invert code {
+          background-color: #1e293b;
+          color: #e2e8f0;
+          padding: 0.1em 0.3em;
           margin: 0 0.05em;
           font-size: 0.85em;
-          border-radius: 0.2rem;
-          border: 1px solid #334155; /* slate-700 */
+          border-radius: 0.25rem;
+          border: 1px solid #334155;
         }
-        .prose-slate pre, .prose-invert pre { /* Unified pre styling */
-          background-color: #020617; /* slate-950 */
-          color: #cbd5e1; /* slate-300 */
-          padding: 0.75em;
-          border-radius: 0.3rem; 
-          overflow-x: auto;
-          border: 1px solid #1e293b; /* slate-800 */
-          box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        .prose-invert pre {
+          background-color: #0f172a !important;
+          color: #cbd5e1 !important;
+          padding: 0 !important;
+          border-radius: 0.3rem !important;
+          overflow-x: visible !important;
+          border: none !important;
+          box-shadow: none !important;
         }
-        .prose-slate pre code, .prose-invert pre code {
-          background-color: transparent !important; color: inherit !important;
-          border: none !important; padding: 0 !important; margin: 0 !important;
-          font-size: inherit !important;
+        .prose-invert pre code {
+          background-color: transparent !important;
+          color: inherit !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          font-size: 0.85em !important;
+          line-height: 1.6 !important;
         }
         
-        @keyframes slide-in-right { from { transform: translateX(100%); opacity: 0.7; } to { transform: translateX(0); opacity: 1; } }
-        .animate-slide-in-right { animation: slide-in-right 0.25s ease-out forwards; }
+        @keyframes slide-in-right {
+          from { transform: translateX(100%); opacity: 0.7; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in-right { animation: slide-in-right 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
-        /* Electric Glows - ensure these are defined in careplan-template.tsx or a global CSS file */
-        .glow-sky-500 { box-shadow: 0 0 8px 1px rgba(14, 165, 233, 0.3); }
-        .glow-teal-500 { box-shadow: 0 0 8px 1px rgba(20, 184, 166, 0.3); }
-        .glow-lime-400 { box-shadow: 0 0 8px 1px rgba(163, 230, 53, 0.3); }
-        .glow-red-400 { box-shadow: 0 0 8px 1px rgba(248, 113, 113, 0.3); }
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fade-in-up 0.3s ease-out forwards; }
+
+        .shadow-top {
+          box-shadow: 0 -4px 12px -2px rgba(0, 0, 0, 0.15), 0 -2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .shadow-top-sm {
+          box-shadow: 0 -2px 6px -1px rgba(0,0,0,0.1), 0 -1px 3px -1px rgba(0,0,0,0.08);
+        }
+
+        /* Electric Glows */
+        .glow-sky-500 { box-shadow: 0 0 8px 1.5px rgba(14, 165, 233, 0.3); }
+        .glow-teal-500 { box-shadow: 0 0 8px 1.5px rgba(20, 184, 166, 0.3); }
       `}</style>
     </div>
   );

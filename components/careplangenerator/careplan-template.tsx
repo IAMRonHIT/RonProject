@@ -9,6 +9,8 @@ import {
 import KanbanBoard from './KanbanBoard';
 import ChatInterface, { ChatMessage } from './ChatInterface';
 import ReasoningDisplay from './ReasoningDisplay';
+// import SonarChatHandler from './SonarChatHandler'; // No longer used
+import GrokChatHandler from './GrokChatHandler'; // Import GrokChatHandler
 import {
   generateKanbanData,
   updateTaskStatus as updateTask,
@@ -210,6 +212,9 @@ interface CarePlanTemplateProps {
   sectionUiStates?: { [sectionId: string]: { isReady: boolean; displayName: string; } };
   onSectionToggle?: (sectionKey: string) => void;
   expandedSectionsFromParent?: Record<string, boolean>;
+  initialTab?: ActiveTabType; // Added initialTab prop
+  initialReasoningContent?: string | null; // Added for Grok reasoning
+  initialGrokResponse?: string; // Added for Grok initial response
 }
 
 interface InfoCardProps {
@@ -878,11 +883,15 @@ const CarePlanTemplate = ({
   sectionReasoning,
   sectionUiStates,
   onSectionToggle,
-  expandedSectionsFromParent
+  expandedSectionsFromParent,
+  initialTab, // Destructure initialTab
+  initialReasoningContent, // Destructure initialReasoningContent
+  initialGrokResponse // Destructure initialGrokResponse
 }: CarePlanTemplateProps) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<ActiveTabType>('chat'); // Default to 'chat'
+  // Use initialTab if provided, otherwise default to 'overview'
+  const [activeTab, setActiveTab] = useState<ActiveTabType>(initialTab || 'overview'); // Default to 'overview'
   const [currentData, setCurrentData] = useState<CarePlanJsonData | null>(null);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -1238,13 +1247,13 @@ const CarePlanTemplate = ({
   const pendingPaCount = paItems.filter(i => i.status?.toLowerCase() === 'in progress' || i.status?.toLowerCase() === 'pending submission').length;
 
   return (
-    <div className="min-h-screen bg-slate-950 py-6 antialiased text-slate-200">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-black py-8 antialiased text-slate-200">
       <NotificationPopup 
         {...notificationContent}
         isVisible={showNotification}
         onClose={() => setShowNotification(false)}
       />
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1800px] mx-auto px-6 sm:px-8 lg:px-12">
         {/* Main Header */}
         <div className="bg-black p-6 rounded-xl shadow-2xl text-white mb-8 flex justify-between items-center flex-wrap gap-y-4 border border-slate-700">
           <div className="flex items-center">
@@ -1325,23 +1334,21 @@ const CarePlanTemplate = ({
 
               {/* Tab Content */}
               <div className={`${activeTab === 'chat' ? 'p-0' : 'p-6 md:p-8'} bg-slate-950 min-h-[700px] tracking-wide leading-relaxed`} key={activeTabKey}>
-                {activeTab === 'chat' && (
+                {activeTab === 'chat' && currentData && (
                   <div className={`${isMounted ? 'animate-fade-in-up' : 'opacity-0'} h-full`}>
-                    <ChatInterface
-                      messages={chatMessages}
-                      onSendMessage={handleSendChatMessage}
-                      isGenerating={false} 
-                      placeholderText="Ask Ron AI about this patient's care plan..."
-                      userName="Provider"
-                      assistantName="Ron AI"
-                      isCarePlanMode={true}
-                      predefinedPrompts={[
-                        "Key risks for this patient?",
-                        "Summarize current medications.",
-                        "Priority nursing diagnoses?",
-                        "Rationale for Entresto?",
-                        "Needed follow-up appointments?"
-                      ]}
+                    {/* Use GrokChatHandler instead of SonarChatHandler */}
+                    <GrokChatHandler 
+                      carePlanData={{
+                      ...currentData,
+                      patientData: currentData.patientData ? {
+                        ...currentData.patientData,
+                        patient_age: typeof currentData.patientData.patient_age === 'number'
+                          ? String(currentData.patientData.patient_age)
+                          : currentData.patientData.patient_age,
+                      } : undefined,
+                    }}
+                      initialResponse={initialGrokResponse}
+                      initialReasoning={initialReasoningContent || undefined}
                     />
                   </div>
                 )}
@@ -1442,8 +1449,7 @@ const CarePlanTemplate = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                         {agents.length > 0 ? agents.map((agent, idx) => (
                             <AgentCard key={`agent-overview-${idx}`} agent={agent} isExpanded={!!expandedAgents[agent.name || `agent_${idx}`]} onToggle={() => toggleAgentExpansion(agent.name || `agent_${idx}`)} section="overview" />
-                          )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center md:col-span-2 xl:col-span-3 border border-slate-700">No AI agent contributions available.</div>
-                        }
+                          )) : <div className="text-base text-slate-500 italic p-5 bg-slate-900 rounded-lg text-center md:col-span-2 xl:col-span-3 border border-slate-700">No AI agent contributions available.</div>}
                         </div>
                     </div>
                   </div>
@@ -1463,8 +1469,8 @@ const CarePlanTemplate = ({
                           {sectionReasoning?.assessment && (
                             <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
                               <ReasoningDisplay
-                                markdownContent={sectionReasoning.assessment.markdownContent}
-                                isSimulating={sectionReasoning.assessment.isLoading}
+                                initialMarkdownContent={sectionReasoning.assessment.markdownContent}
+                                title="Assessment & Plan Reasoning"
                               />
                             </div>
                           )}
@@ -1546,8 +1552,8 @@ const CarePlanTemplate = ({
                             {dxIndex === 0 && sectionReasoning?.diagnosis_goals && (
                               <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
                                 <ReasoningDisplay
-                                  markdownContent={sectionReasoning.diagnosis_goals.markdownContent}
-                                  isSimulating={sectionReasoning.diagnosis_goals.isLoading}
+                                  initialMarkdownContent={sectionReasoning.diagnosis_goals.markdownContent}
+                                  title="Diagnosis Goals Reasoning"
                                 />
                               </div>
                             )}
@@ -1627,8 +1633,8 @@ const CarePlanTemplate = ({
                             {dxIndex === 0 && sectionReasoning?.interventions && (
                               <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
                                 <ReasoningDisplay
-                                  markdownContent={sectionReasoning.interventions.markdownContent}
-                                  isSimulating={sectionReasoning.interventions.isLoading}
+                                  initialMarkdownContent={sectionReasoning.interventions.markdownContent}
+                                  title="Interventions Reasoning"
                                 />
                               </div>
                             )}
@@ -1689,8 +1695,8 @@ const CarePlanTemplate = ({
                              {dxIndex === 0 && sectionReasoning?.evaluation && (
                               <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
                                 <ReasoningDisplay
-                                  markdownContent={sectionReasoning.evaluation.markdownContent}
-                                  isSimulating={sectionReasoning.evaluation.isLoading}
+                                  initialMarkdownContent={sectionReasoning.evaluation.markdownContent}
+                                  title="Evaluation Reasoning"
                                 />
                               </div>
                             )}
@@ -1749,8 +1755,8 @@ const CarePlanTemplate = ({
                           {sectionReasoning?.summary_coordination_sources && (
                             <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
                               <ReasoningDisplay
-                                markdownContent={sectionReasoning.summary_coordination_sources.markdownContent}
-                                isSimulating={sectionReasoning.summary_coordination_sources.isLoading}
+                                initialMarkdownContent={sectionReasoning.summary_coordination_sources.markdownContent}
+                                title="Summary & Coordination Reasoning"
                               />
                             </div>
                           )}
@@ -1808,8 +1814,8 @@ const CarePlanTemplate = ({
                             <div className="my-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
                                 <p className="text-xs text-slate-500 italic mb-2">Note: Source reasoning is part of "Summary & Admin".</p>
                                 <ReasoningDisplay
-                                  markdownContent={sectionReasoning.summary_coordination_sources.markdownContent}
-                                  isSimulating={sectionReasoning.summary_coordination_sources.isLoading}
+                                  initialMarkdownContent={sectionReasoning.summary_coordination_sources.markdownContent}
+                                  title="Summary & Coordination Reasoning"
                                 />
                             </div>
                            )}
@@ -1859,8 +1865,8 @@ const CarePlanTemplate = ({
                 {sectionReasoning?.prior_authorizations && (
                   <div className="mb-5 p-4 bg-slate-950 rounded-lg border border-slate-700">
                     <ReasoningDisplay
-                      markdownContent={sectionReasoning.prior_authorizations.markdownContent}
-                      isSimulating={sectionReasoning.prior_authorizations.isLoading}
+                      initialMarkdownContent={sectionReasoning.prior_authorizations.markdownContent}
+                      title="Prior Authorizations Reasoning"
                     />
                   </div>
                 )}

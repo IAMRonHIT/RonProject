@@ -22,8 +22,9 @@
   "dependencies": {
     "@babel/standalone": "^7.27.1",
     "@emotion/is-prop-valid": "latest",
-    "@google/generative-ai": "^0.24.0",
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.1",
+    "@langchain/google-genai": "^0.2.9",
     "@langchain/openai": "^0.3.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "^1.2.2",
