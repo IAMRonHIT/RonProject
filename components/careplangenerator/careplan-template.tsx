@@ -1255,40 +1255,87 @@ const CarePlanTemplate = ({
       />
       <div className="max-w-[1800px] mx-auto px-6 sm:px-8 lg:px-12">
         {/* Main Header */}
-        <div className="bg-black p-6 rounded-xl shadow-2xl text-white mb-8 flex justify-between items-center flex-wrap gap-y-4 border border-slate-700">
-          <div className="flex items-center">
-            <div className="bg-slate-800 p-3 rounded-lg text-sky-400 mr-4 shadow-md border border-sky-700 glow-sky-500">
-              <Shield size={30} />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white text-shadow-electric-blue">Ron AI</h1>
-              <p className="text-slate-300 text-md">AI-Powered Comprehensive Plan of Care</p>
-            </div>
+        <div className="relative bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800 p-8 rounded-2xl shadow-2xl text-white mb-10 border border-slate-800 overflow-hidden">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+            }} />
           </div>
-          <div className="flex space-x-3 items-center">
-            {enableSimulations && (
+          
+          <div className="relative flex justify-between items-center flex-wrap gap-y-6">
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-sky-500 to-blue-600 rounded-2xl blur opacity-75 animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-xl shadow-xl border border-sky-500/50">
+                  <Shield size={36} className="text-sky-400" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent">
+                  Ron AI
+                </h1>
+                <p className="text-slate-400 text-lg mt-1 font-medium">
+                  Intelligent Care Plan Management System
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 items-center">
+              {enableSimulations && (
                 <button
-                    onClick={() => triggerNotification("Sample System Alert", "This is a test notification.", "Category: System", "Severity: Info")}
-                    className="bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200"
-                    title="Trigger Sample Notification"
+                  onClick={() => triggerNotification("Sample System Alert", "This is a test notification.", "Category: System", "Severity: Info")}
+                  className="group relative px-5 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 hover:border-sky-500/50 transition-all duration-300 shadow-lg hover:shadow-sky-500/20"
+                  title="Trigger Sample Notification"
                 >
-                    <Bell size={16} className="mr-2 text-sky-400" /> Test Notify
+                  <div className="flex items-center gap-2">
+                    <Bell size={16} className="text-sky-400 group-hover:animate-pulse" />
+                    <span className="text-slate-300 group-hover:text-slate-100">Test Notify</span>
+                  </div>
                 </button>
-            )}
-            <button
-              className={`relative bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200 ${showPriorAuth ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black' : ''}`}
-              onClick={togglePriorAuth} title="Toggle Prior Authorizations Panel" >
-              <Shield size={16} className="mr-2 text-sky-400" /> Prior Auth
-              {pendingPaCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-md animate-bounce border-2 border-black">{pendingPaCount}</span>
               )}
-            </button>
-            <button onClick={() => console.log("Communicate action triggered")} className="bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200" title="Communicate with Team">
-              <MessageCircle size={16} className="mr-2 text-sky-400" /> Communicate
-            </button>
-            <button onClick={() => console.log("Export action triggered. Data:", currentData)} className="bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 hover:bg-slate-700 hover:border-sky-500 flex items-center shadow-md hover:shadow-lg transition-all duration-200" title="Export Care Plan">
-              <Download size={16} className="mr-2 text-sky-400" /> Export
-            </button>
+              
+              <button
+                className={`group relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  showPriorAuth 
+                    ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white border border-sky-500 shadow-lg shadow-sky-500/30' 
+                    : 'bg-gradient-to-br from-slate-800 to-slate-900 text-slate-300 hover:text-slate-100 border border-slate-700 hover:border-sky-500/50 shadow-lg hover:shadow-sky-500/20'
+                }`}
+                onClick={togglePriorAuth} 
+                title="Toggle Prior Authorizations Panel"
+              >
+                <div className="flex items-center gap-2">
+                  <Shield size={16} className={showPriorAuth ? 'text-white' : 'text-sky-400'} />
+                  <span>Prior Auth</span>
+                  {pendingPaCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-lg animate-pulse border-2 border-slate-900">
+                      {pendingPaCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+              
+              <button 
+                onClick={() => console.log("Communicate action triggered")} 
+                className="group relative px-5 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 hover:border-sky-500/50 transition-all duration-300 shadow-lg hover:shadow-sky-500/20"
+                title="Communicate with Team"
+              >
+                <div className="flex items-center gap-2">
+                  <MessageCircle size={16} className="text-sky-400 group-hover:animate-pulse" />
+                  <span className="text-slate-300 group-hover:text-slate-100">Communicate</span>
+                </div>
+              </button>
+              
+              <button 
+                onClick={() => console.log("Export action triggered. Data:", currentData)} 
+                className="group relative px-5 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 hover:border-emerald-500/50 transition-all duration-300 shadow-lg hover:shadow-emerald-500/20"
+                title="Export Care Plan"
+              >
+                <div className="flex items-center gap-2">
+                  <Download size={16} className="text-emerald-400 group-hover:animate-bounce" />
+                  <span className="text-slate-300 group-hover:text-slate-100">Export</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
 
