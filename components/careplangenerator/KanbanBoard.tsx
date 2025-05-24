@@ -9,7 +9,7 @@ import {
   TrendingUp, ListChecks, Edit3, Repeat, Share2, Users, Loader2, PlayCircle,
   Search, GripVertical // Added GripVertical for drag handle
 } from 'lucide-react';
-import TaskDetailModal from './TaskDetailModal'; // Import the new modal
+import { TaskDetailPortal } from './TaskDetailPortal'; // Import the portal-based task detail component
 
 // Task Types
 export type TaskStatus = 'todo' | 'in-progress' | 'review' | 'completed';
@@ -82,6 +82,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTaskForModal, setSelectedTaskForModal] = useState<KanbanTask | null>(null);
+  
 
   const statusColumns: StatusColumn[] = [
     { 
@@ -154,7 +155,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const openTaskModal = (task: KanbanTask) => {
-    setSelectedTaskForModal({...task, patientName, patientId });
+    setSelectedTaskForModal(task);
     setIsModalOpen(true);
   };
   const closeTaskModal = () => {
@@ -166,24 +167,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const completedTasksCount = filteredTasks.filter(t => t.status === 'completed').length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0;
 
-  const getPriorityBadgeStyle = (priority: KanbanTask['priority']) => {
-    switch (priority) {
-      case 'high': return 'bg-slate-800 text-red-400 border-red-700 glow-red-500';
-      case 'urgent': return 'bg-slate-800 text-pink-400 border-pink-700 glow-fuchsia-400'; // Using fuchsia for pink glow
-      case 'medium': return 'bg-slate-800 text-amber-400 border-amber-700 glow-amber-400';
-      case 'low': return 'bg-slate-800 text-sky-400 border-sky-700 glow-sky-500';
-      default: return 'bg-slate-700 text-slate-300 border-slate-600';
-    }
-  };
-  
-  const getTypeBadgeStyle = (type: KanbanTask['type']) => {
-    switch (type) {
-      case 'intervention': return 'bg-slate-800 text-purple-400 border-purple-700 glow-purple-500';
-      case 'assessment': return 'bg-slate-800 text-lime-400 border-lime-700 glow-lime-400';
-      case 'evaluation': return 'bg-slate-800 text-orange-400 border-orange-700 glow-amber-400'; // Using amber for orange glow
-      default: return 'bg-slate-700 text-slate-300 border-slate-600';
-    }
-  };
   
   const getColumnGlowClass = (statusId: TaskStatus) => {
     switch (statusId) {
@@ -197,6 +180,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden shadow-2xl border border-slate-700">
+      
       {/* Header */}
       <div className="bg-slate-900 p-4 border-b border-slate-700">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-3 lg:space-y-0">
@@ -470,7 +454,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
       </div>
-      <TaskDetailModal
+      <TaskDetailPortal
         isOpen={isModalOpen}
         onClose={closeTaskModal}
         task={selectedTaskForModal}

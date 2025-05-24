@@ -1443,6 +1443,8 @@ const CarePlanTemplate = ({
                       enableSimulations={enableSimulations}
                       onTaskStatusChange={updateTaskStatus}
                       onTaskAssign={assignTaskToAgent}
+                      patientName={patientInfo.patient_full_name}
+                      patientId={patientInfo.patient_mrn}
                     />
                   </div>
                 )}
