@@ -21,6 +21,19 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { 
+            key: 'Content-Security-Policy', 
+            value: "frame-ancestors *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:;" 
+          },
+        ],
+      },
+    ];
+  },
 }
 
 mergeConfig(nextConfig, userConfig)
