@@ -13,38 +13,37 @@ const cardData = [
     id: 1,
     question: "Stuck in prior authorization loops?",
     icon: CheckCircle,
-    description: "Automated approval processes that reduce wait times and administrative burden",
+    description: "Ron AI automates prior authorization requests by intelligently gathering necessary documentation and directly interfacing with payer systems, reducing delays.",
   },
   {
     id: 2,
-    question: "Communication breakdowns slowing down care?",
+    question: "Communication breakdowns slowing care?",
     icon: Network,
-    description: "Seamless communication between providers, payers, and patients",
+    description: "Ron AI provides a unified communication platform that connects providers, payers, and patients, ensuring coordinated and timely information exchange.",
   },
   {
     id: 3,
     question: "Need to automate complex clinical workflows?",
     icon: Cog,
-    description: "Intelligent workflow automation that adapts to your clinical processes",
+    description: "Ron AI employs intelligent agents to automate and streamline clinical workflows, such as patient intake, scheduling, and results management, adapting to your specific processes.",
   },
   {
     id: 4,
-    question: "Finding it difficult to provide truly patient centered care?",
+    question: "Struggling with personalized care planning?",
     icon: MapPin,
-    description:
-      "Our framework researches the latest evidence based approach that is geared specifically for each and every patient.",
+    description: "Ron AI's Care Plan Generator uses AI to create evidence-based, personalized care plans, considering individual patient data and the latest clinical guidelines.",
   },
   {
     id: 5,
     question: "Is your system truly interoperable?",
     icon: PuzzlePiece,
-    description: "Seamless integration across all healthcare systems and data sources",
+    description: "Ron AI acts as an interoperability hub, securely connecting with diverse healthcare IT systems (EHRs, LIS) using standards like FHIR for seamless data exchange.",
   },
   {
     id: 6,
     question: "Ready for proactive, not just reactive, healthcare?",
     icon: LineChart,
-    description: "Predictive analytics that identify risks before they become problems",
+    description: "Ron AI utilizes predictive analytics on patient data to identify at-risk individuals and potential adverse events, enabling proactive interventions.",
   },
 ]
 
@@ -211,9 +210,13 @@ export default function AutoFlipCarousel() {
                   className="absolute w-full max-w-lg h-full"
                 >
                   {/* The Flippable Card itself */}
-                  <div className="flip-card-container w-full h-full perspective-1200 group">
+                  <motion.div 
+                    className="flip-card-container w-full h-full perspective-1200 group"
+                    whileHover={{ rotateX: 5 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }} // For the hover effect
+                  >
                     <div
-                      className={`flip-card relative w-full h-full transition-transform duration-1000 ease-&lsqb;cubic-bezier(0.25,1,0.5,1)&rsqb; transform-style-3d ${
+                      className={`flip-card relative w-full h-full transition-transform duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform-style-3d ${
                         isFlipped ? "rotate-y-180" : ""
                       }`}
                     >
@@ -286,7 +289,7 @@ export default function AutoFlipCarousel() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </AnimatePresence>
             </div>
