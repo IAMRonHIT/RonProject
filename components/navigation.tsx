@@ -54,10 +54,10 @@ export default function Navigation() {
                 Contact
               </NavLink>
               <Link
-                href="/demo"
+                href="/care-plan-generator"
                 className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium transition-all hover:shadow-[0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 border border-blue-400/20 flex items-center gap-1"
               >
-                Request Demo
+                Try Care Plan Generator
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -120,11 +120,11 @@ export default function Navigation() {
           </MobileNavLink>
           <div className="pt-2">
             <Link
-              href="/demo"
-              className="block w-full text-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium border border-blue-400/20 shadow-md shadow-blue-900/20 flex items-center justify-center gap-1"
+              href="/care-plan-generator"
+              className="w-full text-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium border border-blue-400/20 shadow-md shadow-blue-900/20 flex items-center justify-center gap-1"
               onClick={() => setIsMenuOpen(false)}
             >
-              Request Demo
+              Try Care Plan Generator
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

@@ -280,6 +280,7 @@ const LeadGenChatbot: React.FC<LeadGenChatbotProps> = ({
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: 20, height: 0 }}
             className="fixed bottom-24 right-6 w-[350px] md:w-[400px] bg-slate-900 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden z-50"
+            {...({} as any)}
           >
             {/* Chat Header */}
             <div className="bg-gradient-to-r from-purple-900 to-slate-800 p-4 flex justify-between items-center">
@@ -291,14 +292,20 @@ const LeadGenChatbot: React.FC<LeadGenChatbotProps> = ({
               </div>
               <div className="flex items-center">
                 <button
+                  type="button"
                   onClick={toggleChatState}
                   className="text-slate-200 hover:text-white p-1 rounded"
+                  title="Minimize chat"
+                  aria-label="Minimize chat"
                 >
                   <Minimize2 size={18} />
                 </button>
                 <button
+                  type="button"
                   onClick={() => setChatState('minimized')}
                   className="text-slate-200 hover:text-white p-1 rounded ml-1"
+                  title="Close chat"
+                  aria-label="Close chat"
                 >
                   <X size={18} />
                 </button>
@@ -474,6 +481,9 @@ const LeadGenChatbot: React.FC<LeadGenChatbotProps> = ({
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg flex items-center justify-center z-50 hover:shadow-purple-500/30 transition-shadow"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        type="button"
+        aria-label="Toggle chat"
+        {...({} as any)}
       >
         {chatState === 'minimized' ? (
           <Bot size={24} className="text-white" />

@@ -48,7 +48,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from '@/lib/utils';
-import { SCENARIOS_BY_ENVIRONMENT, CareEnvironment, PatientScenario as ScenarioInterface } from '@/components/careplangenerator/scenarios'; // Updated import
+import { SCENARIOS_BY_ENVIRONMENT, CareEnvironment, PatientScenario as ScenarioInterface } from './scenarios';
 
 // TypeScript Interfaces
 export interface VitalSigns {

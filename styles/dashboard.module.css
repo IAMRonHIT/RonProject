@@ -1,0 +1,88 @@
+/* Progress bars with dynamic width */
+.progressBar {
+  width: var(--progress-width, 0%);
+  height: 100%;
+  transition: width 0.3s ease-out;
+}
+
+/* Chart bars with dynamic height */
+.chartBar {
+  height: var(--bar-height, 0%);
+  transition: height 0.3s ease-out;
+}
+
+/* Progress bar for compliance score */
+.complianceProgress {
+  height: 100%;
+  background: linear-gradient(to right, rgb(34 197 94), rgb(6 182 212));
+  border-radius: 9999px;
+  width: var(--compliance-score, 0%);
+}
+
+/* Resource allocation progress bars */
+.resourceProgress {
+  height: 100%;
+  border-radius: 9999px;
+  width: var(--resource-value, 0%);
+}
+
+/* Cyan gradient progress */
+.cyanProgress {
+  background: linear-gradient(to right, rgb(6 182 212), rgb(59 130 246));
+}
+
+/* Purple gradient progress */
+.purpleProgress {
+  background: linear-gradient(to right, rgb(168 85 247), rgb(236 72 153));
+}
+
+/* Blue gradient progress */
+.blueProgress {
+  background: linear-gradient(to right, rgb(59 130 246), rgb(99 102 241));
+}
+
+/* Status item progress */
+.statusProgress {
+  height: 100%;
+  border-radius: 9999px;
+  width: var(--status-value, 0%);
+}
+
+/* Chart bar variants */
+.chartBarCyan {
+  width: 0.25rem;
+  background: linear-gradient(to top, rgb(8 145 178), rgb(34 211 238));
+  border-radius: 0.125rem 0.125rem 0 0;
+}
+
+.chartBarPurple {
+  width: 0.25rem;
+  background: linear-gradient(to top, rgb(147 51 234), rgb(196 181 253));
+  border-radius: 0.125rem 0.125rem 0 0;
+}
+
+.chartBarBlue {
+  width: 0.25rem;
+  background: linear-gradient(to top, rgb(37 99 235), rgb(147 197 253));
+  border-radius: 0.125rem 0.125rem 0 0;
+}
+
+/* Data metric progress with conditional colors */
+.dataMetricProgress {
+  height: 100%;
+  border-radius: 9999px;
+  width: var(--metric-percentage, 0%);
+}
+
+/* Status progress bar variants */
+.statusProgressCyan {
+  background: linear-gradient(to right, rgb(6 182 212), rgb(59 130 246));
+}
+
+.statusProgressGreen {
+  background: linear-gradient(to right, rgb(34 197 94), rgb(16 185 129));
+}
+
+.statusProgressBlue {
+  background: linear-gradient(to right, rgb(59 130 246), rgb(99 102 241));
+} 

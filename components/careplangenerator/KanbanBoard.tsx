@@ -62,9 +62,6 @@ interface StatusColumn {
   borderColor: string; // Tailwind border color class for column
 }
 
-// Icon glow style
-const iconGlowStyle = { filter: 'drop-shadow(0 0 3px rgba(135, 206, 250, 0.6))' }; // Light blue glow
-
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
   tasks,
   epics,
@@ -90,28 +87,28 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     { 
       id: 'todo', 
       title: 'To Do', 
-      icon: <ListChecks size={18} style={iconGlowStyle} />,
+      icon: <ListChecks size={18} className="drop-shadow-sm" />,
       color: 'bg-sky-600',
       borderColor: 'border-sky-500/70'
     },
     { 
       id: 'in-progress', 
       title: 'In Progress', 
-      icon: <Clock size={18} style={iconGlowStyle} />,
+      icon: <Clock size={18} className="drop-shadow-sm" />,
       color: 'bg-amber-600',
       borderColor: 'border-amber-500/70'
     },
     { 
       id: 'review', 
       title: 'Review', 
-      icon: <Edit3 size={18} style={iconGlowStyle} />,
+      icon: <Edit3 size={18} className="drop-shadow-sm" />,
       color: 'bg-purple-600',
       borderColor: 'border-purple-500/70'
     },
     { 
       id: 'completed', 
       title: 'Completed', 
-      icon: <CheckCircle size={18} style={iconGlowStyle} />,
+      icon: <CheckCircle size={18} className="drop-shadow-sm" />,
       color: 'bg-green-600',
       borderColor: 'border-green-500/70'
     }
@@ -195,7 +192,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-3 lg:space-y-0">
           <div className="flex items-center space-x-3">
             <h2 className="text-xl font-semibold text-slate-100 flex items-center">
-              <BarChart2 size={20} className="mr-2 text-sky-400" style={iconGlowStyle} />
+              <BarChart2 size={20} className="mr-2 text-sky-400" />
               Care Plan Task Board
             </h2>
             <div className="flex items-center space-x-2">
@@ -203,7 +200,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 {totalTasks} Tasks
               </div>
               <div className="bg-green-700/20 border border-green-600/50 p-1.5 rounded-md text-xs text-green-300 flex items-center">
-                <CheckCircle size={14} className="mr-1" style={iconGlowStyle} />
+                <CheckCircle size={14} className="mr-1" />
                 {completionRate}% Complete
               </div>
             </div>
@@ -211,12 +208,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <div className="flex items-center space-x-3 w-full lg:w-auto">
             <div className="relative flex-grow lg:flex-grow-0">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Filter size={14} className="text-slate-400" style={iconGlowStyle} />
+                <Filter size={14} className="text-slate-400" />
               </div>
               <select
                 className="w-full bg-slate-700 text-slate-200 border border-slate-600 rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm appearance-none"
                 value={taskFilter}
                 onChange={(e) => handleTypeFilter(e.target.value as any)}
+                aria-label="Filter tasks by type"
               >
                 <option value="all">All Types</option>
                 <option value="intervention">Interventions</option>
@@ -226,7 +224,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
             <div className="relative flex-grow lg:flex-grow-0">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Search size={14} className="text-slate-400" style={iconGlowStyle} />
+                <Search size={14} className="text-slate-400" />
               </div>
               <input
                 type="text"
@@ -259,7 +257,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onClick={() => handleEpicSelect(epic.id)}
                 >
                   <div className="flex items-center space-x-2 min-w-0">
-                    <Target size={14} className={selectedEpic === epic.id ? 'text-white' : 'text-sky-400'} style={iconGlowStyle} />
+                    <Target size={14} className={selectedEpic === epic.id ? 'text-white' : 'text-sky-400'} />
                     <span className="truncate font-medium">{epic.title}</span>
                   </div>
                   <div 
@@ -277,7 +275,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       <span className="font-semibold">{epic.progress}%</span>
                     </div>
                     <div className="w-full bg-slate-600 rounded-full h-1.5">
-                      <div className="bg-gradient-to-r from-sky-500 to-green-500 h-1.5 rounded-full" style={{ width: `${epic.progress}%` }}></div>
+                      <div 
+                        className="bg-gradient-to-r from-sky-500 to-green-500 h-1.5 rounded-full transition-all duration-300 progress-bar"
+                        data-width={epic.progress}
+                      ></div>
                     </div>
                     {epic.goalTargetDate && (
                       <div className="text-xs text-slate-400 flex items-center mt-1">
@@ -335,14 +336,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           <p className="text-sm text-slate-300 mb-2.5 line-clamp-2">{task.description}</p>
                           {task.epicName && (
                             <div className="flex items-center mb-2 text-xs text-sky-300">
-                              <Target size={12} className="mr-1.5" style={iconGlowStyle} />
+                              <Target size={12} className="mr-1.5" />
                               <span className="truncate">{task.epicName}</span>
                             </div>
                           )}
                           <div className="flex justify-between items-center text-xs text-slate-400">
                             {task.dueDate && <span>Due: {task.dueDate}</span>}
                             {task.assignee && <span className="font-medium flex items-center text-amber-300">
-                              <Users size={12} className="mr-1.5" style={iconGlowStyle} /> {task.assignee}
+                              <Users size={12} className="mr-1.5" /> {task.assignee}
                             </span>}
                           </div>
                           {enableSimulations && column.id !== 'completed' && (
@@ -411,9 +412,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       />
       <style jsx global>{`
         .styled-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-        .styled-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); /* slate-800 with opacity */ border-radius: 10px; }
-        .styled-scrollbar::-webkit-scrollbar-thumb { background: #475569; /* slate-600 */ border-radius: 10px; }
-        .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; /* slate-500 */ }
+        .styled-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 10px; }
+        .styled-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .progress-bar {
+          width: 0%;
+        }
+        ${epics.map(epic => `
+          .progress-bar[data-width="${epic.progress}"] {
+            width: ${epic.progress}%;
+          }
+        `).join('')}
       `}</style>
     </div>
   );
