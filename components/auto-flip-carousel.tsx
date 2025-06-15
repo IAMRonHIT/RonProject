@@ -165,7 +165,7 @@ export default function AutoFlipCarousel() {
   return (
     <section
       ref={ref}
-      className="relative w-full py-20 md:py-28 bg-gradient-to-b from-[#050818] via-[#0a0f2c] to-[#050818] overflow-hidden" // Enhanced background
+      className="relative w-full py-20 md:py-28 bg-gradient-to-b from-white via-slate-50 to-white overflow-hidden" // Enhanced background
     >
       {/* Background Effects (Optional, like previous example) */}
       <div className="absolute inset-0 z-0 opacity-[0.03] bg-[url('/images/subtle-grid.svg')] bg-repeat"></div>
@@ -222,7 +222,7 @@ export default function AutoFlipCarousel() {
                     >
                       {/* Front side */}
                       <div className="flip-card-front absolute w-full h-full backface-hidden rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a1a] to-[#0d1a1a] p-6 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 p-6 flex items-center justify-center">
                           {/* 3D Layered Background */}
                           <div className="absolute inset-0 bg-[url('/images/circuit-pattern.png')] bg-cover opacity-5"></div>
 
@@ -255,7 +255,7 @@ export default function AutoFlipCarousel() {
 
                       {/* Back side */}
                       <div className="flip-card-back absolute w-full h-full backface-hidden rotate-y-180 rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                        <div className="absolute inset-0 bg-[#0a0a1a] p-6 flex flex-col items-center justify-center">
+                        <div className="absolute inset-0 bg-slate-100 p-6 flex flex-col items-center justify-center">
                           {/* 3D Layered Background */}
                           <div className="absolute inset-0 bg-[url('/images/circuit-pattern-2.png')] bg-cover opacity-5"></div>
 
@@ -283,7 +283,7 @@ export default function AutoFlipCarousel() {
                               className="text-[#00E5E0] filter drop-shadow-[0_0_8px_rgba(0,229,224,0.7)]"
                             />
                           </div>
-                          <p className="text-white text-center text-lg font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] transform translate-z-5">
+                          <p className="text-slate-900 text-center text-lg font-medium drop-shadow-[0_1px_2px_rgba(255,255,255,0.3)] transform translate-z-5">
                             {currentCard.description}
                           </p>
                         </div>
@@ -299,7 +299,7 @@ export default function AutoFlipCarousel() {
               <button
                 onClick={prevCard}
                 disabled={isChanging}
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-white/10"
+                className="p-3 rounded-full bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-slate-200"
                 aria-label="Previous card"
               >
                 <svg
@@ -320,7 +320,7 @@ export default function AutoFlipCarousel() {
               <button
                 onClick={nextCard}
                 disabled={isChanging}
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-white/10"
+                className="p-3 rounded-full bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-slate-200"
                 aria-label="Next card"
               >
                 <svg
@@ -349,10 +349,10 @@ export default function AutoFlipCarousel() {
               animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
             >
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-300 to-white mb-6">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 mb-6">
                 Transforming Healthcare Challenges
               </h2>
-              <p className="text-lg md:text-xl text-gray-400 max-w-xl leading-relaxed">
+              <p className="text-lg md:text-xl text-slate-600 max-w-xl leading-relaxed">
                 Ron AI leverages advanced agentic frameworks to solve complex issues in automation, communication, and
                 proactive care.
               </p>

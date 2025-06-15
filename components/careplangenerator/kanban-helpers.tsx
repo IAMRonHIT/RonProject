@@ -195,7 +195,7 @@ export const generateKanbanData = (carePlanData: CarePlanJsonData | null): { epi
       {
         id: 'default-task-1',
         title: 'Review patient assessment',
-        description: 'Complete thorough nursing assessment and document findings',
+        description: 'Complete thorough clinical assessment and document findings',
         status: 'todo' as TaskStatus,
         priority: 'high' as const,
         type: 'assessment' as const,
@@ -237,7 +237,7 @@ export const generateKanbanData = (carePlanData: CarePlanJsonData | null): { epi
     epics.push({
       id: defaultEpicId,
       title: 'Care Plan Implementation',
-      description: 'Standard nursing interventions and assessments',
+      description: 'Standard clinical interventions and assessments',
       diagnosisId: 'default',
       diagnosisName: 'Standard Care',
       tasks: defaultTasks,
@@ -255,7 +255,7 @@ export const updateTaskStatus = (tasks: KanbanTask[], taskId: string, newStatus:
         ...task,
         status: newStatus,
         // If task is being started or completed, update the assignee if not already set
-        assignee: newStatus === 'in-progress' && !task.assignee ? 'Nurse' : task.assignee
+        assignee: newStatus === 'in-progress' && !task.assignee ? 'Clinician' : task.assignee
       };
     }
     return task;

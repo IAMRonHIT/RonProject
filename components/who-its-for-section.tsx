@@ -136,7 +136,7 @@ export function WhoItsForSection() {
   return (
     <section
       ref={setRefs}
-      className="relative bg-[#050818] py-20 md:py-32"
+      className="relative bg-gradient-to-b from-white to-slate-50 py-20 md:py-32"
       style={{
         backgroundImage: "radial-gradient(circle at 50% 50%, rgba(0, 184, 169, 0.03) 0%, rgba(0, 0, 0, 0) 70%)",
       }}
@@ -149,10 +149,10 @@ export function WhoItsForSection() {
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
             Who <span className="text-[#00E5E0]">It's For</span>
           </h2>
-          <p className="text-gray-200 max-w-2xl mx-auto text-base md:text-lg">
+          <p className="text-slate-600 max-w-2xl mx-auto text-base md:text-lg">
             Ron AI serves the entire healthcare ecosystem, bringing intelligent automation to every touchpoint.
           </p>
         </motion.div>
@@ -187,7 +187,7 @@ export function WhoItsForSection() {
           <div
             key={index}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === activeSegmentIndex ? "bg-[#00E5E0] w-3 h-3" : "bg-gray-500"
+              index === activeSegmentIndex ? "bg-[#00E5E0] w-3 h-3" : "bg-slate-400"
             }`}
           />
         ))}
@@ -233,7 +233,7 @@ function SegmentContent({ segment, isActive }: SegmentContentProps) {
         {segment.title}
       </h3>
 
-      <p className="text-white text-base md:text-lg mb-6">{segment.description}</p>
+      <p className="text-slate-700 text-base md:text-lg mb-6">{segment.description}</p>
 
       <div className="video-container relative rounded-xl overflow-hidden aspect-video w-full shadow-lg shadow-[#00B8A9]/10">
         <video
@@ -253,7 +253,7 @@ function SegmentContent({ segment, isActive }: SegmentContentProps) {
         </video>
 
         {/* Video overlay with gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050818] via-transparent to-transparent opacity-40"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-40"></div>
       </div>
     </motion.div>
   )

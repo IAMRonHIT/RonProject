@@ -147,7 +147,7 @@ export default function AutoFlipCarousel() {
   return (
     <section
       ref={ref}
-      className="relative w-full py-20 md:py-28 bg-gradient-to-b from-[#050818] via-[#0a0f2c] to-[#050818] overflow-hidden"
+      className="relative w-full py-20 md:py-28 bg-gradient-to-b from-slate-50 via-white to-slate-50 overflow-hidden"
     >
       {/* Background Effects */}
       <div className="absolute inset-0 z-0 opacity-[0.03] bg-[url('/images/subtle-grid.svg')] bg-repeat"></div>
@@ -163,10 +163,10 @@ export default function AutoFlipCarousel() {
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-300 to-white mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 mb-4">
             Transforming Healthcare Challenges
           </h2>
-          <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
             Ron AI leverages advanced agentic frameworks to solve complex issues in automation, communication, and
             proactive care.
           </p>
@@ -221,7 +221,7 @@ export default function AutoFlipCarousel() {
           <button
             onClick={prevCard}
             disabled={isChanging}
-            className="p-3 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-white/10"
+            className="p-3 rounded-full bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-slate-200"
             aria-label="Previous card"
           >
             <svg
@@ -242,7 +242,7 @@ export default function AutoFlipCarousel() {
           <button
             onClick={nextCard}
             disabled={isChanging}
-            className="p-3 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-white/10"
+            className="p-3 rounded-full bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 group backdrop-blur-sm border border-slate-200"
             aria-label="Next card"
           >
             <svg

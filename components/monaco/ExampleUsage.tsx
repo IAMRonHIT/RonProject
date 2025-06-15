@@ -24,9 +24,9 @@ export function ExampleUsage() {
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-[#00FFFF] shadow-[0_0_5px_#00FFFF]"></div>
-            <h3 className="text-xl font-semibold text-white">Read-Only Mode</h3>
+            <h3 className="text-xl font-semibold text-slate-900">Read-Only Mode</h3>
           </div>
-          <p className="text-gray-400 text-sm mb-4">
+          <p className="text-slate-600 text-sm mb-4">
             Display code with syntax highlighting and glassmorphic styling.
           </p>
           <IDEPanel
@@ -40,9 +40,9 @@ export function ExampleUsage() {
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-[#00FFFF] shadow-[0_0_5px_#00FFFF]"></div>
-            <h3 className="text-xl font-semibold text-white">Editable Mode</h3>
+            <h3 className="text-xl font-semibold text-slate-900">Editable Mode</h3>
           </div>
-          <p className="text-gray-400 text-sm mb-4">
+          <p className="text-slate-600 text-sm mb-4">
             Edit code with real-time updates and glassmorphic cursor effects.
           </p>
           <IDEPanel

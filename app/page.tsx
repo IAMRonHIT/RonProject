@@ -6,7 +6,7 @@ import ProcessShowcase from '@/components/process-showcase'
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#050818]">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <RonAiHero />
       <AutoFlipCarousel />
 

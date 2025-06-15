@@ -171,7 +171,7 @@ export default function WhoItsForSlider() {
   }
 
   return (
-    <section ref={ref} className="relative bg-[#050818] py-16 md:py-24 overflow-hidden">
+    <section ref={ref} className="relative bg-gradient-to-b from-slate-50 to-white py-16 md:py-24 overflow-hidden">
       {/* Header */}
       <motion.div
         className="container mx-auto px-4 md:px-6 mb-12 text-center"
@@ -179,10 +179,10 @@ export default function WhoItsForSlider() {
         animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+        <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
           How Ron AI Helps <span style={{ color: ACCENT_COLOR }}>Your Sector</span>
         </h2>
-        <p className="text-gray-200 max-w-3xl mx-auto text-base md:text-lg">
+        <p className="text-slate-600 max-w-3xl mx-auto text-base md:text-lg">
           Ron AI's intelligent automation adapts to the unique needs of every healthcare setting, streamlining workflows
           and reducing administrative burden.
         </p>
@@ -250,7 +250,7 @@ export default function WhoItsForSlider() {
                 </video>
 
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
 
                 {/* Content */}
                 <motion.div

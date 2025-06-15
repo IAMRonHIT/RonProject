@@ -10,7 +10,7 @@ import Image from 'next/image';
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-[#050818]">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Hero Section with animated gradient background */}
       <section className="relative w-full py-20 md:py-32 overflow-hidden">
         {/* Background with circuit pattern */}
@@ -22,7 +22,7 @@ export default function AboutPage() {
         
         {/* Animated gradient overlay */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#050818] via-transparent to-[#050818] opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white opacity-90" />
           <div className="absolute -top-48 -right-48 w-96 h-96 bg-[#06b6d4] opacity-10 blur-3xl rounded-full animate-pulse" />
           <div className="absolute -bottom-48 -left-48 w-96 h-96 bg-[#3b82f6] opacity-10 blur-3xl rounded-full animate-pulse animation-delay-1s" />
         </div>
@@ -40,7 +40,7 @@ export default function AboutPage() {
                 About Ron AI
               </span>
             </h1>
-            <p className="text-xl text-[#94a3b8] mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
               Revolutionizing healthcare with proactive intelligence that works alongside clinicians to enhance patient outcomes.
             </p>
           </motion.div>

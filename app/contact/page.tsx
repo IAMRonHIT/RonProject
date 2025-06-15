@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen bg-[#050818] text-white overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900 overflow-hidden">
       {/* Hero Section */}
       <section className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden">
         <Spotlight className="-top-40 left-0 md:left-60 md:-top-20 from-blue-400/20 via-blue-500/20 to-cyan-400/20" />
@@ -15,7 +15,7 @@ export default function ContactPage() {
           <h1 className="text-4xl md:text-6xl font-audiowide text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
             Get in Touch
           </h1>
-          <p className="text-xl md:text-2xl text-center max-w-3xl mx-auto text-blue-100/80">
+          <p className="text-xl md:text-2xl text-center max-w-3xl mx-auto text-slate-600">
             Let us show you how Ron AI can transform your healthcare operations
           </p>
         </div>

@@ -25,7 +25,7 @@ export function useChat({
       
       try {
         // Add user message to history
-        const newMessages = [...messages, { role: 'user', content: userMessage }];
+        const newMessages: Message[] = [...messages, { role: 'user' as const, content: userMessage }];
         setMessages(newMessages);
         
         // Setup EventSource for SSE

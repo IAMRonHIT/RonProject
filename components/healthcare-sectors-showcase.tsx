@@ -280,14 +280,14 @@ export default function HealthcareSectorsShowcase() {
   }
 
   return (
-    <section ref={ref} className="relative bg-[#050818] py-16 md:py-24 overflow-hidden">
+    <section ref={ref} className="relative bg-gradient-to-b from-white to-slate-50 py-16 md:py-24 overflow-hidden">
       {/* Section heading */}
       <div className="container mx-auto px-4 md:px-6 mb-12">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
             Transforming <span className="text-[#00E5E0]">Healthcare Sectors</span>
           </h2>
-          <p className="text-gray-200 max-w-3xl mx-auto text-base md:text-lg">
+          <p className="text-slate-600 max-w-3xl mx-auto text-base md:text-lg">
             Ron AI's versatile agentic framework delivers intelligent automation and streamlined workflows across the
             entire healthcare ecosystem.
           </p>
@@ -354,8 +354,8 @@ export default function HealthcareSectorsShowcase() {
                   <div
                     className={`absolute inset-0 transition-all duration-500 ${
                       isActive
-                        ? "bg-gradient-to-t from-black/80 via-black/50 to-black/30"
-                        : "bg-gradient-to-t from-black/90 via-black/80 to-black/60"
+                        ? "bg-gradient-to-t from-slate-900/80 via-slate-900/50 to-slate-900/30"
+                        : "bg-gradient-to-t from-slate-900/90 via-slate-900/80 to-slate-900/60"
                     }`}
                   ></div>
                 </div>

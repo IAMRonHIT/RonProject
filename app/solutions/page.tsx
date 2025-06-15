@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function SolutionsPage() {
   return (
-    <main className="min-h-screen bg-[#050818] text-white overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900 overflow-hidden">
       {/* Hero Section */}
       <section className="relative h-[50vh] md:h-[60vh] flex items-center justify-center overflow-hidden">
         <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="rgba(59, 130, 246, 0.15)" />
@@ -19,7 +19,7 @@ export default function SolutionsPage() {
           <h1 className="text-4xl md:text-6xl font-audiowide text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
             Healthcare AI Solutions
           </h1>
-          <p className="text-xl md:text-2xl text-center max-w-3xl mx-auto text-blue-100/80">
+          <p className="text-xl md:text-2xl text-center max-w-3xl mx-auto text-slate-600">
             Transforming healthcare delivery with intelligent automation and clinical decision support
           </p>
         </div>
@@ -46,11 +46,11 @@ export default function SolutionsPage() {
           <h2 className="text-3xl md:text-4xl font-audiowide text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
             Seamless Integration
           </h2>
-          <div className="bg-[#0a0e24] rounded-2xl p-8 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+          <div className="bg-white rounded-2xl p-8 border border-blue-200 shadow-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div>
-                <h3 className="text-2xl font-semibold mb-4 text-blue-100">Connect with Your Existing Systems</h3>
-                <p className="text-blue-100/80 mb-6">
+                <h3 className="text-2xl font-semibold mb-4 text-slate-900">Connect with Your Existing Systems</h3>
+                <p className="text-slate-600 mb-6">
                   Ron AI integrates with your existing EHR, practice management, and other healthcare IT systems through
                   secure, standards-based APIs and connectors.
                 </p>
@@ -72,14 +72,14 @@ export default function SolutionsPage() {
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                       </div>
-                      <span className="text-blue-100/90">{item}</span>
+                      <span className="text-slate-700">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="relative h-[300px] rounded-xl overflow-hidden">
                 <Image src="/images/tech-diagram.png" alt="Integration Diagram" fill className="object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050818] to-transparent opacity-70"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-70"></div>
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function SolutionsPage() {
           <h2 className="text-3xl md:text-4xl font-audiowide mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
             Ready to Transform Your Healthcare Operations?
           </h2>
-          <p className="text-xl text-blue-100/80 max-w-3xl mx-auto mb-10">
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-10">
             Schedule a demo to see how Ron AI can help your organization improve clinical workflows, reduce
             administrative burden, and enhance patient care.
           </p>
@@ -103,7 +103,7 @@ export default function SolutionsPage() {
             Request a Demo
           </Link>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-[#050818] to-transparent -z-10" />
+        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white to-transparent -z-10" />
       </section>
     </main>
   )
@@ -122,13 +122,13 @@ function SolutionCard({
   features: string[]
 }) {
   return (
-    <div className="bg-[#0a0e24] rounded-2xl p-6 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:-translate-y-1">
+    <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <div className="w-16 h-16 mb-6 relative">
         <Image src={icon || "/placeholder.svg"} alt={title} width={64} height={64} className="object-contain" />
         <div className="absolute -inset-1 bg-blue-500/20 rounded-full blur-md -z-10" />
       </div>
-      <h3 className="text-2xl font-semibold mb-3 text-blue-100">{title}</h3>
-      <p className="text-blue-100/80 mb-6">{description}</p>
+      <h3 className="text-2xl font-semibold mb-3 text-slate-900">{title}</h3>
+      <p className="text-slate-600 mb-6">{description}</p>
       <ul className="space-y-2">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start">
@@ -147,7 +147,7 @@ function SolutionCard({
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
-            <span className="text-blue-100/90 text-sm">{feature}</span>
+            <span className="text-slate-700 text-sm">{feature}</span>
           </li>
         ))}
       </ul>
